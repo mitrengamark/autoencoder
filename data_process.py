@@ -21,52 +21,6 @@ class DataProcess:
     def denormalize(self, data, data_min, data_max):
         data_denormalized = data * (data_max - data_min) + data_min
         return data_denormalized
-
-    def group_manoeuvre_vectors(self, manoeuvre_name, save_csv=False):
-        """
-        Összegyűjti az azonos manőverhez tartozó paramétereket, és opcionálisan egy CSV fájlba menti.
-
-        :param manoeuvre_name: A manőver neve (vagy egyedi azonosítója), amely alapján fájlokat keresünk.
-        :param save_csv: Ha True, akkor az eredményt egy CSV fájlba menti. Alapértelmezés szerint False.
-        :return: Egy numpy array, amely az azonos manőverhez tartozó paramétereket tartalmazza.
-        """
-        # Az azonos manőverhez tartozó fájlok keresése
-        matching_files = [f for f in glob.glob("data/*") if manoeuvre_name in os.path.basename(f)]
-        if not matching_files:
-            print(f"Nincs találat a {manoeuvre_name} manőverhez.")
-            return None
-
-        list_of_vectors = []
-        file_lengths = []
-
-        # Az összes fájl méretének meghatározása
-        for file in matching_files:
-            df = pd.read_csv(file)
-            file_lengths.append(len(df))
-
-        # A legrövidebb fájl hossza
-        min_length = min(file_lengths)
-        shortest_file_index = file_lengths.index(min_length)
-        shortest_file_name = matching_files[shortest_file_index]
-        print(f"Min length: {min_length}")
-        print(f"Shortest file: {shortest_file_name}")
-
-        # Azonos méretre vágás és összegyűjtés
-        for file in matching_files:
-            df = pd.read_csv(file)
-            trimmed_vector = df.values[:min_length]  # Azonos méretre vágás
-            list_of_vectors.append(trimmed_vector)
-
-        # A listát numpy array-é alakítjuk
-        combined_vectors = np.hstack(list_of_vectors)
-
-        # Opcionális mentés CSV fájlba
-        if save_csv:
-            combined_df = pd.DataFrame(np.hstack(combined_vectors))
-            combined_df.to_csv(f"{manoeuvre_name}_combined.csv", index=False)
-            print(f"Mentve a {manoeuvre_name}_combined.csv fájlba.")
-
-        return combined_vectors
     
     def vector_collector(self, metric):
         matching_files = [f for f in glob.glob("data/*") if metric in os.path.basename(f)]
@@ -79,6 +33,7 @@ class DataProcess:
             file_lengths.append(len(df))
 
         min_length = min(file_lengths)
+        min_length = 10805
         min_length_index = file_lengths.index(min_length)
         shortest_file = matching_files[min_length_index]
         
@@ -192,8 +147,5 @@ class DataProcess:
     
 dp = DataProcess()
 # # list_of_vectors = dp.vector_collector('')
-# combined_vectors = dp.group_manoeuvre_vectors("allando_v_chirp_a1_v5")
-# # tranindata, testdata, traindata, _, _, _ = dp.train_test_split()
-# combined_vectors = dp.group_manoeuvre_vectors("allando_v_chirp_a1_v15")
-# print(f"Combined vectors shape: {combined_vectors.shape}")
-list_of_vectors = dp.vector_collector('allando_v_chirp_a1_v15')
+combined_vectors = dp.group_manoeuvre_vectors("allando_v_chirp_a1_v15")
+print(f"Combined vectors shape: {combined_vectors.shape}")
