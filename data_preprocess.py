@@ -1,6 +1,7 @@
 import scipy.io
 import pandas as pd
 import os
+import glob
 
 
 class DataPreProcess:
@@ -44,5 +45,29 @@ class DataPreProcess:
                     else:
                         print(f"A '{key}' kulcs alatt található adatok nem megfelelő formátumúak.")
 
+    def delete_csv_with_keyword(self, keyword):
+        """
+        Törli a .csv fájlokat a 'data' mappából, amelyek nevében szerepel a megadott kulcsszó.
+
+        :param keyword: Az a szövegrészlet, amely alapján a fájlokat törölni kell.
+        """
+        data_dir = "data"
+        csv_files = glob.glob(os.path.join(data_dir, "*.csv"))
+        deleted_files = []
+
+        for csv_file in csv_files:
+            if keyword in os.path.basename(csv_file):
+                os.remove(csv_file)
+                deleted_files.append(csv_file)
+
+        if deleted_files:
+            for file in deleted_files:
+                print(f"- {file}")
+
+            print(f"Törölt fájlok ({len(deleted_files)}):")
+        else:
+            print(f"Nem található olyan fájl a '{data_dir}' mappában, amely tartalmazza a(z) '{keyword}' kulcsszót.")
+
 df = DataPreProcess()
-df.mat_to_csv()
+# df.mat_to_csv()
+df.delete_csv_with_keyword("tout")

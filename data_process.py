@@ -58,7 +58,7 @@ class DataProcess:
             list_of_vectors.append(trimmed_vector)
 
         # A listát numpy array-é alakítjuk
-        combined_vectors = np.array(list_of_vectors)
+        combined_vectors = np.hstack(list_of_vectors)
 
         # Opcionális mentés CSV fájlba
         if save_csv:
@@ -90,6 +90,7 @@ class DataProcess:
         # shortest_vector = list_of_vectors[min_length_index]
         print(f"Shortest file: {shortest_file}")
         print(f"Shortest file length: {min_length}")
+        print(f"List of vectors shape: {list_of_vectors.shape}")
         return list_of_vectors
     
     def select_random_maneuver(self):        
@@ -193,5 +194,6 @@ dp = DataProcess()
 # # list_of_vectors = dp.vector_collector('')
 # combined_vectors = dp.group_manoeuvre_vectors("allando_v_chirp_a1_v5")
 # # tranindata, testdata, traindata, _, _, _ = dp.train_test_split()
-combined_vectors = dp.group_manoeuvre_vectors("allando_v_chirp_a1_v5")
-print(f"Combined vectors shape: {combined_vectors.shape}")
+# combined_vectors = dp.group_manoeuvre_vectors("allando_v_chirp_a1_v15")
+# print(f"Combined vectors shape: {combined_vectors.shape}")
+list_of_vectors = dp.vector_collector('allando_v_chirp_a1_v15')
