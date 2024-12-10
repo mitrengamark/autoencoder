@@ -155,20 +155,25 @@ def merge_csv_for_manoeuvres(manoeuvre_names, input_dir="data", output_dir="data
         print(f"Feldolgozás: {manoeuvre_name}")
         list_of_vectors = []
         file_lengths = []
+        column_names = []
 
-        # Az összes fájl méretének meghatározása
+        # Az összes fájl méretének meghatározása és változónevek kinyerése
         for file in matching_files:
             df = pd.read_csv(file)
             file_lengths.append(len(df))
 
+            # A változó neve a fájlnév utolsó "_" utáni része ".csv" nélkül
+            variable_name = re.search(r'_(.+)_([^_]+)\.csv$', os.path.basename(file)).group(2)
+            column_names.append(variable_name)
+
         # A legrövidebb fájl hossza
-        min_length = min(file_lengths)
-        print(f"Legrövidebb fájl hossza: {min_length}")
+        # min_length = min(file_lengths)
+        # print(f"Legrövidebb fájl hossza: {min_length}")
 
         # Azonos méretre vágás és összegyűjtés
         for file in matching_files:
             df = pd.read_csv(file)
-            trimmed_vector = df.values[:min_length]  # Azonos méretre vágás
+            trimmed_vector = df.values[:10805]  # Azonos méretre vágás
             list_of_vectors.append(trimmed_vector)
 
         # A listát numpy array-é alakítjuk és egyesítjük oszlopokként
@@ -177,12 +182,36 @@ def merge_csv_for_manoeuvres(manoeuvre_names, input_dir="data", output_dir="data
         # Közös .csv fájl mentése
         if save:
             output_path = os.path.join(output_dir, f"{manoeuvre_name}_combined.csv")
-            combined_df = pd.DataFrame(combined_vectors)
+            combined_df = pd.DataFrame(combined_vectors, columns=column_names)
             combined_df.to_csv(output_path, index=False)
             print(f"{manoeuvre_name} manőverhez tartozó fájl mentve: {output_path}")
 
+def rename_files(variable):
+    """
+    Az adott változót tartalmazó fájlok nevét úgy módosítja, hogy az utolsó "_" karakter törlődik belőlük.
+
+    :param variable: Az a string, amelyet a fájlok nevében keresünk.
+    """
+    # A 'data' mappában lévő fájlok keresése, amelyek tartalmazzák a 'variable'-t
+    matching_files = [f for f in glob.glob("data/*") if variable in os.path.basename(f)]
+    
+    # Minden egyező fájl feldolgozása
+    for file_path in matching_files:
+        dir_name = os.path.dirname(file_path)
+        base_name = os.path.basename(file_path)
+        
+        # Új név generálása az utolsó "_" törlésével
+        if "_" in base_name:
+            parts = base_name.rsplit("_", 1)  # Az utolsó "_" mentén bontás
+            new_name = parts[0] + parts[1].replace(".csv", "") + ".csv"  # Az új fájlnév
+            new_file_path = os.path.join(dir_name, new_name)
+            
+            # Fájl átnevezése az eredeti helyén
+            os.rename(file_path, new_file_path)
+            print(f"{file_path} átnevezve erre: {new_file_path}")
+        else:
+            print(f"A fájlnévben nincs '_', így nem módosítottam: {file_path}")
+    
 
 manouver_names = collect_maoeuver_names()
 combined_vectors = merge_csv_for_manoeuvres(manouver_names, save=True)
-
-

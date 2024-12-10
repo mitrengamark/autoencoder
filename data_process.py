@@ -145,7 +145,7 @@ class DataProcess:
         elif training_model == "MAE":
             return trainloader, testloader, train_data, test_data
     
-dp = DataProcess()
-# # list_of_vectors = dp.vector_collector('')
-combined_vectors = dp.group_manoeuvre_vectors("allando_v_chirp_a1_v15")
-print(f"Combined vectors shape: {combined_vectors.shape}")
+# dp = DataProcess()
+# # # list_of_vectors = dp.vector_collector('')
+# combined_vectors = dp.group_manoeuvre_vectors("allando_v_chirp_a1_v15")
+# print(f"Combined vectors shape: {combined_vectors.shape}")
