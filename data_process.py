@@ -60,7 +60,20 @@ class DataProcess:
         
         return selected_maneuver
 
-    def train_test_split(self):
+    def load_single_manoeuvre(self, file_path):
+        """
+        Egyetlen .csv fájl betöltése, normalizálása és numpy array-é alakítása.
+
+        :param file_path: Az input fájl elérési útja.
+        :return: Normalizált adatok numpy array formátumban.
+        """
+        df = pd.read_csv(file_path)
+        self.data_min = df.min().min()
+        self.data_max = df.max().max()
+        normalized_data = (df - self.data_min) / (self.data_max - self.data_min)
+        return normalized_data.values
+
+    def train_test_split(self, file_path=None):
         config = configparser.ConfigParser()
         config.read('config.ini')
 
@@ -72,11 +85,16 @@ class DataProcess:
         batch_size = int(config['Model']['batch_size'])
         training_model = config.get('Agent', 'training_model')
 
-        self.data = self.vector_collector(metric)
-        # if training_model == "VAE":
-        #     self.data = self.normalize()
+        if file_path:
+            self.data = self.load_single_manoeuvre(file_path)
+        else:
+            raise ValueError("Egy fájlt kell megadni a `file_path` paraméterben!")
 
-        self.data = self.data.reshape(-1, self.data.shape[1])
+        # self.data = self.vector_collector(metric)
+        if training_model == "VAE":
+            self.data = torch.tensor(self.data, dtype=torch.float32)
+
+        # self.data = self.data.reshape(-1, self.data.shape[1])
 
         if training_model == "MAE":
             self.data = self.data[:, :self.data.shape[1] // 2]
@@ -86,7 +104,7 @@ class DataProcess:
         # print(f"Data: {self.data[0]}")
         # print(f"Data shape: {self.data[0].shape}")
 
-        self.data = [torch.tensor(vector, dtype=torch.float32) for vector in self.data]
+        # self.data = [torch.tensor(vector, dtype=torch.float32) for vector in self.data]
 
         if test_mode == 1:
             self.data = self.select_random_maneuver()
@@ -126,7 +144,21 @@ class DataProcess:
             elif training_model == "MAE":
                 return trainloader, testloader, train_data, test_data
 
-        train_data, test_data = train_test_split(self.data, test_size=test_size, random_state=seed)
+        n = len(self.data)
+        train_size = int((1 - test_size) * n)
+        torch.manual_seed(seed)
+
+        indices = torch.randperm(n)
+        train_indices = indices[:train_size]
+        test_indices = indices[train_size:]
+
+        train_data = self.data[train_indices]
+        test_data = self.data[test_indices]
+
+        print(f"Train data shape: {train_data.shape}")
+        print(f"Test data shape: {test_data.shape}")
+
+        # train_data, test_data = train_test_split(self.data, test_size=test_size, random_state=seed)
 
         # print(f"Train data shape: {len(train_data)}")
         # print(f"Test data shape: {len(test_data)}")
@@ -134,7 +166,9 @@ class DataProcess:
         trainloader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
         testloader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
-        # print((f"trainloader type: {type(trainloader)}"))
+        print((f"trainloader type: {type(trainloader)}"))
+        print(f"trainloader: {trainloader}")
+        print(f"trainloader shape: {trainloader.dataset[0].shape}")
         # print((f"testloader type: {type(testloader)}"))
         # print((f"train_data type: {type(train_data)}"))
         # print((f"train_data shape: {train_data[0].shape}"))
@@ -149,3 +183,7 @@ class DataProcess:
 # # # list_of_vectors = dp.vector_collector('')
 # combined_vectors = dp.group_manoeuvre_vectors("allando_v_chirp_a1_v15")
 # print(f"Combined vectors shape: {combined_vectors.shape}")
+# trainloader, _, _, _ = dp.train_test_split(file_path="data2/allando_v_savvaltas_alacsony_v5_combined.csv")
+# for batch in trainloader:
+#     print(f"Batch shape: {batch.shape}")
+#     print(f"Batch: {batch}")

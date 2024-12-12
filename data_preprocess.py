@@ -214,4 +214,4 @@ def rename_files(variable):
     
 
 manouver_names = collect_maoeuver_names()
-combined_vectors = merge_csv_for_manoeuvres(manouver_names, save=True)
+# combined_vectors = merge_csv_for_manoeuvres(manouver_names[:1])
