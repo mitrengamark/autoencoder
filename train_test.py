@@ -2,7 +2,7 @@ import torch
 from Factory.variational_autoencoder import VariationalAutoencoder
 from Factory.masked_autoencoder import MaskedAutoencoder
 from data_process import DataProcess
-from Analyse.decrase_dim import visualize_bottleneck
+from Analyse.decrase_dim import visualize_bottleneck, plot_latent_space
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -23,15 +23,12 @@ class Training():
 
     def train(self):
         self.model.train()
-        bottleneck_outputs = []
-        labels = []
-
         for epoch in range(self.num_epochs):
             loss_per_episode = 0
             reconst_loss_per_epoch = 0
             kl_loss_per_epoch = 0
 
-            for batch_idx, data in enumerate(self.trainloader):
+            for data in self.trainloader:
                 inputs = data.to(self.device)
                 # print(f"inputs dim: {inputs.shape}")
                 if inputs.dim() == 3:
@@ -46,9 +43,6 @@ class Training():
                     loss, reconst_loss, kl_div = self.model.loss(inputs, outputs, z_mean, z_log_var)
                     reconst_loss_per_epoch += reconst_loss.item()
                     kl_loss_per_epoch += kl_div.item()
-                    
-                    bottleneck_outputs.append(z_mean.cpu().detach().numpy())
-                    labels.extend([batch_idx] * z_mean.shape[0])
                 elif isinstance(self.model, MaskedAutoencoder):
                     outputs, _ = self.model.forward(inputs)
                     loss = self.model.loss(inputs, outputs)
@@ -70,13 +64,9 @@ class Training():
                 self.run[f"train/loss"].append(average_loss)
             print(f'Epoch [{epoch+1}/{self.num_epochs}], Loss: {average_loss:.4f}')
 
-        bottleneck_outputs = np.concatenate(bottleneck_outputs, axis=0)
-        print(f"Bottleneck outputs shape: {bottleneck_outputs.shape}")
-        print(f"Bottleneck outputs: {bottleneck_outputs}")
-        labels = np.array(labels)
-        # variable_names = [f"Változó {i+1}" for i in range(bottleneck_outputs.shape[1])]
-
-        visualize_bottleneck(bottleneck_outputs, labels)
+        plot_latent_space(z_mean, z_log_var, epoch)
+        bottleneck_output = z_mean.cpu().detach().numpy()
+        visualize_bottleneck(bottleneck_output)
 
         self.plot_losses()
             
@@ -99,7 +89,8 @@ class Training():
                 test_loss += loss.item()
 
         print(f'Test Loss: {test_loss / len(self.testloader):.4f}')
-        print(f"Original input: {inputs}")
+        bottleneck_output = z_mean.cpu().detach().numpy()
+        visualize_bottleneck(bottleneck_output)
 
         if isinstance(self.model, VariationalAutoencoder):
             dp = DataProcess()

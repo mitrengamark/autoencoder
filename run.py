@@ -26,6 +26,7 @@ save_model = int(config['Agent']['save_model'])
 test_mode = int(config['Data']['test_mode'])
 project_name = config.get('callbacks', 'neptune_project')
 api_token = config.get('callbacks', 'neptune_token')
+dropout = float(config['Hyperparameters']['dropout'])
 
 parameters = {
     "latent_dim": latent_dim,
@@ -56,7 +57,7 @@ if training_model == "VAE":
         train_input_dim = trainloader.dataset[0].shape[0]
 
     print(f"Train input dim: {train_input_dim}")
-    model = VariationalAutoencoder(train_input_dim, latent_dim, hidden_dim_0, hidden_dim_1).to(device)
+    model = VariationalAutoencoder(train_input_dim, latent_dim, hidden_dim_0, hidden_dim_1, beta, dropout).to(device)
     model_path = 'Models/vae.pth'
     optimizer = optim.Adam(model.parameters(), lr)
     training = Training(trainloader, testloader, optimizer, model, num_epochs, device) #, data_min, data_max) #, run)
