@@ -75,19 +75,19 @@ if training_model == "VAE":
     model = VariationalAutoencoder(train_input_dim, latent_dim, hidden_dim_0, hidden_dim_1, beta, dropout).to(device)
     model_path = 'Models/vae.pth'
     optimizer = optim.Adam(model.parameters(), lr)
-    training = Training(trainloader, testloader, optimizer, model, num_epochs, device,scheduler, step_size, gamma, patience, warmup_epochs, max_lr, run=run) #, data_min, data_max)
+    training = Training(trainloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size, gamma, patience, warmup_epochs, max_lr, run=run) #, data_min, data_max)
 elif training_model == "MAE":
-    trainloader, testloader, train_input_size, test_input_size = dp.train_test_split()
-    train_input_dim = len(train_input_size)
+    trainloader, testloader, train_input_size, test_input_size = dp.train_test_split(file_path=file_path)
+    train_input_dim = trainloader.dataset[0].shape[0]
     model = MaskedAutoencoder(train_input_dim, mask_ratio).to(device)
     model_path = 'Models/mae.pth'
     optimizer = optim.Adam(model.parameters(), lr)
-    training = Training(trainloader, testloader, optimizer, model, num_epochs, device) #run=run)
+    training = Training(trainloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size, gamma, patience, warmup_epochs, max_lr, run=run) #run=run)
 
 training.train()
 if save_model == 1:
     training.save_model(model_path)
 
-inputs, _, outputs = training.test()
+inputs, outputs = training.test()
 # ev = Evaluation(inputs, denorm_outputs, outputs)
 # ev.mean_absolute_error()

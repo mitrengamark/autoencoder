@@ -35,10 +35,10 @@ class MaskedAutoencoder(nn.Module):
         return reconstructed_input
 
     def forward(self, x):
-        encoded, mask, masked_iput = self.encoder(x)  # Javítás: Bemenet dinamikus kezelése.
+        encoded, mask, masked_input = self.encoder(x)  # Javítás: Bemenet dinamikus kezelése.
         # Indok: Az eredeti osztály fix 'self.input'-ot használt, ami nem dinamikus.
         reconstructed = self.decoder(encoded, mask, x)
-        return reconstructed, masked_iput
+        return reconstructed, masked_input, encoded
 
     def loss(self, input, reconstructed):
         loss_fn = nn.MSELoss()  # Javítás: Loss funkció inicializálása a 'forward'-ban kívül.

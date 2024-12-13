@@ -77,7 +77,6 @@ class DataProcess:
         config = configparser.ConfigParser()
         config.read('config.ini')
 
-        metric = config.get('Data', 'metric')
         batch_size = int(config['Model']['batch_size'])
         test_size = float(config['Data']['test_size'])
         seed = int(config['Hyperparameters']['seed'])
@@ -90,21 +89,7 @@ class DataProcess:
         else:
             raise ValueError("Egy fájlt kell megadni a `file_path` paraméterben!")
 
-        # self.data = self.vector_collector(metric)
-        if training_model == "VAE":
-            self.data = torch.tensor(self.data, dtype=torch.float32)
-
-        # self.data = self.data.reshape(-1, self.data.shape[1])
-
-        if training_model == "MAE":
-            self.data = self.data[:, :self.data.shape[1] // 2]
-
-        # print(f"Data type: {type(self.data)}.")
-        # print(f"Data type: {type(self.data[0])}.")
-        # print(f"Data: {self.data[0]}")
-        # print(f"Data shape: {self.data[0].shape}")
-
-        # self.data = [torch.tensor(vector, dtype=torch.float32) for vector in self.data]
+        self.data = torch.tensor(self.data, dtype=torch.float32)
 
         if test_mode == 1:
             self.data = self.select_random_maneuver()
@@ -178,12 +163,3 @@ class DataProcess:
             return trainloader, testloader, train_data, test_data# , self.data_min, self.data_max
         elif training_model == "MAE":
             return trainloader, testloader, train_data, test_data
-    
-# dp = DataProcess()
-# # # list_of_vectors = dp.vector_collector('')
-# combined_vectors = dp.group_manoeuvre_vectors("allando_v_chirp_a1_v15")
-# print(f"Combined vectors shape: {combined_vectors.shape}")
-# trainloader, _, _, _ = dp.train_test_split(file_path="data2/allando_v_savvaltas_alacsony_v5_combined.csv")
-# for batch in trainloader:
-#     print(f"Batch shape: {batch.shape}")
-#     print(f"Batch: {batch}")

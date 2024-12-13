@@ -10,13 +10,13 @@ def visualize_bottleneck(bottleneck_outputs):
         """
         Vizualizálja a bottleneck kimeneteket PCA vagy T-SNE segítségével.
 
-        :param bottleneck_outputs: A VAE bottleneck által generált adatok (numpy array).
+        :param bottleneck_outputs: A bottleneck által generált adatok (numpy array).
         """
         print("PCA Visualization:")
-        visualize_with_pca(bottleneck_outputs, title="PCA - VAE Bottleneck")
+        visualize_with_pca(bottleneck_outputs, title="PCA - Bottleneck")
         
         print("T-SNE Visualization:")
-        visualize_with_tsne(bottleneck_outputs, title="T-SNE - VAE Bottleneck")
+        visualize_with_tsne(bottleneck_outputs, title="T-SNE - Bottleneck")
 
 def visualize_with_pca(data, title="PCA Visualization"):
     """
