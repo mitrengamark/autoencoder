@@ -1,13 +1,14 @@
 import torch
 from Factory.variational_autoencoder import VariationalAutoencoder
 from Factory.masked_autoencoder import MaskedAutoencoder
+from Factory.scheduler import scheduler_maker
 from data_process import DataProcess
 from Analyse.decrase_dim import visualize_bottleneck, plot_latent_space
 import matplotlib.pyplot as plt
 import numpy as np
 
 class Training():
-    def __init__(self, trainloader, testloader, optimizer, model, num_epochs, device, data_min=None, data_max=None, run=None):
+    def __init__(self, trainloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size, gamma, patience, warmup_epochs, max_lr, data_min=None, data_max=None, run=None):
         self.trainloader = trainloader
         self.testloader = testloader
         self.optimizer = optimizer
@@ -20,9 +21,16 @@ class Training():
         self.data_min = data_min
         self.data_max = data_max
         self.run = run
+        self.scheduler = scheduler
+        self.step_size = step_size
+        self.gamma = gamma
+        self.patience = patience
+        self.warmup_epochs = warmup_epochs
+        self.max_lr = max_lr
 
     def train(self):
         self.model.train()
+        scheduler = scheduler_maker(self.scheduler, self.optimizer, self.step_size, self.gamma, self.num_epochs, self.patience, self.warmup_epochs, self.max_lr)
         for epoch in range(self.num_epochs):
             loss_per_episode = 0
             reconst_loss_per_epoch = 0
@@ -60,12 +68,22 @@ class Training():
                 self.reconst_losses.append(reconst_loss_per_epoch / len(self.trainloader))
                 self.kl_losses.append(kl_loss_per_epoch / len(self.trainloader))
 
+            if self.scheduler == 'ReduceLROnPlateau':
+                scheduler.step(average_loss)
+            else:
+                scheduler.step()
+
             if self.run:
                 self.run[f"train/loss"].append(average_loss)
+                self.run[f"learning_rate"].append(self.optimizer.param_groups[0]['lr'])
             print(f'Epoch [{epoch+1}/{self.num_epochs}], Loss: {average_loss:.4f}')
 
+        if self.run:
+            self.run.stop()
+
+        z = self.model.reparameterize(z_mean, z_log_var)
         plot_latent_space(z_mean, z_log_var, epoch)
-        bottleneck_output = z_mean.cpu().detach().numpy()
+        bottleneck_output = z.cpu().detach().numpy()
         visualize_bottleneck(bottleneck_output)
 
         self.plot_losses()

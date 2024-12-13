@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 /synth
 /data2/**
+/.neptune

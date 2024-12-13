@@ -17,6 +17,7 @@ latent_dim = int(config['Dims']['latent_dim'])
 hidden_dim_0 = int(config['Dims']['hidden_dim_0'])
 hidden_dim_1 = int(config['Dims']['hidden_dim_1'])
 lr = float(config['Hyperparameters']['lr'])
+max_lr = float(config['Hyperparameters']['max_lr'])
 num_epochs = int(config['Hyperparameters']['num_epochs'])
 beta = float(config['Hyperparameters']['beta'])
 seed = int(config['Hyperparameters']['seed'])
@@ -24,9 +25,15 @@ training_model = config.get('Agent', 'training_model')
 mask_ratio = float(config['Agent']['mask_ratio'])
 save_model = int(config['Agent']['save_model'])
 test_mode = int(config['Data']['test_mode'])
-project_name = config.get('callbacks', 'neptune_project')
-api_token = config.get('callbacks', 'neptune_token')
+project_name = config.get('Callbacks', 'neptune_project')
+api_token = config.get('Callbacks', 'neptune_token')
 dropout = float(config['Hyperparameters']['dropout'])
+scheduler = config.get('Hyperparameters', 'scheduler')
+step_size = int(config['Hyperparameters']['step_size'])
+gamma = float(config['Hyperparameters']['gamma'])
+patience = int(config['Hyperparameters']['patience'])
+warmup_epochs = int(config['Hyperparameters']['warmup_epochs'])
+plot = int(config['Callbacks']['plot'])
 
 parameters = {
     "latent_dim": latent_dim,
@@ -35,11 +42,19 @@ parameters = {
     "learning_rate": lr,
     "num_epochs": num_epochs,
     "training_model": training_model,
-    "mask_ratio": mask_ratio
+    "mask_ratio": mask_ratio,
+    "scheduler": scheduler,
+    "step_size": step_size,
+    "gamma": gamma,
+    "patience": patience,
+    "warmup_epochs": warmup_epochs
 }
 
 # Neptune inicializáció
-# run = init_neptune(project_name, api_token, parameters)
+if plot == 1:
+    run = init_neptune(project_name, api_token, parameters)
+else:
+    run = None
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if torch.cuda.is_available():
@@ -60,7 +75,7 @@ if training_model == "VAE":
     model = VariationalAutoencoder(train_input_dim, latent_dim, hidden_dim_0, hidden_dim_1, beta, dropout).to(device)
     model_path = 'Models/vae.pth'
     optimizer = optim.Adam(model.parameters(), lr)
-    training = Training(trainloader, testloader, optimizer, model, num_epochs, device) #, data_min, data_max) #, run)
+    training = Training(trainloader, testloader, optimizer, model, num_epochs, device,scheduler, step_size, gamma, patience, warmup_epochs, max_lr, run=run) #, data_min, data_max)
 elif training_model == "MAE":
     trainloader, testloader, train_input_size, test_input_size = dp.train_test_split()
     train_input_dim = len(train_input_size)
