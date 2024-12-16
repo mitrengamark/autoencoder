@@ -24,7 +24,6 @@ seed = int(config['Hyperparameters']['seed'])
 training_model = config.get('Agent', 'training_model')
 mask_ratio = float(config['Agent']['mask_ratio'])
 save_model = int(config['Agent']['save_model'])
-test_mode = int(config['Data']['test_mode'])
 project_name = config.get('Callbacks', 'neptune_project')
 api_token = config.get('Callbacks', 'neptune_token')
 dropout = float(config['Hyperparameters']['dropout'])
@@ -63,28 +62,21 @@ if torch.cuda.is_available():
 
 dp = DataProcess()
 
-if training_model == "VAE":
-    trainloader, testloader, train_input_size, test_input_size  = dp.train_test_split(file_path=file_path)
-    if test_mode == 1:
-        train_input_dim = train_input_size.shape[0]
-    else:
-        train_input_dim = trainloader.dataset[0].shape[0]
+trainloader, testloader = dp.train_test_split(file_path=file_path)
+train_input_dim = trainloader.dataset[0].shape[0]
+print(f"Train input dim: {train_input_dim}")
 
-    print(f"Train input dim: {train_input_dim}")
+if training_model == "VAE":
     model = VariationalAutoencoder(train_input_dim, latent_dim, hidden_dim_0, hidden_dim_1, beta, dropout).to(device)
     model_path = 'Models/vae.pth'
-    optimizer = optim.Adam(model.parameters(), lr)
-    training = Training(trainloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size, gamma, patience, warmup_epochs, max_lr, run=run) #, data_min, data_max)
 elif training_model == "MAE":
-    trainloader, testloader, train_input_size, test_input_size = dp.train_test_split(file_path=file_path)
-    train_input_dim = trainloader.dataset[0].shape[0]
     model = MaskedAutoencoder(train_input_dim, mask_ratio).to(device)
     model_path = 'Models/mae.pth'
-    optimizer = optim.Adam(model.parameters(), lr)
-    training = Training(trainloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size, gamma, patience, warmup_epochs, max_lr, run=run) #run=run)
+
+optimizer = optim.Adam(model.parameters(), lr)
+training = Training(trainloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size, gamma, patience, warmup_epochs, max_lr, run=run)
 
 training.train()
 if save_model == 1:
     training.save_model(model_path)
-
-inputs, outputs = training.test()
+training.test()

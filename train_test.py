@@ -5,7 +5,6 @@ from Factory.scheduler import scheduler_maker
 from data_process import DataProcess
 from Analyse.decrase_dim import visualize_bottleneck, plot_latent_space
 import matplotlib.pyplot as plt
-import numpy as np
 
 class Training():
     def __init__(self, trainloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size, gamma, patience, warmup_epochs, max_lr, data_min=None, data_max=None, run=None):
@@ -38,14 +37,11 @@ class Training():
 
             for data in self.trainloader:
                 inputs = data.to(self.device)
-                # print(f"inputs dim: {inputs.shape}")
                 if inputs.dim() == 3:
                     inputs = inputs.squeeze(1)
                 elif inputs.dim() != 2:
                     raise ValueError(f"Unexpected input dimension: {inputs.dim()}. Expected 2D tensor.")
-                
-                # print(f"Input shape: {inputs.shape}")
-                
+                                
                 if isinstance(self.model, VariationalAutoencoder):
                     outputs, z_mean, z_log_var = self.model.forward(inputs)
                     loss, reconst_loss, kl_div = self.model.loss(inputs, outputs, z_mean, z_log_var)
@@ -126,29 +122,9 @@ class Training():
             print(f"Masked input: {masked_input}")
             print(f"Reconstructed output: {outputs}")
 
-        return inputs, outputs
-        
-    #     dataiter = iter(self.testloader)
-    #     images = next(dataiter)
-    #     images = images.to(self.device)
-    #     outputs, _, _ = self.model.forward(images)
-
-    #     # self.imgshow(images, outputs)
-
     def save_model(self, path):
         torch.save(self.model.state_dict(), path)
         print(f'Model saved to {path}')
-
-    # def imgshow(self, images, outputs):
-    #     images = images.cpu()
-    #     outputs = outputs.cpu()
-    #     fig, axes = plt.subplots(2, 10, figsize=(20, 4))
-    #     for i in range(10):
-    #         axes[0, i].imshow(images[i].view(input_size, 1).numpy(), cmap='gray')
-    #         axes[0, i].axis('off')
-    #         axes[1, i].imshow(outputs[i].detach().view(input_size, 1).numpy(), cmap='gray')
-    #         axes[1, i].axis('off')
-    #     plt.show()
 
     def plot_losses(self):
         if isinstance(self.model, VariationalAutoencoder):
