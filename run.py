@@ -34,6 +34,7 @@ gamma = float(config['Hyperparameters']['gamma'])
 patience = int(config['Hyperparameters']['patience'])
 warmup_epochs = int(config['Hyperparameters']['warmup_epochs'])
 plot = int(config['Callbacks']['plot'])
+file_path = config.get('Data', 'file_path')
 
 parameters = {
     "latent_dim": latent_dim,
@@ -62,10 +63,8 @@ if torch.cuda.is_available():
 
 dp = DataProcess()
 
-file_path = "data2/allando_v_savvaltas_alacsony_v5_combined.csv"
-
 if training_model == "VAE":
-    trainloader, testloader, train_input_size, test_input_size  = dp.train_test_split(file_path=file_path) #data_min, data_max
+    trainloader, testloader, train_input_size, test_input_size  = dp.train_test_split(file_path=file_path)
     if test_mode == 1:
         train_input_dim = train_input_size.shape[0]
     else:
@@ -89,5 +88,3 @@ if save_model == 1:
     training.save_model(model_path)
 
 inputs, outputs = training.test()
-# ev = Evaluation(inputs, denorm_outputs, outputs)
-# ev.mean_absolute_error()

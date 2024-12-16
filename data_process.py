@@ -12,6 +12,22 @@ class DataProcess:
     def __init__(self):
         ...
 
+    def z_score_normalize(self):
+        """
+        Z-score standardizálás az adatokhoz.
+        """
+        self.data_mean = self.data.mean().mean()
+        self.data_std = self.data.std().std()
+        data_standardized = (self.data - self.data_mean) / self.data_std
+        return data_standardized
+    
+    def z_score_denormalize(self, data):
+        """
+        Az adatok denormalizálása (visszatranszformálás az eredeti skálára).
+        """
+        data_denormalized = (data * self.data_std) + self.data_mean
+        return data_denormalized
+
     def normalize(self):
         self.data_min = self.data.min().min()
         self.data_max = self.data.max().max()
@@ -62,17 +78,14 @@ class DataProcess:
 
     def load_single_manoeuvre(self, file_path):
         """
-        Egyetlen .csv fájl betöltése, normalizálása és numpy array-é alakítása.
-
-        :param file_path: Az input fájl elérési útja.
-        :return: Normalizált adatok numpy array formátumban.
+        Egyetlen .csv fájl betöltése, standardizálása és numpy array-é alakítása.
         """
+        # Adatok betöltése
         df = pd.read_csv(file_path)
-        self.data_min = df.min().min()
-        self.data_max = df.max().max()
-        normalized_data = (df - self.data_min) / (self.data_max - self.data_min)
+        self.data = df
+        normalized_data = self.normalize()
         return normalized_data.values
-
+    
     def train_test_split(self, file_path=None):
         config = configparser.ConfigParser()
         config.read('config.ini')
