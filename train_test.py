@@ -5,9 +5,11 @@ from Factory.scheduler import scheduler_maker
 from data_process import DataProcess
 from Analyse.decrase_dim import visualize_bottleneck, plot_latent_space
 import matplotlib.pyplot as plt
+import numpy as np
 
 class Training():
-    def __init__(self, trainloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size, gamma, patience, warmup_epochs, max_lr, data_min=None, data_max=None, run=None):
+    def __init__(self, trainloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size, gamma, patience,
+                 warmup_epochs, max_lr, data_min=None, data_max=None, run=None, data_mean=None, data_std=None):
         self.trainloader = trainloader
         self.testloader = testloader
         self.optimizer = optimizer
@@ -19,6 +21,8 @@ class Training():
         self.device = device
         self.data_min = data_min
         self.data_max = data_max
+        self.data_mean = data_mean
+        self.data_std = data_std
         self.run = run
         self.scheduler = scheduler
         self.step_size = step_size
@@ -29,7 +33,8 @@ class Training():
 
     def train(self):
         self.model.train()
-        scheduler = scheduler_maker(self.scheduler, self.optimizer, self.step_size, self.gamma, self.num_epochs, self.patience, self.warmup_epochs, self.max_lr)
+        scheduler = scheduler_maker(self.scheduler, self.optimizer, self.step_size, self.gamma, self.num_epochs, self.patience,
+                                    self.warmup_epochs, self.max_lr)
         for epoch in range(self.num_epochs):
             loss_per_episode = 0
             reconst_loss_per_epoch = 0
@@ -89,8 +94,19 @@ class Training():
         self.plot_losses()
             
     def test(self):
+        if isinstance(self.model, VariationalAutoencoder):
+            self.model.load_state_dict(torch.load("Models/vae.pth", map_location=self.device))
+        elif isinstance(self.model, MaskedAutoencoder):
+            self.model.load_state_dict(torch.load("Models/mae.pth", map_location=self.device))
+        else:
+            raise ValueError("Unsupported model type. Expected VAE or MAE!")
+        
+        self.model.to(self.device)
         self.model.eval()
         test_loss = 0
+        bottleneck_outputs = []
+        whole_output = []
+        whole_masked_input = []
         with torch.no_grad():
             for data in self.testloader:
                 inputs = data.to(self.device)
@@ -98,29 +114,40 @@ class Training():
                 if isinstance(self.model, VariationalAutoencoder):
                     outputs, z_mean, z_log_var = self.model.forward(inputs)
                     loss, _, _ = self.model.loss(inputs, outputs, z_mean, z_log_var)
+                    bottleneck_output = z_mean.cpu().detach().numpy()
                 elif isinstance(self.model, MaskedAutoencoder):
                     outputs, masked_input, encoded = self.model.forward(inputs)
                     loss = self.model.loss(inputs, outputs)
+                    bottleneck_output = encoded.cpu().detach().numpy()
+                    whole_masked_input.append(masked_input.cpu().detach().numpy())
                 else:
                     raise ValueError(f"Unsupported model type. Expected VAE or MAE!")
                 
                 test_loss += loss.item()
 
-        print(f'Test Loss: {test_loss / len(self.testloader):.4f}')
-        if isinstance(self.model, VariationalAutoencoder):
-            bottleneck_output = z_mean.cpu().detach().numpy()
-            visualize_bottleneck(bottleneck_output)
-        elif isinstance(self.model, MaskedAutoencoder):
-            bottleneck_output = encoded.cpu().detach().numpy()
-            visualize_bottleneck(bottleneck_output)
+                bottleneck_outputs.append(bottleneck_output)
+                whole_output.append(outputs.cpu().detach().numpy())
 
+        bottleneck_outputs = np.vstack(bottleneck_outputs)
+        whole_output = np.vstack(whole_output)
+
+        print(f'Test Loss: {test_loss / len(self.testloader):.4f}')
+        print(f'Bottleneck outputs shape: {bottleneck_outputs.shape}')
+
+        dp = DataProcess()
         if isinstance(self.model, VariationalAutoencoder):
-            dp = DataProcess()
-            # denorm_outputs = dp.denormalize(outputs, self.data_min, self.data_max)
-            # print(f"Denormalized output: {denorm_outputs}")
+            bottleneck_outputs = dp.denormalize(bottleneck_outputs, self.data_min, self.data_max)
+            denorm_outputs = dp.denormalize(whole_output, self.data_min, self.data_max)
+            print(f"Denormalized output: {denorm_outputs}")
         elif isinstance(self.model, MaskedAutoencoder):
-            print(f"Masked input: {masked_input}")
-            print(f"Reconstructed output: {outputs}")
+            bottleneck_outputs = dp.z_score_denormalize(bottleneck_outputs, self.data_mean, self.data_std)
+            whole_masked_input = np.vstack(whole_masked_input)
+            destandardized_outputs = dp.z_score_denormalize(whole_output, self.data_mean, self.data_std)
+            print(f"Masked input: {whole_masked_input}")
+            print(f"Reconstructed output: {destandardized_outputs}")
+            print(f"Reconstructed output shape: {destandardized_outputs.shape}")
+
+        visualize_bottleneck(bottleneck_outputs)
 
     def save_model(self, path):
         torch.save(self.model.state_dict(), path)

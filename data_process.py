@@ -13,10 +13,10 @@ class DataProcess:
         config = configparser.ConfigParser()
         config.read('config.ini')
 
-        self.batch_size = int(config['Model']['batch_size'])
+        self.batch_size = int(config['Hyperparameters']['batch_size'])
         self.test_size = float(config['Data']['test_size'])
-        self.seed = int(config['Hyperparameters']['seed'])
-        self.training_model = config.get('Agent', 'training_model')
+        self.seed = int(config['Data']['seed'])
+        self.training_model = config.get('Model', 'training_model')
 
     def z_score_normalize(self):
         """
@@ -27,11 +27,11 @@ class DataProcess:
         data_standardized = (self.data - self.data_mean) / self.data_std
         return data_standardized
     
-    def z_score_denormalize(self, data):
+    def z_score_denormalize(self, data, data_mean, data_std):
         """
         Az adatok denormalizálása (visszatranszformálás az eredeti skálára).
         """
-        data_denormalized = (data * self.data_std) + self.data_mean
+        data_denormalized = (data * data_std) + data_mean
         return data_denormalized
 
     def normalize(self):
@@ -88,4 +88,7 @@ class DataProcess:
         trainloader = torch.utils.data.DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
         testloader = torch.utils.data.DataLoader(test_data, batch_size=self.batch_size, shuffle=False)
 
-        return trainloader, testloader
+        if self.training_model == "VAE":
+            return trainloader, testloader, self.data_min, self.data_max
+        elif self.training_model == "MAE":
+            return trainloader, testloader, self.data_mean, self.data_std
