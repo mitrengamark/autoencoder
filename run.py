@@ -2,6 +2,7 @@ import torch
 import torch.optim as optim
 import configparser
 import torch.utils.data
+import datetime
 from data_process import DataProcess
 from train_test import Training
 from Factory.variational_autoencoder import VariationalAutoencoder
@@ -16,8 +17,9 @@ config.read('config.ini')
 latent_dim = int(config['Dims']['latent_dim'])
 hidden_dim_0 = int(config['Dims']['hidden_dim_0'])
 hidden_dim_1 = int(config['Dims']['hidden_dim_1'])
-lr = float(config['Hyperparameters']['lr'])
+initial_lr = float(config['Hyperparameters']['initial_lr'])
 max_lr = float(config['Hyperparameters']['max_lr'])
+final_lr = float(config['Hyperparameters']['final_lr'])
 num_epochs = int(config['Hyperparameters']['num_epochs'])
 beta = float(config['Hyperparameters']['beta'])
 seed = int(config['Data']['seed'])
@@ -31,24 +33,29 @@ scheduler = config.get('Hyperparameters', 'scheduler')
 step_size = int(config['Hyperparameters']['step_size'])
 gamma = float(config['Hyperparameters']['gamma'])
 patience = int(config['Hyperparameters']['patience'])
-warmup_epochs = int(config['Hyperparameters']['warmup_epochs'])
 plot = int(config['Callbacks']['plot'])
 file_path = config.get('Data', 'file_path')
 test_mode = int(config['Model']['test_mode'])
+saved_model = config.get('Model', 'model_path')
+warmup_epochs = num_epochs * 0.1
+current_date = datetime.datetime.now().strftime("%m_%d_%H_%M")
+model_path = f'Models/{training_model}_{num_epochs}_{current_date}.pth'
 
 parameters = {
     "latent_dim": latent_dim,
     "hidden_dim_0": hidden_dim_0,
     "hidden_dim_1": hidden_dim_1,
-    "learning_rate": lr,
     "num_epochs": num_epochs,
     "training_model": training_model,
     "mask_ratio": mask_ratio,
     "scheduler": scheduler,
     "step_size": step_size,
     "gamma": gamma,
-    "patience": patience,
-    "warmup_epochs": warmup_epochs
+    "patience": patience,    
+    "initial_lr": initial_lr,
+    "max_lr": max_lr,
+    "final_lr": final_lr,
+    "model": model_path
 }
 
 # Neptune inicializáció
@@ -79,16 +86,14 @@ print(f"Train input dim: {train_input_dim}")
 
 if training_model == "VAE":
     model = VariationalAutoencoder(train_input_dim, latent_dim, hidden_dim_0, hidden_dim_1, beta, dropout).to(device)
-    model_path = 'Models/vae.pth'
 elif training_model == "MAE":
     model = MaskedAutoencoder(train_input_dim, mask_ratio).to(device)
-    model_path = 'Models/mae.pth'
 else:
     raise ValueError(f"Unsupported model type. Expected VAE or MAE!")
 
-optimizer = optim.Adam(model.parameters(), lr)
+optimizer = optim.Adam(model.parameters(), 1)
 training = Training(trainloader, valloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size, gamma, patience,
-                    warmup_epochs, max_lr, run=run, data_min=data_min, data_max=data_max, data_mean=data_mean, data_std=data_std)
+                    warmup_epochs, initial_lr, max_lr, final_lr, saved_model, run=run, data_min=data_min, data_max=data_max, data_mean=data_mean, data_std=data_std)
 
 if test_mode == 0:
     training.train()

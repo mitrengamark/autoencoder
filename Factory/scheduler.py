@@ -1,7 +1,8 @@
 import torch
+import numpy as np
 
 
-def scheduler_maker(scheduler, optimizer, step_size, gamma, num_epochs, patience, warmup_epochs, max_lr):
+def scheduler_maker(scheduler, optimizer, step_size, gamma, num_epochs, patience, warmup_epochs, initial_lr, max_lr, final_lr):
     if scheduler == 'StepLR':
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size, gamma)
     elif scheduler == 'CosineAnnealingLR':
@@ -11,20 +12,20 @@ def scheduler_maker(scheduler, optimizer, step_size, gamma, num_epochs, patience
     elif scheduler == 'ExponentialLR':
         scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma)
     elif scheduler == 'WarmupCosine':
-        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=warmup_cosine_lr(num_epochs, warmup_epochs, max_lr))
+        lr_lambda = warmup_cosine_lr(num_epochs, warmup_epochs, initial_lr, max_lr, final_lr)
+        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
     else:
         raise ValueError(f"Unsupported scheduler type. Expected StepLR, CosineAnnealingLR, ReduceLROnPlateau, ExponentialLR or WarmupCosine!")
     
     return scheduler
 
-def warmup_cosine_lr(num_epochs, warmup_epochs, max_lr):
+def warmup_cosine_lr(num_epochs, warmup_epochs, initial_lr, max_lr, final_lr):
     def lr_lambda(epoch):
         if epoch < warmup_epochs:
-            # Lineáris melegítés
-            return (epoch / warmup_epochs) * max_lr
+            lr = initial_lr + (max_lr - initial_lr) * (epoch / warmup_epochs)
         else:
-            # Koszinusz annealing
             cosine_epochs = epoch - warmup_epochs
             cosine_total = num_epochs - warmup_epochs
-            return max_lr * 0.5 * (1 + torch.cos(torch.tensor(cosine_epochs / cosine_total * 3.14159265359)))
+            lr = final_lr + (max_lr - final_lr) * 0.5 * (1 + np.cos(cosine_epochs / cosine_total * np.pi))
+        return lr
     return lr_lambda

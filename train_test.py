@@ -10,7 +10,7 @@ import numpy as np
 
 class Training():
     def __init__(self, trainloader, valloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size, gamma, patience,
-                 warmup_epochs, max_lr, data_min=None, data_max=None, run=None, data_mean=None, data_std=None):
+                 warmup_epochs, initial_lr, max_lr, final_lr, model_path, data_min=None, data_max=None, run=None, data_mean=None, data_std=None):
         self.trainloader = trainloader
         self.testloader = testloader
         self.valloader = valloader
@@ -32,18 +32,22 @@ class Training():
         self.gamma = gamma
         self.patience = patience
         self.warmup_epochs = warmup_epochs
+        self.initial_lr = initial_lr
         self.max_lr = max_lr
+        self.final_lr = final_lr
+        self.model_path = model_path
 
     def train(self):
         self.model.train()
         scheduler = scheduler_maker(self.scheduler, self.optimizer, self.step_size, self.gamma, self.num_epochs, self.patience,
-                                    self.warmup_epochs, self.max_lr)
+                                    self.warmup_epochs, self.initial_lr, self.max_lr, self.final_lr)
+        
         for epoch in range(self.num_epochs):
             loss_per_episode = 0
             reconst_loss_per_epoch = 0
             kl_loss_per_epoch = 0
             train_accuracy = 0
-
+            
             for data in self.trainloader:
                 inputs = data.to(self.device)
                 if inputs.dim() == 3:
@@ -85,20 +89,24 @@ class Training():
             else:
                 scheduler.step()
 
+            current_lr = self.optimizer.param_groups[0]['lr']
+            print(f"Epoch {epoch+1}, Current Learning Rate: {current_lr:.6f}")
+
             if self.run:
                 self.run[f"train/loss"].append(average_loss)
                 self.run[f"train/accuracy"].append(average_accuracy)
                 self.run[f"learning_rate"].append(self.optimizer.param_groups[0]['lr'])
                 self.run[f"validation/loss"].append(val_loss)
                 self.run[f"validation/accuracy"].append(val_accuracy)
-            print(f'Epoch [{epoch+1}/{self.num_epochs}], Train Loss: {average_loss:.4f}, Train Accuracy: {average_accuracy:.2f}%, Val Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.2f}%')
 
+            print(f'Epoch [{epoch+1}/{self.num_epochs}], Train Loss: {average_loss:.4f}, Train Accuracy: {average_accuracy:.2f}%, Val Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.2f}%')
+            
         if self.run:
             self.run.stop()
 
         if isinstance(self.model, VariationalAutoencoder):
             z = self.model.reparameterize(z_mean, z_log_var)
-            plot_latent_space(z_mean, z_log_var, epoch)
+            # plot_latent_space(z_mean, z_log_var, epoch)
             bottleneck_output_z_mean = z_mean.cpu().detach().numpy() # A latens térben lévő átlagok.
             # Használható a latens tér szerkezetének elemzésére, pl. klaszterek vizsgálatára.
             bottleneck_output_z = z.cpu().detach().numpy() # A mintavételezett tényleges latens értékek.
@@ -132,19 +140,14 @@ class Training():
         return val_loss / len(self.valloader), val_accuracy / len(self.valloader)
             
     def test(self):
-        if isinstance(self.model, VariationalAutoencoder):
-            self.model.load_state_dict(torch.load("Models/vae.pth", map_location=self.device))
-        elif isinstance(self.model, MaskedAutoencoder):
-            self.model.load_state_dict(torch.load("Models/mae.pth", map_location=self.device))
-        else:
-            raise ValueError("Unsupported model type. Expected VAE or MAE!")
-        
+        self.model.load_state_dict(torch.load(self.model_path, map_location=self.device))
         self.model.to(self.device)
         self.model.eval()
         test_loss = 0
         bottleneck_outputs_z_mean = []
         bottleneck_outputs_z = []
         bottleneck_outputs = []
+        whole_input = []
         whole_output = []
         whole_masked_input = []
         with torch.no_grad():
@@ -170,8 +173,10 @@ class Training():
                 
                 test_loss += loss.item()
 
+                whole_input.append(inputs.cpu().detach().numpy())
                 whole_output.append(outputs.cpu().detach().numpy())
 
+        whole_input = np.vstack(whole_input)
         whole_output = np.vstack(whole_output)
 
         print(f'Test Loss: {test_loss / len(self.testloader):.4f}')
@@ -198,6 +203,9 @@ class Training():
             print(f"Reconstructed output: {destandardized_outputs}")
             print(f"Reconstructed output shape: {destandardized_outputs.shape}")
             visualize_bottleneck(bottleneck_outputs, model_name)
+
+        accuracy = reconstruction_accuracy(whole_input, whole_output)
+        print(f"Test Accuracy: {accuracy:.2f}%")
 
     def save_model(self, path):
         torch.save(self.model.state_dict(), path)
