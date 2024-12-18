@@ -6,17 +6,27 @@ from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.manifold import TSNE
     
-def visualize_bottleneck(bottleneck_outputs):
-        """
-        Vizualizálja a bottleneck kimeneteket PCA vagy T-SNE segítségével.
+def visualize_bottleneck(bottleneck_outputs, model_name, bottleneck_type=None):
+    """
+    Vizualizálja a bottleneck kimeneteket PCA vagy T-SNE segítségével.
 
-        :param bottleneck_outputs: A bottleneck által generált adatok (numpy array).
-        """
-        print("PCA Visualization:")
-        visualize_with_pca(bottleneck_outputs, title="PCA - Bottleneck")
-        
-        print("T-SNE Visualization:")
-        visualize_with_tsne(bottleneck_outputs, title="T-SNE - Bottleneck")
+    :param bottleneck_outputs: A bottleneck által generált adatok (numpy array).
+    :param model_name: A modell neve (pl. "VAE" vagy "MAE").
+    :param bottleneck_type: A bottleneck típusa (pl. "z_mean", "z") - csak VAE esetén.
+    """
+    # Címképzés dinamikusan
+    if model_name == "VAE":
+        pca_title = f"PCA - {model_name} Bottleneck ({bottleneck_type})"
+        tsne_title = f"T-SNE - {model_name} Bottleneck ({bottleneck_type})"
+    else:  # MAE esetén egyszerűsített cím
+        pca_title = f"PCA - {model_name} Bottleneck"
+        tsne_title = f"T-SNE - {model_name} Bottleneck"
+
+    print("PCA Visualization:")
+    visualize_with_pca(bottleneck_outputs, title=pca_title)
+    
+    print("T-SNE Visualization:")
+    visualize_with_tsne(bottleneck_outputs, title=tsne_title)
 
 def visualize_with_pca(data, title="PCA Visualization"):
     """

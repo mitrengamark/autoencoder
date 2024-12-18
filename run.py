@@ -64,11 +64,11 @@ if torch.cuda.is_available():
 dp = DataProcess()
 
 if training_model == "VAE":
-    trainloader, testloader, data_min, data_max = dp.train_test_split(file_path=file_path)
+    trainloader, valloader, testloader, data_min, data_max = dp.train_test_split(file_path=file_path)
     data_mean = None
     data_std = None
 elif training_model == "MAE":
-    trainloader, testloader, data_mean, data_std = dp.train_test_split(file_path=file_path)
+    trainloader, valloader, testloader, data_mean, data_std = dp.train_test_split(file_path=file_path)
     data_min = None
     data_max = None
 else:
@@ -87,7 +87,7 @@ else:
     raise ValueError(f"Unsupported model type. Expected VAE or MAE!")
 
 optimizer = optim.Adam(model.parameters(), lr)
-training = Training(trainloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size, gamma, patience,
+training = Training(trainloader, valloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size, gamma, patience,
                     warmup_epochs, max_lr, run=run, data_min=data_min, data_max=data_max, data_mean=data_mean, data_std=data_std)
 
 if test_mode == 0:
@@ -95,4 +95,4 @@ if test_mode == 0:
     if save_model == 1:
         training.save_model(model_path)
 elif test_mode == 1:
-    training.test()
+       training.test()

@@ -14,7 +14,8 @@ class DataProcess:
         config.read('config.ini')
 
         self.batch_size = int(config['Hyperparameters']['batch_size'])
-        self.test_size = float(config['Data']['test_size'])
+        self.train_size = float(config['Data']['train_size'])
+        self.val_size = float(config['Data']['val_size'])
         self.seed = int(config['Data']['seed'])
         self.training_model = config.get('Model', 'training_model')
 
@@ -72,23 +73,29 @@ class DataProcess:
         self.data = torch.tensor(self.data, dtype=torch.float32)
 
         n = len(self.data)
-        train_size = int((1 - self.test_size) * n)
         torch.manual_seed(self.seed)
+
+        train_size = int(self.train_size * n)
+        val_size = int(self.val_size * n)
 
         indices = torch.randperm(n)
         train_indices = indices[:train_size]
-        test_indices = indices[train_size:]
+        val_indices = indices[train_size:train_size + val_size]
+        test_indices = indices[train_size + val_size:]
 
         train_data = self.data[train_indices]
+        val_data = self.data[val_indices]
         test_data = self.data[test_indices]
 
         print(f"Train data shape: {train_data.shape}")
+        print(f"Validation data shape: {val_data.shape}")
         print(f"Test data shape: {test_data.shape}")
             
         trainloader = torch.utils.data.DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
+        valloader = torch.utils.data.DataLoader(val_data, batch_size=self.batch_size, shuffle=False)
         testloader = torch.utils.data.DataLoader(test_data, batch_size=self.batch_size, shuffle=False)
 
         if self.training_model == "VAE":
-            return trainloader, testloader, self.data_min, self.data_max
+            return trainloader, valloader, testloader, self.data_min, self.data_max
         elif self.training_model == "MAE":
-            return trainloader, testloader, self.data_mean, self.data_std
+            return trainloader, valloader, testloader, self.data_mean, self.data_std
