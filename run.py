@@ -100,7 +100,7 @@ else:
 model_params = model.parameters()
 optimizer = optimizer_maker(opt_name, model_params)
 training = Training(trainloader, valloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size, gamma, patience,
-                    warmup_epochs, initial_lr, max_lr, final_lr, saved_model, tolerance, run=run, data_min=data_min, data_max=data_max,
+                    warmup_epochs, initial_lr, max_lr, final_lr, saved_model, tolerance=tolerance, run=run, data_min=data_min, data_max=data_max,
                     data_mean=data_mean, data_std=data_std, hyperopt=hyperopt)
 
 if test_mode == 0:
