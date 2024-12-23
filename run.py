@@ -40,6 +40,8 @@ saved_model = config.get('Model', 'model_path')
 warmup_epochs = num_epochs * 0.1
 current_date = datetime.datetime.now().strftime("%m_%d_%H_%M")
 model_path = f'Models/{training_model}_{num_epochs}_{current_date}.pth'
+tolerance = float(config['Callbacks']['tolerance'])
+start_lr = float(config['Hyperparameters']['start_lr'])
 
 parameters = {
     "latent_dim": latent_dim,
@@ -55,7 +57,8 @@ parameters = {
     "initial_lr": initial_lr,
     "max_lr": max_lr,
     "final_lr": final_lr,
-    "model": model_path
+    "model": model_path,
+    "tolerance": tolerance
 }
 
 # Neptune inicializáció
@@ -91,9 +94,10 @@ elif training_model == "MAE":
 else:
     raise ValueError(f"Unsupported model type. Expected VAE or MAE!")
 
-optimizer = optim.Adam(model.parameters(), 1)
+optimizer = optim.Adam(model.parameters(), lr=start_lr)
 training = Training(trainloader, valloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size, gamma, patience,
-                    warmup_epochs, initial_lr, max_lr, final_lr, saved_model, run=run, data_min=data_min, data_max=data_max, data_mean=data_mean, data_std=data_std)
+                    warmup_epochs, initial_lr, max_lr, final_lr, saved_model, tolerance, run=run, data_min=data_min, data_max=data_max,
+                    data_mean=data_mean, data_std=data_std)
 
 if test_mode == 0:
     training.train()
