@@ -36,6 +36,8 @@ class Training():
         self.max_lr = max_lr
         self.final_lr = final_lr
         self.model_path = model_path
+        self.hyperopt = hyperopt
+        self.tolerance = tolerance
 
     def train(self):
         self.model.train()

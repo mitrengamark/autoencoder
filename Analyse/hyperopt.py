@@ -44,6 +44,7 @@ config.read('config.ini')
 seed = int(config['Data']['seed'])
 training_model = config.get('Model', 'training_model')
 file_path = config.get('Data', 'file_path')
+tolerance = float(config['Callbacks']['tolerance'])
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if torch.cuda.is_available():
@@ -62,7 +63,7 @@ elif training_model == "MAE":
 else:
     raise ValueError(f"Unsupported model type. Expected VAE or MAE!")
 
-def grid_search(grid, param_keys, trainloader, valloader, testloader, device):
+def grid_search(grid, param_keys, trainloader, valloader, testloader, device, tolerance):
     """
     Grid search implementáció hyperparaméter optimalizációhoz.
     
@@ -122,7 +123,7 @@ def grid_search(grid, param_keys, trainloader, valloader, testloader, device):
         training = Training(
             trainloader, valloader, testloader, optimizer, model, params["num_epochs"],
             device, scheduler, warmup_epochs=warmup_epochs, initial_lr=params["initial_lr"], max_lr=params["max_lr"],
-            final_lr=params["final_lr"], hyperopt=1 #, gamma=params["gamma"], patience=params["patience"]
+            final_lr=params["final_lr"], hyperopt=1, tolerance=tolerance #, gamma=params["gamma"], patience=params["patience"]
         )
         training.train()
 
@@ -146,5 +147,6 @@ best_params = grid_search(
     trainloader=trainloader,
     valloader=valloader,
     testloader=testloader,
-    device=device
+    device=device,
+    tolerance=tolerance
 )
