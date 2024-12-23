@@ -10,7 +10,7 @@ import numpy as np
 
 class Training():
     def __init__(self, trainloader, valloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size=None, gamma=None, patience=None,
-                 warmup_epochs=None, initial_lr=None, max_lr=None, final_lr=None, model_path=None, tolerance=None, data_min=None, data_max=None, run=None, data_mean=None, data_std=None, hyperopt=None):
+                 warmup_epochs=None, initial_lr=None, max_lr=None, final_lr=None, model_path=None, data_min=None, data_max=None, run=None, data_mean=None, data_std=None, hyperopt=None, tolerance=None):
         self.trainloader = trainloader
         self.testloader = testloader
         self.valloader = valloader
