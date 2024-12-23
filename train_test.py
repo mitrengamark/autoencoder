@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class Training():
-    def __init__(self, trainloader, valloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size, gamma, patience,
-                 warmup_epochs, initial_lr, max_lr, final_lr, model_path, data_min=None, data_max=None, run=None, data_mean=None, data_std=None):
+    def __init__(self, trainloader, valloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size=None, gamma=None, patience=None,
+                 warmup_epochs=None, initial_lr=None, max_lr=None, final_lr=None, model_path=None, data_min=None, data_max=None, run=None, data_mean=None, data_std=None, hyperopt=None):
         self.trainloader = trainloader
         self.testloader = testloader
         self.valloader = valloader
@@ -36,11 +36,13 @@ class Training():
         self.max_lr = max_lr
         self.final_lr = final_lr
         self.model_path = model_path
+        self.hyperopt = hyperopt
 
     def train(self):
         self.model.train()
-        scheduler = scheduler_maker(self.scheduler, self.optimizer, self.step_size, self.gamma, self.num_epochs, self.patience,
-                                    self.warmup_epochs, self.initial_lr, self.max_lr, self.final_lr)
+        if self.hyperopt == 0:
+            scheduler = scheduler_maker(self.scheduler, self.optimizer, self.step_size, self.gamma, self.num_epochs, self.patience,
+                                        self.warmup_epochs, self.initial_lr, self.max_lr, self.final_lr)
         
         for epoch in range(self.num_epochs):
             loss_per_episode = 0
@@ -84,10 +86,15 @@ class Training():
             val_loss, val_accuracy = self.validate()
             self.val_losses.append(val_loss)
 
-            if self.scheduler == 'ReduceLROnPlateau':
-                scheduler.step(average_loss)
+            if self.hyperopt == 0:
+                if self.scheduler == 'ReduceLROnPlateau':
+                    scheduler.step(average_loss)
+                else:
+                    scheduler.step()
+            elif self.hyperopt == 1:
+                self.scheduler.step()
             else:
-                scheduler.step()
+                raise ValueError("Unsupported hyperopt value. Expected 0 or 1.")
 
             current_lr = self.optimizer.param_groups[0]['lr']
             print(f"Epoch {epoch+1}, Current Learning Rate: {current_lr:.6f}")
@@ -104,20 +111,21 @@ class Training():
         if self.run:
             self.run.stop()
 
-        if isinstance(self.model, VariationalAutoencoder):
-            z = self.model.reparameterize(z_mean, z_log_var)
-            # plot_latent_space(z_mean, z_log_var, epoch)
-            bottleneck_output_z_mean = z_mean.cpu().detach().numpy() # A latens térben lévő átlagok.
-            # Használható a latens tér szerkezetének elemzésére, pl. klaszterek vizsgálatára.
-            bottleneck_output_z = z.cpu().detach().numpy() # A mintavételezett tényleges latens értékek.
-                                                        # Ez a modell valódi bemenete a decoder számára.
-            visualize_bottleneck(bottleneck_output_z_mean, "VAE", "z_mean")
-            visualize_bottleneck(bottleneck_output_z, "VAE", "z")
-        elif isinstance(self.model, MaskedAutoencoder):
-            bottleneck_output = encoded.cpu().detach().numpy()
-            visualize_bottleneck(bottleneck_output, "MAE")
+        if self.hyperopt == 0:
+            if isinstance(self.model, VariationalAutoencoder):
+                z = self.model.reparameterize(z_mean, z_log_var)
+                # plot_latent_space(z_mean, z_log_var, epoch)
+                bottleneck_output_z_mean = z_mean.cpu().detach().numpy() # A latens térben lévő átlagok.
+                # Használható a latens tér szerkezetének elemzésére, pl. klaszterek vizsgálatára.
+                bottleneck_output_z = z.cpu().detach().numpy() # A mintavételezett tényleges latens értékek.
+                                                            # Ez a modell valódi bemenete a decoder számára.
+                visualize_bottleneck(bottleneck_output_z_mean, "VAE", "z_mean")
+                visualize_bottleneck(bottleneck_output_z, "VAE", "z")
+            elif isinstance(self.model, MaskedAutoencoder):
+                bottleneck_output = encoded.cpu().detach().numpy()
+                visualize_bottleneck(bottleneck_output, "MAE")
 
-        self.plot_losses()
+            self.plot_losses()
 
     def validate(self):
         self.model.eval()

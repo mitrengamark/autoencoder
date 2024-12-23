@@ -2,7 +2,7 @@ import torch
 import numpy as np
 
 
-def scheduler_maker(scheduler, optimizer, step_size, gamma, num_epochs, patience, warmup_epochs, initial_lr, max_lr, final_lr):
+def scheduler_maker(scheduler, optimizer, step_size=None, gamma=None, num_epochs=None, patience=None, warmup_epochs=None, initial_lr=None, max_lr=None, final_lr=None):
     if scheduler == 'StepLR':
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size, gamma)
     elif scheduler == 'CosineAnnealingLR':

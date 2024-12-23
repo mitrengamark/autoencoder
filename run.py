@@ -7,6 +7,7 @@ from data_process import DataProcess
 from train_test import Training
 from Factory.variational_autoencoder import VariationalAutoencoder
 from Factory.masked_autoencoder import MaskedAutoencoder
+from Factory.optimizer import optimizer_maker
 from Analyse.neptune_utils import init_neptune
 
 torch.cuda.empty_cache()
@@ -40,6 +41,8 @@ saved_model = config.get('Model', 'model_path')
 warmup_epochs = num_epochs * 0.1
 current_date = datetime.datetime.now().strftime("%m_%d_%H_%M")
 model_path = f'Models/{training_model}_{num_epochs}_{current_date}.pth'
+opt_name = config.get('Hyperparameters', 'optimizer')
+hyperopt = int(config['Hyperparameters']['hyperopt'])
 
 parameters = {
     "latent_dim": latent_dim,
@@ -91,9 +94,10 @@ elif training_model == "MAE":
 else:
     raise ValueError(f"Unsupported model type. Expected VAE or MAE!")
 
-optimizer = optim.Adam(model.parameters(), 1)
+model_params = model.parameters()
+optimizer = optimizer_maker(opt_name, model_params)
 training = Training(trainloader, valloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size, gamma, patience,
-                    warmup_epochs, initial_lr, max_lr, final_lr, saved_model, run=run, data_min=data_min, data_max=data_max, data_mean=data_mean, data_std=data_std)
+                    warmup_epochs, initial_lr, max_lr, final_lr, saved_model, run=run, data_min=data_min, data_max=data_max, data_mean=data_mean, data_std=data_std, hyperopt=hyperopt)
 
 if test_mode == 0:
     training.train()
