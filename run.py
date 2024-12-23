@@ -43,6 +43,7 @@ current_date = datetime.datetime.now().strftime("%m_%d_%H_%M")
 model_path = f'Models/{training_model}_{num_epochs}_{current_date}.pth'
 opt_name = config.get('Hyperparameters', 'optimizer')
 hyperopt = int(config['Hyperparameters']['hyperopt'])
+tolerance = float(config['Callbacks']['tolerance'])
 
 parameters = {
     "latent_dim": latent_dim,
@@ -97,7 +98,7 @@ else:
 model_params = model.parameters()
 optimizer = optimizer_maker(opt_name, model_params)
 training = Training(trainloader, valloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size, gamma, patience,
-                    warmup_epochs, initial_lr, max_lr, final_lr, saved_model, run=run, data_min=data_min, data_max=data_max, data_mean=data_mean, data_std=data_std, hyperopt=hyperopt)
+                    warmup_epochs, initial_lr, max_lr, final_lr, saved_model, run=run, data_min=data_min, data_max=data_max, data_mean=data_mean, data_std=data_std, hyperopt=hyperopt, tolerance=tolerance)
 
 if test_mode == 0:
     training.train()

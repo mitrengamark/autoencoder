@@ -10,7 +10,7 @@ import numpy as np
 
 class Training():
     def __init__(self, trainloader, valloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size=None, gamma=None, patience=None,
-                 warmup_epochs=None, initial_lr=None, max_lr=None, final_lr=None, model_path=None, data_min=None, data_max=None, run=None, data_mean=None, data_std=None, hyperopt=None):
+                 warmup_epochs=None, initial_lr=None, max_lr=None, final_lr=None, model_path=None, data_min=None, data_max=None, run=None, data_mean=None, data_std=None, hyperopt=None, tolerance=None):
         self.trainloader = trainloader
         self.testloader = testloader
         self.valloader = valloader
@@ -37,6 +37,7 @@ class Training():
         self.final_lr = final_lr
         self.model_path = model_path
         self.hyperopt = hyperopt
+        self.tolerance = tolerance
 
     def train(self):
         self.model.train()
@@ -68,7 +69,7 @@ class Training():
                 else:
                     raise ValueError(f"Unsupported model type. Expected VAE or MAE!")
                     
-                accuracy = reconstruction_accuracy(inputs, outputs)
+                accuracy = reconstruction_accuracy(inputs, outputs, self.tolerance)
                 train_accuracy += accuracy
 
                 self.optimizer.zero_grad()
@@ -144,7 +145,7 @@ class Training():
                     raise ValueError("Unsupported model type. Expected VAE or MAE!")
                 
                 val_loss += loss.item()
-                val_accuracy += reconstruction_accuracy(inputs, outputs)
+                val_accuracy += reconstruction_accuracy(inputs, outputs, self.tolerance)
         return val_loss / len(self.valloader), val_accuracy / len(self.valloader)
             
     def test(self):
@@ -212,7 +213,7 @@ class Training():
             print(f"Reconstructed output shape: {destandardized_outputs.shape}")
             visualize_bottleneck(bottleneck_outputs, model_name)
 
-        accuracy = reconstruction_accuracy(whole_input, whole_output)
+        accuracy = reconstruction_accuracy(whole_input, whole_output, self.tolerance)
         print(f"Test Accuracy: {accuracy:.2f}%")
 
     def save_model(self, path):

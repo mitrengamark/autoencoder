@@ -4,6 +4,7 @@ import os
 # Adja hozzá a projekt gyökérkönyvtárát a Python keresési útvonalához
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+import optuna
 import torch
 import configparser
 from itertools import product
@@ -12,31 +13,7 @@ from Factory.masked_autoencoder import MaskedAutoencoder
 from Factory.optimizer import optimizer_maker
 from Factory.scheduler import scheduler_maker
 from train_test import Training
-from data_process import DataProcess
-
-# Paramétertér definiálása
-param_space = {
-    "model_type": ["VAE"],
-    "latent_dim": [4, 8, 16], # 3
-    "hidden_dim_0": [16, 32, 64], # 3
-    "hidden_dim_1": [8, 16, 32], # 3
-    "beta": [0.1, 0.5, 1], # 3
-    "dropout": [0.1, 0.2, 0.3], # 3
-    # "mask_ratio": [0.75, 0.8], # 2
-    "scheduler": ["WarmupCosine"],
-    # "gamma": [0.5, 0.75, 0.9], # 3
-    "num_epochs": [100, 1000, 10000], # 3
-    # "patience": [5, 20, 50, 100], # 4
-    "initial_lr": [1e-3, 1e-4, 1e-5], # 3
-    "max_lr": [1e-2, 1e-3, 1e-4], # 3
-    "final_lr": [1e-4, 1e-5, 1e-6], # 3
-    "batch_size": [16, 32, 64, 128, 256, 512], # 6
-    "optimizer": ['SGD', 'Adam', 'AdamW', 'Adagrad', 'RMSprop'], # 5
-} # 590 490
-
-# Grid készítése a paraméterek kombinációjához
-grid = list(product(*param_space.values()))
-param_keys = list(param_space.keys())
+from data_process import DataProcess    
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -44,6 +21,9 @@ config.read('config.ini')
 seed = int(config['Data']['seed'])
 training_model = config.get('Model', 'training_model')
 file_path = config.get('Data', 'file_path')
+tolerance = float(config['Callbacks']['tolerance'])
+hyperopt = int(config['Hyperparameters']['hyperopt'])
+n_trials = int(config['Hyperparameters']['n_trials'])
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if torch.cuda.is_available():
@@ -62,89 +42,74 @@ elif training_model == "MAE":
 else:
     raise ValueError(f"Unsupported model type. Expected VAE or MAE!")
 
-def grid_search(grid, param_keys, trainloader, valloader, testloader, device):
-    """
-    Grid search implementáció hyperparaméter optimalizációhoz.
+def objective(trial):
+    # Hiperparaméterek kiválasztása Optuna segítségével
+    model_type = trial.suggest_categorical("model_type", ["VAE"])
+    latent_dim = trial.suggest_categorical("latent_dim", [4, 8, 16])
+    hidden_dim_0 = trial.suggest_categorical("hidden_dim_0", [16, 32, 64])
+    hidden_dim_1 = trial.suggest_categorical("hidden_dim_1", [8, 16, 32])
+    beta = trial.suggest_categorical("beta", [0.1, 0.5, 1])
+    dropout = trial.suggest_categorical("dropout", [0.1, 0.2, 0.3])
+    scheduler_type = trial.suggest_categorical("scheduler", ["WarmupCosine"])
+    initial_lr = trial.suggest_categorical("initial_lr", [1e-3, 1e-4, 1e-5])
+    max_lr = trial.suggest_categorical("max_lr", [1e-2, 1e-3, 1e-4])
+    final_lr = trial.suggest_categorical("final_lr", [1e-4, 1e-5, 1e-6])
+    batch_size = trial.suggest_categorical("batch_size", [16, 32, 64, 128, 256, 512])
+    optimizer_type = trial.suggest_categorical("optimizer", ['SGD', 'Adam', 'AdamW', 'Adagrad', 'RMSprop'])
+    # gamma = trial.suggest_categorical("gamma", [0.5, 0.75, 0.9])
+    num_epochs = trial.suggest_categorical("num_epochs", [100, 1000, 10000])
+    # patience = trial.suggest_categorical("patience", [5, 20, 50, 100])
+
+    if model_type == "VAE":
+        model = VariationalAutoencoder(
+            input_dim=trainloader.dataset[0].shape[0],
+            latent_dim=latent_dim,
+            hidden_dim_0=hidden_dim_0,
+            hidden_dim_1=hidden_dim_1,
+            beta=beta,
+            dropout=dropout
+        ).to(device)
+    elif model_type == "MAE":
+        model = MaskedAutoencoder(
+            input_dim=trainloader.dataset[0].shape[0],
+            mask_ratio=trial.suggest_categorical("mask_ratio", [0.75, 0.8])
+        ).to(device)
+    else:
+        raise ValueError("Unsupported model type!")
     
-    :param grid: Az összes paraméter kombináció listája.
-    :param param_keys: A paraméterek neveinek listája.
-    :param trainloader: Az edzési adatok betöltője.
-    :param valloader: A validációs adatok betöltője.
-    :param testloader: A teszt adatok betöltője.
-    :param device: A használt eszköz (CPU vagy GPU).
-    """
-    best_params = None
-    best_val_accuracy = 0.0
+    optimizer = optimizer_maker(
+        optimizer_type=optimizer_type,
+        model_params=model.parameters()
+    )
 
-    for trial, param_values in enumerate(grid):
-        params = dict(zip(param_keys, param_values))
-        print(f"Trial {trial + 1}/{len(grid)} - Current Parameters: {params}")
+    warmup_epochs = num_epochs * 0.1
 
-        # Modell inicializálása
-        if params["model_type"] == "VAE":
-            model = VariationalAutoencoder(
-                input_dim=trainloader.dataset[0].shape[0],
-                latent_dim=params["latent_dim"],
-                hidden_dim_0=params["hidden_dim_0"],
-                hidden_dim_1=params["hidden_dim_1"],
-                beta=params["beta"],
-                dropout=params["dropout"]
-            ).to(device)
-        elif params["model_type"] == "MAE":
-            model = MaskedAutoencoder(
-                input_dim=trainloader.dataset[0].shape[0],
-                mask_ratio=params["mask_ratio"]
-            ).to(device)
-        else:
-            raise ValueError("Unsupported model type!")
-        
-        # Optimizer és Scheduler inicializálása
-        optimizer = optimizer_maker(
-            optimizer_type=params["optimizer"],
-            model_params=model.parameters()
-        )
+    scheduler = scheduler_maker(
+        scheduler=scheduler_type,
+        optimizer=optimizer,
+        num_epochs=num_epochs,
+        warmup_epochs=warmup_epochs,
+        initial_lr=initial_lr,
+        max_lr=max_lr,
+        final_lr=final_lr
+    )
 
-        warmup_epochs = params["num_epochs"] / 10
+    training = Training(
+        trainloader, valloader, testloader, optimizer, model, num_epochs,
+        device, scheduler, warmup_epochs=warmup_epochs, initial_lr=initial_lr, 
+        max_lr=max_lr, final_lr=final_lr, hyperopt=hyperopt, tolerance=tolerance # gamma=gamma, patience=patience
+    )
 
-        scheduler = scheduler_maker(
-            scheduler=params["scheduler"],
-            optimizer=optimizer,
-            # gamma=params["gamma"],
-            num_epochs=params["num_epochs"],
-            # patience=params["patience"],
-            warmup_epochs=warmup_epochs,
-            initial_lr=params["initial_lr"],
-            max_lr=params["max_lr"],
-            final_lr=params["final_lr"]
-        )
+    training.train()
+    _, val_accuracy = training.validate()
 
-        # Tréning
-        training = Training(
-            trainloader, valloader, testloader, optimizer, model, params["num_epochs"],
-            device, scheduler, warmup_epochs=warmup_epochs, initial_lr=params["initial_lr"], max_lr=params["max_lr"],
-            final_lr=params["final_lr"], hyperopt=1 #, gamma=params["gamma"], patience=params["patience"]
-        )
-        training.train()
+    return val_accuracy
+# Optuna tanulmány létrehozása
+study = optuna.create_study(direction="maximize" , pruner=optuna.pruners.MedianPruner())
+study.optimize(objective, n_trials)
 
-        # Validációs pontosság kiértékelése
-        _, val_accuracy = training.validate()
-        print(f"Validation Accuracy: {val_accuracy:.2f}%")
-
-        # Legjobb paraméterek mentése
-        if val_accuracy > best_val_accuracy:
-            best_val_accuracy = val_accuracy
-            best_params = params
-    
-        print(f"Best Parameters: {best_params}")
-        print(f"Best Validation Accuracy: {best_val_accuracy:.2f}%")
-    
-    return best_params
-
-best_params = grid_search(
-    grid=grid,
-    param_keys=param_keys,
-    trainloader=trainloader,
-    valloader=valloader,
-    testloader=testloader,
-    device=device
-)
+# Legjobb paraméterek kiíratása
+print("Best trial:")
+print(study.best_trial)
+print("Best parameters:")
+print(study.best_params)
