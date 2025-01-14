@@ -51,7 +51,7 @@ class DataProcess:
         data_denormalized = data * (data_max - data_min) + data_min
         return data_denormalized
 
-    def load_single_manoeuvre(self, file_path):
+    def load_single_manoeuvre(self, file_path, batch_size=None):
         """
         Egyetlen .csv fájl betöltése, standardizálása és numpy array-é alakítása.
         """
@@ -63,6 +63,26 @@ class DataProcess:
         elif self.training_model == "MAE":
             normalized_data = self.z_score_normalize()
         return normalized_data.values
+    
+    def load_manoeuvres(self, file_paths, batch_size=None):
+        """
+        Több .csv fájl betöltése, standardizálása és numpy array-é alakítása.
+
+        :param file_paths: Lista az egyes .csv fájlok elérési útvonalairól.
+        :param batch_size: Nem kötelező, a betöltési batch méret (ha releváns).
+        """
+        all_data = []
+        for file_path in file_paths:
+            # Adatok betöltése
+            df = pd.read_csv(file_path)
+            self.data = df
+            if self.training_model == "VAE":
+                normalized_data = self.normalize()
+            elif self.training_model == "MAE":
+                normalized_data = self.z_score_normalize()
+            all_data.append(normalized_data.values)
+
+        return np.concatenate(all_data, axis=0)
     
     def train_test_split(self, file_path=None):
         if file_path:

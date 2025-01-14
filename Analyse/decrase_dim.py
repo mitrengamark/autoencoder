@@ -38,8 +38,11 @@ def visualize_with_pca(data, title="PCA Visualization"):
     pca = PCA(n_components=2)
     reduced_data = pca.fit_transform(data)
 
+    alphas = np.linspace(0.1, 1.0, len(reduced_data))
+
     plt.figure(figsize=(8, 6))
-    plt.scatter(reduced_data[:, 0], reduced_data[:, 1], alpha=0.7, color='blue')
+    for i in range(len(reduced_data)):
+        plt.scatter(reduced_data[i, 0], reduced_data[i, 1], alpha=alphas[i], color='blue')
     plt.title(title)
     plt.xlabel("Főkomponens 1")
     plt.ylabel("Főkomponens 2")
@@ -78,8 +81,11 @@ def visualize_with_tsne(data, title="T-SNE Visualization"):
     tsne = TSNE(n_components=2, perplexity=50, learning_rate=200, n_iter=1000, random_state=42)
     reduced_data = tsne.fit_transform(data)
 
+    alphas = np.linspace(0.1, 1.0, len(reduced_data))
+
     plt.figure(figsize=(8, 6))
-    plt.scatter(reduced_data[:, 0], reduced_data[:, 1], alpha=0.7, color='blue')
+    for i in range(len(reduced_data)):
+        plt.scatter(reduced_data[i, 0], reduced_data[i, 1], alpha=alphas[i], color='blue')
     plt.title(title)
     plt.xlabel("T-SNE Komponens 1")
     plt.ylabel("T-SNE Komponens 2")
