@@ -18,20 +18,33 @@ class DataProcess:
         self.val_size = float(config['Data']['val_size'])
         self.seed = int(config['Data']['seed'])
         self.training_model = config.get('Model', 'training_model')
+        self.data_dir = config.get('Data', 'data_dir')
+        self.file_paths = [os.path.join(self.data_dir, file) for file in os.listdir(self.data_dir) if file.endswith('.csv')]
+        self.labels = [os.path.splitext(os.path.basename(file))[0] for file in self.file_paths]
+
+        print("File paths:", self.file_paths)
+        print("Labels:", self.labels)
 
     def z_score_normalize(self):
         """
         Z-score standardizálás az adatokhoz.
         """
-        self.data_mean = self.data.mean().mean()
-        self.data_std = self.data.std().std()
-        data_standardized = (self.data - self.data_mean) / self.data_std
+        self.data_mean = self.data.mean(dim=0)
+        self.data_std = self.data.std(dim=0)
+        # self.data_mean = self.data.mean().mean()
+        # self.data_std = self.data.std().std()
+        data_standardized = (self.data - self.data_mean) / (self.data_std + 1e-8)
         return data_standardized
     
     def z_score_denormalize(self, data, data_mean, data_std):
         """
         Az adatok denormalizálása (visszatranszformálás az eredeti skálára).
         """
+        print("Data Type:", type(data))
+        print("Data Mean Type:", type(data_mean))
+        print("Data Std Type:", type(data_std))
+        data = torch.tensor(data) if isinstance(data, np.ndarray) else data
+        print("Data Type 2:", type(data))
         data_denormalized = (data * data_std) + data_mean
         return data_denormalized
 
@@ -84,17 +97,61 @@ class DataProcess:
 
         return np.concatenate(all_data, axis=0)
     
+    def load_and_label_data(self):
+        combined_data = {label: [] for label in self.labels}
+
+        for file_path, label in zip(self.file_paths, self.labels):
+            df = pd.read_csv(file_path)
+            data_tensor = torch.tensor(df.values, dtype=torch.float32)
+            self.data = data_tensor
+
+
+            if self.training_model == "VAE":
+                normalized_data = self.normalize()
+            elif self.training_model == "MAE":
+                normalized_data = self.z_score_normalize()
+            else:
+                raise ValueError("Unsupported model type. Expected 'VAE' or 'MAE'!")
+
+            combined_data[label].append(normalized_data)
+
+        self.data = {label: torch.cat(data_list, dim=0) for label, data_list in combined_data.items()}
+        print(f"Data by manoeuvre: { {label: data.shape for label, data in self.data.items()} }")
+        
+    def get_manoeuvre_specific_data(self):
+        manoeuvre_data = {label: [] for label in torch.unique(self.data_labels)}
+        for label in manoeuvre_data.keys():
+            manoeuvre_data[label] = self.data[self.data_labels == label]
+        return manoeuvre_data
+
+    
     def train_test_split(self, file_path=None):
-        if file_path:
-            self.data = self.load_single_manoeuvre(file_path)
-        else:
-            raise ValueError("Egy fájlt kell megadni a `file_path` paraméterben!")
 
-        self.data = torch.tensor(self.data, dtype=torch.float32)
+        # if file_path:
+        #     self.data = self.load_single_manoeuvre(file_path)
+        # else:
+        #     raise ValueError("Egy fájlt kell megadni a `file_path` paraméterben!")
 
-        n = len(self.data)
+        # self.data = torch.tensor(self.data, dtype=torch.float32)
+
+        self.load_and_label_data()
+
         torch.manual_seed(self.seed)
 
+        all_data = []
+        all_labels = []
+        label_mapping = {label: idx for idx, label in enumerate(self.labels)}  # Címkék indexelése
+
+        for label, data in self.data.items():
+            all_data.append(data)
+            all_labels.append(torch.full((data.shape[0],), label_mapping[label], dtype=torch.int64))
+
+        # Összesített tensor
+        all_data = torch.cat(all_data, dim=0)
+        all_labels = torch.cat(all_labels, dim=0)
+
+        # Train-val-test split
+        n = all_data.size(0)
         train_size = int(self.train_size * n)
         val_size = int(self.val_size * n)
 
@@ -103,19 +160,28 @@ class DataProcess:
         val_indices = indices[train_size:train_size + val_size]
         test_indices = indices[train_size + val_size:]
 
-        train_data = self.data[train_indices]
-        val_data = self.data[val_indices]
-        test_data = self.data[test_indices]
+        train_data = all_data[train_indices]
+        train_labels = all_labels[train_indices]
+        val_data = all_data[val_indices]
+        val_labels = all_labels[val_indices]
+        test_data = all_data[test_indices]
+        test_labels = all_labels[test_indices]
 
-        print(f"Train data shape: {train_data.shape}")
-        print(f"Validation data shape: {val_data.shape}")
-        print(f"Test data shape: {test_data.shape}")
+        print(f"Train data shape: {train_data.shape}, Labels: {train_labels.shape}")
+        print(f"Validation data shape: {val_data.shape}, Labels: {val_labels.shape}")
+        print(f"Test data shape: {test_data.shape}, Labels: {test_labels.shape}")
             
-        trainloader = torch.utils.data.DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
-        valloader = torch.utils.data.DataLoader(val_data, batch_size=self.batch_size, shuffle=False)
-        testloader = torch.utils.data.DataLoader(test_data, batch_size=self.batch_size, shuffle=False)
+        trainloader = torch.utils.data.DataLoader(
+            list(zip(train_data, train_labels)), batch_size=self.batch_size, shuffle=True
+        )
+        valloader = torch.utils.data.DataLoader(
+            list(zip(val_data, val_labels)), batch_size=self.batch_size, shuffle=False
+        )
+        testloader = torch.utils.data.DataLoader(
+            list(zip(test_data, test_labels)), batch_size=self.batch_size, shuffle=False
+        )
 
         if self.training_model == "VAE":
-            return trainloader, valloader, testloader, self.data_min, self.data_max
+            return trainloader, valloader, testloader, self.data_min, self.data_max, all_labels
         elif self.training_model == "MAE":
-            return trainloader, valloader, testloader, self.data_mean, self.data_std
+            return trainloader, valloader, testloader, self.data_mean, self.data_std, all_labels

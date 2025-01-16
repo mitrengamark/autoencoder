@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class Training():
-    def __init__(self, trainloader, valloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size=None, gamma=None, patience=None,
+    def __init__(self, trainloader, valloader, testloader, optimizer, model, labels, num_epochs, device, scheduler, step_size=None, gamma=None, patience=None,
                  warmup_epochs=None, initial_lr=None, max_lr=None, final_lr=None, model_path=None, data_min=None, data_max=None, run=None, data_mean=None, data_std=None, hyperopt=None, tolerance=None):
         self.trainloader = trainloader
         self.testloader = testloader
@@ -38,6 +38,7 @@ class Training():
         self.model_path = model_path
         self.hyperopt = hyperopt
         self.tolerance = tolerance
+        self.labels = labels
 
     def train(self):
         self.model.train()
@@ -52,7 +53,8 @@ class Training():
             train_accuracy = 0
             
             for data in self.trainloader:
-                inputs = data.to(self.device)
+                inputs, _ = data
+                inputs = inputs.to(self.device)
                 if inputs.dim() == 3:
                     inputs = inputs.squeeze(1)
                 elif inputs.dim() != 2:
@@ -120,11 +122,38 @@ class Training():
                 # Használható a latens tér szerkezetének elemzésére, pl. klaszterek vizsgálatára.
                 bottleneck_output_z = z.cpu().detach().numpy() # A mintavételezett tényleges latens értékek.
                                                             # Ez a modell valódi bemenete a decoder számára.
-                visualize_bottleneck(bottleneck_output_z_mean, "VAE", "z_mean")
-                visualize_bottleneck(bottleneck_output_z, "VAE", "z")
+                visualize_bottleneck(bottleneck_output_z_mean, self.labels, "VAE", "z_mean")
+                visualize_bottleneck(bottleneck_output_z, self.labels, "VAE", "z")
             elif isinstance(self.model, MaskedAutoencoder):
                 bottleneck_output = encoded.cpu().detach().numpy()
-                visualize_bottleneck(bottleneck_output, "MAE")
+                visualize_bottleneck(bottleneck_output, self.labels, "MAE")
+
+            if isinstance(self.model, VariationalAutoencoder):
+                with torch.no_grad():
+                    bottleneck_outputs = {label: [] for label in torch.unique(self.labels)}
+                    for data in self.trainloader:
+                        inputs, labels = data
+                        inputs = inputs.to(self.device)
+                        labels = labels.to(self.device)
+                        _, z_mean, _ = self.model.forward(inputs)
+                        for label in torch.unique(labels):
+                            bottleneck_outputs[label.item()].append(z_mean[labels == label])
+                    bottleneck_outputs = {label: torch.cat(outputs, dim=0).cpu().numpy() for label, outputs in bottleneck_outputs.items()}
+                    visualize_bottleneck(bottleneck_outputs, self.labels, "VAE")
+            elif isinstance(self.model, MaskedAutoencoder):
+                # MAE esetén
+                with torch.no_grad():
+                    bottleneck_outputs = {label: [] for label in torch.unique(self.labels)}
+                    for data in self.trainloader:
+                        inputs, labels = data
+                        inputs = inputs.to(self.device)
+                        labels = labels.to(self.device)
+                        _, _, encoded = self.model.forward(inputs)
+                        for label in torch.unique(labels):
+                            bottleneck_outputs[label.item()].append(encoded[labels == label])
+                    bottleneck_outputs = {label: torch.cat(outputs, dim=0).cpu().numpy() for label, outputs in bottleneck_outputs.items()}
+                    visualize_bottleneck(bottleneck_outputs, self.labels, "MAE")
+
 
             self.plot_losses()
 
@@ -134,7 +163,8 @@ class Training():
         val_accuracy = 0
         with torch.no_grad():
             for data in self.valloader:
-                inputs = data.to(self.device)
+                inputs, _ = data
+                inputs = inputs.to(self.device)
                 if isinstance(self.model, VariationalAutoencoder):
                     outputs, z_mean, z_log_var = self.model.forward(inputs)
                     loss, _, _ = self.model.loss(inputs, outputs, z_mean, z_log_var)
@@ -161,7 +191,8 @@ class Training():
         whole_masked_input = []
         with torch.no_grad():
             for data in self.testloader:
-                inputs = data.to(self.device)
+                inputs, _ = data
+                inputs = inputs.to(self.device)
 
                 if isinstance(self.model, VariationalAutoencoder):
                     outputs, z_mean, z_log_var = self.model.forward(inputs)
@@ -200,8 +231,8 @@ class Training():
             denorm_outputs = dp.denormalize(whole_output, self.data_min, self.data_max)
             model_name = "VAE"
             print(f"Denormalized output: {denorm_outputs}")
-            visualize_bottleneck(bottleneck_outputs_z_mean, model_name, "z_mean")
-            visualize_bottleneck(bottleneck_outputs_z, model_name, "z")
+            visualize_bottleneck(bottleneck_outputs_z_mean, self.labels, model_name, "z_mean")
+            visualize_bottleneck(bottleneck_outputs_z, self.labels, model_name, "z")
         elif isinstance(self.model, MaskedAutoencoder):
             bottleneck_outputs = np.vstack(bottleneck_outputs)
             bottleneck_outputs = dp.z_score_denormalize(bottleneck_outputs, self.data_mean, self.data_std)
@@ -211,7 +242,21 @@ class Training():
             print(f"Masked input: {whole_masked_input}")
             print(f"Reconstructed output: {destandardized_outputs}")
             print(f"Reconstructed output shape: {destandardized_outputs.shape}")
-            visualize_bottleneck(bottleneck_outputs, model_name)
+            visualize_bottleneck(bottleneck_outputs, self.labels, model_name)
+
+        if isinstance(self.model, VariationalAutoencoder):
+            with torch.no_grad():
+                bottleneck_outputs_z_mean = {label: [] for label in torch.unique(self.labels)}
+                for data in self.testloader:
+                    inputs, labels = data
+                    inputs = inputs.to(self.device)
+                    labels = labels.to(self.device)
+                    _, z_mean, _ = self.model.forward(inputs)
+                    for label in torch.unique(labels):
+                        bottleneck_outputs_z_mean[label.item()].append(z_mean[labels == label])
+                bottleneck_outputs_z_mean = {label: torch.cat(outputs, dim=0).cpu().numpy() for label, outputs in bottleneck_outputs_z_mean.items()}
+                visualize_bottleneck(bottleneck_outputs_z_mean, self.labels, "VAE")
+
 
         accuracy = reconstruction_accuracy(whole_input, whole_output, self.tolerance)
         print(f"Test Accuracy: {accuracy:.2f}%")
