@@ -34,5 +34,5 @@ class MaskedAutoencoder(nn.Module):
         return reconstructed, masked_input, encoded
 
     def loss(self, input, reconstructed):
-        loss_fn = nn.MSELoss()
+        loss_fn = nn.SmoothL1Loss()
         return loss_fn(input, reconstructed)

@@ -213,5 +213,5 @@ def rename_files(variable):
             print(f"A fájlnévben nincs '_', így nem módosítottam: {file_path}")
     
 
-manouver_names = collect_maoeuver_names()
-# combined_vectors = merge_csv_for_manoeuvres(manouver_names[:1])
+# manouver_names = collect_maoeuver_names()
+# combined_vectors = merge_csv_for_manoeuvres(manouver_names[1:2], save=True)

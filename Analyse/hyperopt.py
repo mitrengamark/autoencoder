@@ -32,7 +32,7 @@ if torch.cuda.is_available():
 dp = DataProcess()
 
 if training_model == "VAE":
-    trainloader, valloader, testloader, data_min, data_max = dp.train_test_split(file_path=file_path)
+    trainloader, valloader, testloader, data_min, data_max = dp.train_test_split(file_path=file_path, batch_size=batch_size)
     data_mean = None
     data_std = None
 elif training_model == "MAE":
@@ -50,10 +50,10 @@ def objective(trial):
     hidden_dim_1 = trial.suggest_categorical("hidden_dim_1", [8, 16, 32])
     beta = trial.suggest_categorical("beta", [0.1, 0.5, 1])
     dropout = trial.suggest_categorical("dropout", [0.1, 0.2, 0.3])
-    scheduler_type = trial.suggest_categorical("scheduler", ["WarmupCosine"])
-    initial_lr = trial.suggest_categorical("initial_lr", [1e-3, 1e-4, 1e-5])
-    max_lr = trial.suggest_categorical("max_lr", [1e-2, 1e-3, 1e-4])
-    final_lr = trial.suggest_categorical("final_lr", [1e-4, 1e-5, 1e-6])
+    scheduler_type = trial.suggest_categorical("scheduler", ["ReduceLROnPlateau"])
+    # initial_lr = trial.suggest_categorical("initial_lr", [1e-3, 1e-4, 1e-5])
+    # max_lr = trial.suggest_categorical("max_lr", [1e-2, 1e-3, 1e-4])
+    # final_lr = trial.suggest_categorical("final_lr", [1e-4, 1e-5, 1e-6])
     batch_size = trial.suggest_categorical("batch_size", [16, 32, 64, 128, 256, 512])
     optimizer_type = trial.suggest_categorical("optimizer", ['SGD', 'Adam', 'AdamW', 'Adagrad', 'RMSprop'])
     # gamma = trial.suggest_categorical("gamma", [0.5, 0.75, 0.9])

@@ -78,17 +78,17 @@ if torch.cuda.is_available():
 dp = DataProcess()
 
 if training_model == "VAE":
-    trainloader, valloader, testloader, data_min, data_max = dp.train_test_split(file_path=file_path)
+    trainloader, valloader, testloader, data_min, data_max, labels = dp.train_test_split(file_path=file_path)
     data_mean = None
     data_std = None
 elif training_model == "MAE":
-    trainloader, valloader, testloader, data_mean, data_std = dp.train_test_split(file_path=file_path)
+    trainloader, valloader, testloader, data_mean, data_std, labels = dp.train_test_split(file_path=file_path)
     data_min = None
     data_max = None
 else:
     raise ValueError(f"Unsupported model type. Expected VAE or MAE!")
 
-train_input_dim = trainloader.dataset[0].shape[0]
+train_input_dim = trainloader.dataset[0][0].shape[0]
 print(f"Train input dim: {train_input_dim}")
 
 if training_model == "VAE":
@@ -100,7 +100,7 @@ else:
 
 model_params = model.parameters()
 optimizer = optimizer_maker(opt_name, model_params)
-training = Training(trainloader, valloader, testloader, optimizer, model, num_epochs, device, scheduler, step_size, gamma, patience,
+training = Training(trainloader, valloader, testloader, optimizer, model, labels, num_epochs, device, scheduler, step_size, gamma, patience,
                     warmup_epochs, initial_lr, max_lr, final_lr, saved_model, run=run, data_min=data_min, data_max=data_max, data_mean=data_mean, data_std=data_std, hyperopt=hyperopt, tolerance=tolerance)
 
 if test_mode == 0:
