@@ -20,6 +20,11 @@ class DataProcess:
         self.training_model = config.get('Model', 'training_model')
         self.data_dir = config.get('Data', 'data_dir')
         self.file_paths = [os.path.join(self.data_dir, file) for file in os.listdir(self.data_dir) if file.endswith('.csv')]
+        num_manoeuvres = int(config['Data']['num_manoeuvres'])
+
+        # Csak az első 2 fájlt tartjuk meg:
+        self.file_paths = self.file_paths[:num_manoeuvres]
+
         self.labels = [os.path.splitext(os.path.basename(file))[0] for file in self.file_paths]
 
         print("File paths:", self.file_paths)
