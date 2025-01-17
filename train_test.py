@@ -115,44 +115,53 @@ class Training():
             self.run.stop()
 
         if self.hyperopt == 0:
-            if isinstance(self.model, VariationalAutoencoder):
-                z = self.model.reparameterize(z_mean, z_log_var)
-                # plot_latent_space(z_mean, z_log_var, epoch)
-                bottleneck_output_z_mean = z_mean.cpu().detach().numpy() # A latens térben lévő átlagok.
-                # Használható a latens tér szerkezetének elemzésére, pl. klaszterek vizsgálatára.
-                bottleneck_output_z = z.cpu().detach().numpy() # A mintavételezett tényleges latens értékek.
-                                                            # Ez a modell valódi bemenete a decoder számára.
-                visualize_bottleneck(bottleneck_output_z_mean, self.labels, "VAE", "z_mean")
-                visualize_bottleneck(bottleneck_output_z, self.labels, "VAE", "z")
-            elif isinstance(self.model, MaskedAutoencoder):
-                bottleneck_output = encoded.cpu().detach().numpy()
-                visualize_bottleneck(bottleneck_output, self.labels, "MAE")
+            # if isinstance(self.model, VariationalAutoencoder):
+            #     z = self.model.reparameterize(z_mean, z_log_var)
+            #     # plot_latent_space(z_mean, z_log_var, epoch)
+            #     bottleneck_output_z_mean = z_mean.cpu().detach().numpy() # A latens térben lévő átlagok.
+            #     # Használható a latens tér szerkezetének elemzésére, pl. klaszterek vizsgálatára.
+            #     bottleneck_output_z = z.cpu().detach().numpy() # A mintavételezett tényleges latens értékek.
+            #                                                 # Ez a modell valódi bemenete a decoder számára.
+            #     visualize_bottleneck(bottleneck_output_z_mean, self.labels, "VAE", "z_mean")
+            #     visualize_bottleneck(bottleneck_output_z, self.labels, "VAE", "z")
+            # elif isinstance(self.model, MaskedAutoencoder):
+            #     bottleneck_output = encoded.cpu().detach().numpy()
+            #     visualize_bottleneck(bottleneck_output, self.labels, "MAE")
 
+            bottleneck_outputs = []
+            labels_list = []
             if isinstance(self.model, VariationalAutoencoder):
                 with torch.no_grad():
-                    bottleneck_outputs = {label: [] for label in torch.unique(self.labels)}
                     for data in self.trainloader:
-                        inputs, labels = data
+                        inputs, batch_labels = data
                         inputs = inputs.to(self.device)
-                        labels = labels.to(self.device)
+                        batch_labels = batch_labels.to(self.device)
+
                         _, z_mean, _ = self.model.forward(inputs)
-                        for label in torch.unique(labels):
-                            bottleneck_outputs[label.item()].append(z_mean[labels == label])
-                    bottleneck_outputs = {label: torch.cat(outputs, dim=0).cpu().numpy() for label, outputs in bottleneck_outputs.items()}
-                    visualize_bottleneck(bottleneck_outputs, self.labels, "VAE")
+                        bottleneck_outputs.append(z_mean.cpu())
+                        labels_list.append(batch_labels.cpu())
+
+                # Egyesítjük a batchek kimenetét
+                bottleneck_outputs = torch.cat(bottleneck_outputs, dim=0).numpy()
+                labels = torch.cat(labels_list, dim=0).numpy()
+
+                visualize_bottleneck(bottleneck_outputs, labels, "VAE")
             elif isinstance(self.model, MaskedAutoencoder):
-                # MAE esetén
                 with torch.no_grad():
-                    bottleneck_outputs = {label: [] for label in torch.unique(self.labels)}
                     for data in self.trainloader:
-                        inputs, labels = data
+                        inputs, batch_labels = data
                         inputs = inputs.to(self.device)
-                        labels = labels.to(self.device)
+                        batch_labels = batch_labels.to(self.device)
+
                         _, _, encoded = self.model.forward(inputs)
-                        for label in torch.unique(labels):
-                            bottleneck_outputs[label.item()].append(encoded[labels == label])
-                    bottleneck_outputs = {label: torch.cat(outputs, dim=0).cpu().numpy() for label, outputs in bottleneck_outputs.items()}
-                    visualize_bottleneck(bottleneck_outputs, self.labels, "MAE")
+                        bottleneck_outputs.append(encoded.cpu())
+                        labels_list.append(batch_labels.cpu())
+
+                # Egyesítjük a batchek kimenetét
+                bottleneck_outputs = torch.cat(bottleneck_outputs, dim=0).numpy()
+                labels = torch.cat(labels_list, dim=0).numpy()
+
+                visualize_bottleneck(bottleneck_outputs, labels, "MAE")
 
 
             self.plot_losses()

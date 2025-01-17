@@ -16,6 +16,8 @@ def visualize_bottleneck(bottleneck_outputs, labels, model_name, bottleneck_type
     :param model_name: A modell neve (pl. "VAE" vagy "MAE").
     :param bottleneck_type: A bottleneck típusa (pl. "z_mean", "z") - csak VAE esetén.
     """
+    assert len(bottleneck_outputs) == len(labels), "A bottleneck kimenetek és a címkék mérete nem egyezik!"
+
     # Címképzés dinamikusan
     if model_name == "VAE":
         pca_title = f"PCA - {model_name} Bottleneck ({bottleneck_type})"
@@ -43,6 +45,9 @@ def visualize_with_pca(data, labels, title="PCA Visualization"):
     :param labels: Az egyes mintákhoz tartozó címkék (list vagy numpy array).
     :param title: A grafikon címe.
     """
+    print(f"Data shape: {data.shape}, Labels shape: {labels.shape}")
+    assert data.shape[0] == labels.shape[0], "Data és Labels mérete nem egyezik!"
+
     pca = PCA(n_components=2)
     reduced_data = pca.fit_transform(data)
 
@@ -50,14 +55,19 @@ def visualize_with_pca(data, labels, title="PCA Visualization"):
     unique_labels = np.unique(labels)
     colors = cm.get_cmap("tab10", len(unique_labels))
 
+    # Címkék szerinti szétválasztás
     for i, label in enumerate(unique_labels):
-        mask = labels == label
+        mask = labels == label  # Boolean maszk
         label_data = reduced_data[mask]
-        alphas = np.linspace(0.1, 1.0, label_data.shape[0])  # Alpha értékek lineárisan növekednek
-        for j in range(label_data.shape[0]):
+        alphas = np.linspace(0.1, 1.0, len(label_data))  # Alpha értékek lineárisan növekednek
+        for j in range(len(label_data)):
             plt.scatter(label_data[j, 0], label_data[j, 1], label=f"Manoeuvre {label}" if j == 0 else "",
                         color=colors(i), alpha=alphas[j])
     
+    handles, _ = plt.gca().get_legend_handles_labels()
+    for handle in handles:
+        handle.set_alpha(1.0)  # Legendben alpha érték kikapcsolása
+        
     plt.title(title)
     plt.xlabel("Főkomponens 1")
     plt.ylabel("Főkomponens 2")
