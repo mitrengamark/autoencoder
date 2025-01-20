@@ -6,13 +6,17 @@ class MaskedAutoencoder(nn.Module):
     def __init__(self, input_dim, mask_ratio):
         super(MaskedAutoencoder, self).__init__()
         self.mask_ratio = mask_ratio
-        self.self_attention = SelfAttention(input_dim)
-        self.decoder_self_attention = SelfAttention(input_dim)
-        self.reconstruction_layer = nn.Linear(input_dim, input_dim)
-        self.positional_encoding = nn.Parameter(torch.randn(1, input_dim)) 
+        self.self_attention = SelfAttention(input_dim, num_heads=4)
+        self.decoder_self_attention = SelfAttention(input_dim, num_heads=4)
+        self.positional_encoding = PositionalEncoding(input_dim)
+        self.reconstruction_layer = nn.Sequential(
+            nn.Dropout(0.1),
+            nn.Linear(input_dim, input_dim)
+        )
 
     def masking(self, x):
-        mask = torch.rand_like(x) > self.mask_ratio
+        dynamic_mask_ratio = torch.rand(1).item() * self.mask_ratio
+        mask = torch.rand_like(x) > dynamic_mask_ratio
         masked_input = x * mask
         return masked_input, mask
 
@@ -22,7 +26,7 @@ class MaskedAutoencoder(nn.Module):
         return encoded, mask, masked_input
 
     def decoder(self, encoded, mask, original_input):
-        encoded += self.positional_encoding
+        encoded = self.positional_encoding(encoded)
         decoded = self.decoder_self_attention(encoded)
         reconstructed = self.reconstruction_layer(decoded)
         reconstructed_input = torch.where(mask, original_input, reconstructed)
@@ -36,3 +40,17 @@ class MaskedAutoencoder(nn.Module):
     def loss(self, input, reconstructed):
         loss_fn = nn.SmoothL1Loss()
         return loss_fn(input, reconstructed)
+    
+
+class PositionalEncoding(nn.Module):
+    def __init__(self, input_dim, max_len=5000):
+        super(PositionalEncoding, self).__init__()
+        pe = torch.zeros(max_len, input_dim)
+        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, input_dim, 2).float() * (-torch.log(torch.tensor(10000.0)) / input_dim))
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        self.register_buffer('pe', pe.unsqueeze(0))
+
+    def forward(self, x):
+        return x + self.pe[:, :x.size(1)]

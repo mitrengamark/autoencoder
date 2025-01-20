@@ -5,34 +5,42 @@ import torch.utils.data
 
 
 class VariationalAutoencoder(nn.Module):
-    def __init__(self, input_dim, latent_dim, hidden_dim_0, hidden_dim_1, beta, dropout):
+    def __init__(self, input_dim, latent_dim, hidden_dims, dropout):
+        """
+        :param input_dim: Bemeneti dimenziók száma.
+        :param latent_dim: Latens tér dimenziója.
+        :param hidden_dims: A rejtett rétegek méreteit tartalmazó lista.
+        :param dropout: Dropout arány.
+        """
         super(VariationalAutoencoder, self).__init__()
         self.input_dim = input_dim
-        self.hidden_dim_0 = hidden_dim_0
-        self.hidden_dim_1 = hidden_dim_1
+        self.hidden_dims = hidden_dims
         self.latent_dim = latent_dim
-        self.beta = beta
         self.dropout = dropout
 
-        self.shared_encoder = nn.Sequential(nn.Linear(self.input_dim, self.hidden_dim_0),
-                                     nn.ReLU(),
-                                     nn.Dropout(self.dropout),
-                                     nn.Linear(self.hidden_dim_0,self.hidden_dim_1),
-                                     nn.ReLU(),
-                                     nn.Dropout(self.dropout))
-        
-        self.encoder_mu = nn.Sequential(
-            nn.Linear(self.hidden_dim_1, self.latent_dim))
-        
-        self.encoder_logvar = nn.Sequential(
-            nn.Linear(self.hidden_dim_1, self.latent_dim))
+        # Encoder
+        encoder_layers = []
+        prev_dim = self.input_dim
+        for h_dim in self.hidden_dims:
+            encoder_layers.append(nn.Linear(prev_dim, h_dim))
+            encoder_layers.append(nn.ReLU())
+            encoder_layers.append(nn.Dropout(self.dropout))
+            prev_dim = h_dim
+        self.shared_encoder = nn.Sequential(*encoder_layers)
 
-        self.decoder = nn.Sequential(nn.Linear(self.latent_dim, self.hidden_dim_1),
-                                     nn.ReLU(),
-                                     nn.Linear(self.hidden_dim_1, self.hidden_dim_0),
-                                     nn.ReLU(),
-                                     nn.Linear(self.hidden_dim_0, self.input_dim),
-                                     nn.Sigmoid())
+        self.encoder_mu = nn.Linear(self.hidden_dims[-1], self.latent_dim)
+        self.encoder_logvar = nn.Linear(self.hidden_dims[-1], self.latent_dim)
+
+        # Decoder
+        decoder_layers = []
+        prev_dim = self.latent_dim
+        for h_dim in reversed(self.hidden_dims):
+            decoder_layers.append(nn.Linear(prev_dim, h_dim))
+            decoder_layers.append(nn.ReLU())
+            prev_dim = h_dim
+        decoder_layers.append(nn.Linear(self.hidden_dims[0], self.input_dim))
+        decoder_layers.append(nn.Sigmoid())
+        self.decoder = nn.Sequential(*decoder_layers)
         
 
     def encode(self, x):
@@ -57,8 +65,8 @@ class VariationalAutoencoder(nn.Module):
         x_ = self.decode(z)
         return x_, z_mean, z_log_var
 
-    def loss(self, x, x_, z_mean, z_log_var):
+    def loss(self, x, x_, z_mean, z_log_var, beta):
         reconst_loss = F.mse_loss(x_, x, reduction='sum')
         kl_div = -0.5 * torch.sum(1 + z_log_var - z_mean.pow(2) - z_log_var.exp())
-        loss = reconst_loss + self.beta * kl_div
-        return loss, reconst_loss, self.beta * kl_div
+        loss = reconst_loss + beta * kl_div
+        return loss, reconst_loss, beta * kl_div

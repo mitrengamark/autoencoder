@@ -175,18 +175,26 @@ class DataProcess:
         print(f"Train data shape: {train_data.shape}, Labels: {train_labels.shape}")
         print(f"Validation data shape: {val_data.shape}, Labels: {val_labels.shape}")
         print(f"Test data shape: {test_data.shape}, Labels: {test_labels.shape}")
+
+        rest_data = train_data.shape[0] % self.batch_size
+        rest_data_procent = (rest_data / self.batch_size) * 100
+
+        if rest_data_procent >= 70:
+            drop_last = False
+        else:
+            drop_last = True
             
         trainloader = torch.utils.data.DataLoader(
-            list(zip(train_data, train_labels)), batch_size=self.batch_size, shuffle=True
+            list(zip(train_data, train_labels)), batch_size=self.batch_size, shuffle=True, drop_last=drop_last
         )
         valloader = torch.utils.data.DataLoader(
-            list(zip(val_data, val_labels)), batch_size=self.batch_size, shuffle=False
+            list(zip(val_data, val_labels)), batch_size=self.batch_size, shuffle=False, drop_last=drop_last
         )
         testloader = torch.utils.data.DataLoader(
-            list(zip(test_data, test_labels)), batch_size=self.batch_size, shuffle=False
+            list(zip(test_data, test_labels)), batch_size=self.batch_size, shuffle=False, drop_last=drop_last
         )
 
         if self.training_model == "VAE":
             return trainloader, valloader, testloader, self.data_min, self.data_max, all_labels
         elif self.training_model == "MAE":
-            return trainloader, valloader, testloader, self.data_mean, self.data_std, all_labels
+            return trainloader, valloader, testloader, self.data_mean, self.data_std, all_labels # self.data_mean, self.data_std,

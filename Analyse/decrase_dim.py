@@ -28,14 +28,14 @@ def visualize_bottleneck(bottleneck_outputs, labels, model_name, bottleneck_type
         lda_title = f"LDA - {model_name} Bottleneck"
         tsne_title = f"T-SNE - {model_name} Bottleneck"
 
-    print("PCA Visualization:")
-    visualize_with_pca(bottleneck_outputs, labels=labels, title=pca_title)
+    # print("PCA Visualization:")
+    # visualize_with_pca(bottleneck_outputs, labels=labels, title=pca_title)
 
-    print("LDA Visualization:")
-    visualize_with_lda(bottleneck_outputs, labels=labels, title=lda_title)
+    # print("LDA Visualization:")
+    # visualize_with_lda(bottleneck_outputs, labels=labels, title=lda_title)
     
-    print("T-SNE Visualization:")
-    visualize_with_tsne(bottleneck_outputs, labels=labels, title=tsne_title)
+    # print("T-SNE Visualization:")
+    # visualize_with_tsne(bottleneck_outputs, labels=labels, title=tsne_title)
 
 def visualize_with_pca(data, labels, title="PCA Visualization"):
     """
