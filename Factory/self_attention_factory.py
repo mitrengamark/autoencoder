@@ -3,7 +3,7 @@ import torch.nn as nn
 
 
 class SelfAttention(nn.Module):
-    def __init__(self, input_dim, num_heads=4, dropout=0.1, max_len=5000):
+    def __init__(self, input_dim, num_heads, dropout, max_len=5000):
         super(SelfAttention, self).__init__()
         self.multi_head_attention = nn.MultiheadAttention(embed_dim=input_dim, num_heads=num_heads, dropout=dropout)
         self.positional_encoding = self.create_positional_encoding(input_dim, max_len)
@@ -28,9 +28,11 @@ class SelfAttention(nn.Module):
         # attention = attention / torch.sqrt(torch.tensor(query.size(-1), dtype=torch.float32))
         # attention = torch.softmax(attention, dim=-1)
         # output = torch.matmul(attention, value)
+
         if x.dim() == 2:
             x = x.unsqueeze(1)
         x = x + self.positional_encoding[:, :x.size(0), :].to(x.device)
         output, _ = self.multi_head_attention(x, x, x)
         output = self.output_layer(output)  # Kimenet tovább transzformálása
-        return output.squeeze(1)
+        output = output.squeeze(1)
+        return output

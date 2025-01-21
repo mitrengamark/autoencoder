@@ -13,6 +13,7 @@ class DataProcess:
         config = configparser.ConfigParser()
         config.read('config.ini')
 
+        self.num_workers = int(config['Data']['num_workers'])
         self.batch_size = int(config['Hyperparameters']['batch_size'])
         self.train_size = float(config['Data']['train_size'])
         self.val_size = float(config['Data']['val_size'])
@@ -185,13 +186,13 @@ class DataProcess:
             drop_last = True
             
         trainloader = torch.utils.data.DataLoader(
-            list(zip(train_data, train_labels)), batch_size=self.batch_size, shuffle=True, drop_last=drop_last
+            list(zip(train_data, train_labels)), batch_size=self.batch_size, shuffle=False, drop_last=drop_last, num_workers=self.num_workers
         )
         valloader = torch.utils.data.DataLoader(
-            list(zip(val_data, val_labels)), batch_size=self.batch_size, shuffle=False, drop_last=drop_last
+            list(zip(val_data, val_labels)), batch_size=self.batch_size, shuffle=False, drop_last=drop_last, num_workers=self.num_workers
         )
         testloader = torch.utils.data.DataLoader(
-            list(zip(test_data, test_labels)), batch_size=self.batch_size, shuffle=False, drop_last=drop_last
+            list(zip(test_data, test_labels)), batch_size=self.batch_size, shuffle=False, drop_last=drop_last, num_workers=self.num_workers
         )
 
         if self.training_model == "VAE":

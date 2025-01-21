@@ -7,7 +7,7 @@ from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.manifold import TSNE
     
-def visualize_bottleneck(bottleneck_outputs, labels, model_name, bottleneck_type=None):
+def visualize_bottleneck(bottleneck_outputs, labels, model_name, test_mode, bottleneck_type=None):
     """
     Vizualizálja a bottleneck kimeneteket PCA vagy T-SNE segítségével.
 
@@ -28,14 +28,15 @@ def visualize_bottleneck(bottleneck_outputs, labels, model_name, bottleneck_type
         lda_title = f"LDA - {model_name} Bottleneck"
         tsne_title = f"T-SNE - {model_name} Bottleneck"
 
-    # print("PCA Visualization:")
-    # visualize_with_pca(bottleneck_outputs, labels=labels, title=pca_title)
+    if test_mode == 1:
+        print("PCA Visualization:")
+        visualize_with_pca(bottleneck_outputs, labels=labels, title=pca_title)
 
-    # print("LDA Visualization:")
-    # visualize_with_lda(bottleneck_outputs, labels=labels, title=lda_title)
-    
-    # print("T-SNE Visualization:")
-    # visualize_with_tsne(bottleneck_outputs, labels=labels, title=tsne_title)
+        print("LDA Visualization:")
+        visualize_with_lda(bottleneck_outputs, labels=labels, title=lda_title)
+        
+        print("T-SNE Visualization:")
+        visualize_with_tsne(bottleneck_outputs, labels=labels, title=tsne_title)
 
 def visualize_with_pca(data, labels, title="PCA Visualization"):
     """

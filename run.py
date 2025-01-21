@@ -16,6 +16,7 @@ config = configparser.ConfigParser()
 config.read('config.ini')
 
 latent_dim = int(config['Dims']['latent_dim'])
+bottleneck_dim = int(config['Dims']['bottleneck_dim'])
 hidden_dims_str = config.get('Dims', 'hidden_dims')
 hidden_dims = [int(dim) for dim in hidden_dims_str.strip('[]').split(', ')]
 initial_lr = float(config['Hyperparameters']['initial_lr'])
@@ -26,6 +27,7 @@ beta_min = 1 / float(config['Hyperparameters']['beta_min'])
 seed = int(config['Data']['seed'])
 training_model = config.get('Model', 'training_model')
 mask_ratio = float(config['Hyperparameters']['mask_ratio'])
+num_heads = int(config['Hyperparameters']['num_heads'])
 save_model = int(config['Model']['save_model'])
 project_name = config.get('Callbacks', 'neptune_project')
 api_token = config.get('Callbacks', 'neptune_token')
@@ -91,13 +93,13 @@ print(f"Train input dim: {train_input_dim}")
 if training_model == "VAE":
     model = VariationalAutoencoder(train_input_dim, latent_dim, hidden_dims, dropout).to(device)
 elif training_model == "MAE":
-    model = MaskedAutoencoder(train_input_dim, mask_ratio).to(device)
+    model = MaskedAutoencoder(train_input_dim, bottleneck_dim, mask_ratio, num_heads, dropout).to(device)
 else:
     raise ValueError(f"Unsupported model type. Expected VAE or MAE!")
 
 model_params = model.parameters()
 optimizer = optimizer_maker(opt_name, model_params, initial_lr)
-training = Training(trainloader, valloader, testloader, optimizer, model, labels, num_epochs, device, scheduler, beta_min, step_size, gamma, patience,
+training = Training(trainloader, valloader, testloader, test_mode, optimizer, model, labels, num_epochs, device, scheduler, beta_min, step_size, gamma, patience,
                     warmup_epochs, initial_lr, max_lr, final_lr, saved_model, run=run, data_min=data_min, data_max=data_max, data_mean=data_mean, data_std=data_std, hyperopt=hyperopt, tolerance=tolerance)
 
 if test_mode == 0:

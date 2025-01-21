@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class Training():
-    def __init__(self, trainloader, valloader, testloader, optimizer, model, labels, num_epochs, device, scheduler, beta_min, step_size=None, gamma=None, patience=None,
+    def __init__(self, trainloader, valloader, testloader, test_mode, optimizer, model, labels, num_epochs, device, scheduler, beta_min, step_size=None, gamma=None, patience=None,
                  warmup_epochs=None, initial_lr=None, max_lr=None, final_lr=None, model_path=None, data_min=None, data_max=None, run=None, data_mean=None, data_std=None, hyperopt=None, tolerance=None):
         self.trainloader = trainloader
         self.testloader = testloader
@@ -41,6 +41,7 @@ class Training():
         self.labels = labels
         self.beta_min = beta_min
         self.beta = 0
+        self.test_mode = test_mode
 
     def train(self):
         self.model.train()
@@ -166,7 +167,7 @@ class Training():
                 bottleneck_outputs = torch.cat(padded_outputs, dim=0).numpy()
                 labels = torch.cat(labels_list, dim=0).numpy()
 
-                visualize_bottleneck(bottleneck_outputs, labels, "VAE")
+                visualize_bottleneck(bottleneck_outputs, labels, "VAE", self.test_mode)
             elif isinstance(self.model, MaskedAutoencoder):
                 with torch.no_grad():
                     for data in self.trainloader:
@@ -193,10 +194,11 @@ class Training():
                         padded_outputs.append(output)
 
                 # Egyesítjük a batchek kimenetét
-                bottleneck_outputs = torch.cat(padded_outputs, dim=0).numpy()
+                bottleneck_outputs = torch.cat(padded_outputs, dim=0)
                 labels = torch.cat(labels_list, dim=0).numpy()
 
-                visualize_bottleneck(bottleneck_outputs, labels, "MAE")
+                bottleneck_outputs_flattened = bottleneck_outputs.mean(dim=1).numpy()
+                visualize_bottleneck(bottleneck_outputs_flattened, labels, "MAE", self.test_mode)
 
             self.plot_losses()
 
@@ -262,7 +264,7 @@ class Training():
                 whole_input.append(inputs.cpu().detach().numpy())
                 whole_output.append(outputs.cpu().detach().numpy())
 
-        bottleneck_outputs = torch.cat(bottleneck_outputs, dim=0).numpy()
+        bottleneck_outputs = torch.cat(bottleneck_outputs, dim=0)
         labels = torch.cat(labels_list, dim=0).numpy()
         whole_input = np.vstack(whole_input)
         whole_output = np.vstack(whole_output)
@@ -294,9 +296,11 @@ class Training():
 
         # Vizualizáció
         if isinstance(self.model, VariationalAutoencoder):
-            visualize_bottleneck(bottleneck_outputs, labels, "VAE")
+            bottleneck_outputs.numpy()
+            visualize_bottleneck(bottleneck_outputs, labels, "VAE", self.test_mode)
         elif isinstance(self.model, MaskedAutoencoder):
-            visualize_bottleneck(bottleneck_outputs, labels, "MAE")
+            bottleneck_outputs_flattened = bottleneck_outputs.mean(dim=1).numpy()
+            visualize_bottleneck(bottleneck_outputs_flattened, labels, "MAE", self.test_mode)
 
 
         accuracy = reconstruction_accuracy(whole_input, whole_output, self.tolerance)

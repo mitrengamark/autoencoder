@@ -3,14 +3,24 @@ import torch.nn as nn
 from Factory.self_attention_factory import SelfAttention
 
 class MaskedAutoencoder(nn.Module):
-    def __init__(self, input_dim, mask_ratio):
+    def __init__(self, input_dim, bottleneck_dim, mask_ratio, num_heads, dropout):
         super(MaskedAutoencoder, self).__init__()
         self.mask_ratio = mask_ratio
-        self.self_attention = SelfAttention(input_dim, num_heads=4)
-        self.decoder_self_attention = SelfAttention(input_dim, num_heads=4)
+        self.bottleneck_dim = bottleneck_dim
+        self.self_attention = SelfAttention(input_dim, num_heads, dropout)
+        self.encoder_bottleneck = nn.Sequential(
+            nn.Dropout(dropout),
+            nn.Linear(input_dim, bottleneck_dim),
+            nn.ReLU()
+        )
+        self.decoder_bottleneck = nn.Sequential(
+            nn.Linear(bottleneck_dim, input_dim),
+            nn.ReLU()
+        )
+        self.decoder_self_attention = SelfAttention(input_dim, num_heads, dropout)
         self.positional_encoding = PositionalEncoding(input_dim)
         self.reconstruction_layer = nn.Sequential(
-            nn.Dropout(0.1),
+            nn.Dropout(dropout),
             nn.Linear(input_dim, input_dim)
         )
 
@@ -22,20 +32,22 @@ class MaskedAutoencoder(nn.Module):
 
     def encoder(self, x):
         masked_input, mask = self.masking(x)
-        encoded = self.self_attention(masked_input)
-        return encoded, mask, masked_input
+        encoded = self.self_attention(masked_input, )
+        bottleneck_output = self.encoder_bottleneck(encoded)  # Dimenziócsökkentés
+        return bottleneck_output, mask, masked_input
 
-    def decoder(self, encoded, mask, original_input):
-        encoded = self.positional_encoding(encoded)
-        decoded = self.decoder_self_attention(encoded)
+    def decoder(self, bottleneck_output, mask, original_input):
+        expanded_output = self.decoder_bottleneck(bottleneck_output)  # Dimenzió visszaállítása
+        expanded_output = self.positional_encoding(expanded_output)
+        decoded = self.decoder_self_attention(expanded_output)
         reconstructed = self.reconstruction_layer(decoded)
         reconstructed_input = torch.where(mask, original_input, reconstructed)
         return reconstructed_input
 
     def forward(self, x):
-        encoded, mask, masked_input = self.encoder(x)
-        reconstructed = self.decoder(encoded, mask, x)
-        return reconstructed, masked_input, encoded
+        bottleneck_output, mask, masked_input = self.encoder(x)
+        reconstructed = self.decoder(bottleneck_output, mask, x)
+        return reconstructed, masked_input, bottleneck_output
 
     def loss(self, input, reconstructed):
         loss_fn = nn.SmoothL1Loss()
