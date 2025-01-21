@@ -8,15 +8,15 @@ class MaskedAutoencoder(nn.Module):
         self.mask_ratio = mask_ratio
         self.bottleneck_dim = bottleneck_dim
         self.self_attention = SelfAttention(input_dim, num_heads, dropout)
-        self.encoder_bottleneck = nn.Sequential(
-            nn.Dropout(dropout),
-            nn.Linear(input_dim, bottleneck_dim),
-            nn.ReLU()
-        )
-        self.decoder_bottleneck = nn.Sequential(
-            nn.Linear(bottleneck_dim, input_dim),
-            nn.ReLU()
-        )
+        # self.encoder_bottleneck = nn.Sequential(
+        #     nn.Dropout(dropout),
+        #     nn.Linear(input_dim, bottleneck_dim),
+        #     nn.ReLU()
+        # )
+        # self.decoder_bottleneck = nn.Sequential(
+        #     nn.Linear(bottleneck_dim, input_dim),
+        #     nn.ReLU()
+        # )
         self.decoder_self_attention = SelfAttention(input_dim, num_heads, dropout)
         self.positional_encoding = PositionalEncoding(input_dim)
         self.reconstruction_layer = nn.Sequential(
@@ -33,12 +33,12 @@ class MaskedAutoencoder(nn.Module):
     def encoder(self, x):
         masked_input, mask = self.masking(x)
         encoded = self.self_attention(masked_input, )
-        bottleneck_output = self.encoder_bottleneck(encoded)  # Dimenziócsökkentés
-        return bottleneck_output, mask, masked_input
+        # bottleneck_output = self.encoder_bottleneck(encoded)  # Dimenziócsökkentés
+        return encoded, mask, masked_input
 
-    def decoder(self, bottleneck_output, mask, original_input):
-        expanded_output = self.decoder_bottleneck(bottleneck_output)  # Dimenzió visszaállítása
-        expanded_output = self.positional_encoding(expanded_output)
+    def decoder(self, encoded, mask, original_input):
+        # expanded_output = self.decoder_bottleneck(bottleneck_output)  # Dimenzió visszaállítása
+        expanded_output = self.positional_encoding(encoded)
         decoded = self.decoder_self_attention(expanded_output)
         reconstructed = self.reconstruction_layer(decoded)
         reconstructed_input = torch.where(mask, original_input, reconstructed)

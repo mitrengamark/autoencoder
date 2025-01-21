@@ -1,6 +1,6 @@
 import torch
 
-def optimizer_maker(optimizer_type, model_params, lr):
+def optimizer_maker(optimizer_type, model_params, lr, scheduler):
     """
     Creates a PyTorch optimizer based on the specified type.
 
@@ -11,6 +11,9 @@ def optimizer_maker(optimizer_type, model_params, lr):
     Returns:
     - optimizer: The instantiated optimizer.
     """
+    if scheduler == "WarmupCosine":
+        lr = 1
+
     if optimizer_type == 'SGD':
         optimizer = torch.optim.SGD(model_params, lr)
     elif optimizer_type == 'Adam':

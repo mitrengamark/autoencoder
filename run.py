@@ -98,7 +98,7 @@ else:
     raise ValueError(f"Unsupported model type. Expected VAE or MAE!")
 
 model_params = model.parameters()
-optimizer = optimizer_maker(opt_name, model_params, initial_lr)
+optimizer = optimizer_maker(opt_name, model_params, initial_lr, scheduler)
 training = Training(trainloader, valloader, testloader, test_mode, optimizer, model, labels, num_epochs, device, scheduler, beta_min, step_size, gamma, patience,
                     warmup_epochs, initial_lr, max_lr, final_lr, saved_model, run=run, data_min=data_min, data_max=data_max, data_mean=data_mean, data_std=data_std, hyperopt=hyperopt, tolerance=tolerance)
 
