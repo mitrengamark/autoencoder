@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class Training():
-    def __init__(self, trainloader, valloader, testloader, optimizer, model, labels, num_epochs, device, scheduler, step_size=None, gamma=None, patience=None,
+    def __init__(self, trainloader, valloader, testloader, optimizer, model, labels, num_epochs, device, scheduler, beta_min, step_size=None, gamma=None, patience=None,
                  warmup_epochs=None, initial_lr=None, max_lr=None, final_lr=None, model_path=None, data_min=None, data_max=None, run=None, data_mean=None, data_std=None, hyperopt=None, tolerance=None):
         self.trainloader = trainloader
         self.testloader = testloader
@@ -39,6 +39,8 @@ class Training():
         self.hyperopt = hyperopt
         self.tolerance = tolerance
         self.labels = labels
+        self.beta_min = beta_min
+        self.beta = 0
 
     def train(self):
         self.model.train()
@@ -51,6 +53,9 @@ class Training():
             reconst_loss_per_epoch = 0
             kl_loss_per_epoch = 0
             train_accuracy = 0
+            self.beta = min(1.0, epoch / self.beta_min)
+            if epoch == 0:
+                self.beta = 1 / self.beta_min
             
             for data in self.trainloader:
                 inputs, _ = data
@@ -62,7 +67,7 @@ class Training():
                                 
                 if isinstance(self.model, VariationalAutoencoder):
                     outputs, z_mean, z_log_var = self.model.forward(inputs)
-                    loss, reconst_loss, kl_div = self.model.loss(inputs, outputs, z_mean, z_log_var)
+                    loss, reconst_loss, kl_div = self.model.loss(inputs, outputs, z_mean, z_log_var, self.beta)
                     reconst_loss_per_epoch += reconst_loss.item()
                     kl_loss_per_epoch += kl_div.item()
                 elif isinstance(self.model, MaskedAutoencoder):
@@ -76,6 +81,7 @@ class Training():
 
                 self.optimizer.zero_grad()
                 loss.backward()
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
                 self.optimizer.step()
                 loss_per_episode += loss.item()
                 
@@ -130,6 +136,7 @@ class Training():
 
             bottleneck_outputs = []
             labels_list = []
+            max_dim = None
             if isinstance(self.model, VariationalAutoencoder):
                 with torch.no_grad():
                     for data in self.trainloader:
@@ -138,11 +145,25 @@ class Training():
                         batch_labels = batch_labels.to(self.device)
 
                         _, z_mean, _ = self.model.forward(inputs)
+                        if max_dim is None:
+                            max_dim = z_mean.size(1)
+                        elif z_mean.size(1) != max_dim:
+                            max_dim = max(max_dim, z_mean.size(1))
+
                         bottleneck_outputs.append(z_mean.cpu())
                         labels_list.append(batch_labels.cpu())
 
+                # Pad-elés a batchek dimenzióinak egységesítéséhez
+                padded_outputs = []
+                for output in bottleneck_outputs:
+                    if output.size(1) < max_dim:
+                        padded_output = torch.nn.functional.pad(output, (0, max_dim - output.size(1)))  # Jobbra pad-elés
+                        padded_outputs.append(padded_output)
+                    else:
+                        padded_outputs.append(output)
+
                 # Egyesítjük a batchek kimenetét
-                bottleneck_outputs = torch.cat(bottleneck_outputs, dim=0).numpy()
+                bottleneck_outputs = torch.cat(padded_outputs, dim=0).numpy()
                 labels = torch.cat(labels_list, dim=0).numpy()
 
                 visualize_bottleneck(bottleneck_outputs, labels, "VAE")
@@ -154,15 +175,28 @@ class Training():
                         batch_labels = batch_labels.to(self.device)
 
                         _, _, encoded = self.model.forward(inputs)
+                        if max_dim is None:
+                            max_dim = encoded.size(1)
+                        elif encoded.size(1) != max_dim:
+                            max_dim = max(max_dim, encoded.size(1))
+
                         bottleneck_outputs.append(encoded.cpu())
                         labels_list.append(batch_labels.cpu())
 
+                # Pad-elés a batchek dimenzióinak egységesítéséhez
+                padded_outputs = []
+                for output in bottleneck_outputs:
+                    if output.size(1) < max_dim:
+                        padded_output = torch.nn.functional.pad(output, (0, max_dim - output.size(1)))  # Jobbra pad-elés
+                        padded_outputs.append(padded_output)
+                    else:
+                        padded_outputs.append(output)
+
                 # Egyesítjük a batchek kimenetét
-                bottleneck_outputs = torch.cat(bottleneck_outputs, dim=0).numpy()
+                bottleneck_outputs = torch.cat(padded_outputs, dim=0).numpy()
                 labels = torch.cat(labels_list, dim=0).numpy()
 
                 visualize_bottleneck(bottleneck_outputs, labels, "MAE")
-
 
             self.plot_losses()
 
@@ -176,7 +210,7 @@ class Training():
                 inputs = inputs.to(self.device)
                 if isinstance(self.model, VariationalAutoencoder):
                     outputs, z_mean, z_log_var = self.model.forward(inputs)
-                    loss, _, _ = self.model.loss(inputs, outputs, z_mean, z_log_var)
+                    loss, _, _ = self.model.loss(inputs, outputs, z_mean, z_log_var, self.beta)
                 elif isinstance(self.model, MaskedAutoencoder):
                     outputs, _, _ = self.model.forward(inputs)
                     loss = self.model.loss(inputs, outputs)
@@ -207,7 +241,7 @@ class Training():
 
                 if isinstance(self.model, VariationalAutoencoder):
                     outputs, z_mean, z_log_var = self.model.forward(inputs)
-                    loss, _, _ = self.model.loss(inputs, outputs, z_mean, z_log_var)
+                    loss, _, _ = self.model.loss(inputs, outputs, z_mean, z_log_var, self.beta)
                     # z = self.model.reparameterize(z_mean, z_log_var)
                     # bottleneck_output_z_mean = z_mean.cpu().detach().numpy()
                     # bottleneck_output_z = z.cpu().detach().numpy()

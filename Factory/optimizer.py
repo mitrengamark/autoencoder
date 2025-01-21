@@ -1,6 +1,6 @@
 import torch
 
-def optimizer_maker(optimizer_type, model_params):
+def optimizer_maker(optimizer_type, model_params, lr):
     """
     Creates a PyTorch optimizer based on the specified type.
 
@@ -12,15 +12,15 @@ def optimizer_maker(optimizer_type, model_params):
     - optimizer: The instantiated optimizer.
     """
     if optimizer_type == 'SGD':
-        optimizer = torch.optim.SGD(model_params, 1)
+        optimizer = torch.optim.SGD(model_params, lr)
     elif optimizer_type == 'Adam':
-        optimizer = torch.optim.Adam(model_params, 1)
+        optimizer = torch.optim.Adam(model_params, lr)
     elif optimizer_type == 'AdamW':
-        optimizer = torch.optim.AdamW(model_params, 1)
+        optimizer = torch.optim.AdamW(model_params, lr)
     elif optimizer_type == 'Adagrad':
-        optimizer = torch.optim.Adagrad(model_params, 1)
+        optimizer = torch.optim.Adagrad(model_params, lr)
     elif optimizer_type == 'RMSprop':
-        optimizer = torch.optim.RMSprop(model_params, 1)
+        optimizer = torch.optim.RMSprop(model_params, lr)
     else:
         raise ValueError(f"Unsupported optimizer type: {optimizer_type}. Expected SGD, Adam, AdamW, Adagrad, or RMSprop.")
     

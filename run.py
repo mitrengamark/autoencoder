@@ -16,13 +16,13 @@ config = configparser.ConfigParser()
 config.read('config.ini')
 
 latent_dim = int(config['Dims']['latent_dim'])
-hidden_dim_0 = int(config['Dims']['hidden_dim_0'])
-hidden_dim_1 = int(config['Dims']['hidden_dim_1'])
+hidden_dims_str = config.get('Dims', 'hidden_dims')
+hidden_dims = [int(dim) for dim in hidden_dims_str.strip('[]').split(', ')]
 initial_lr = float(config['Hyperparameters']['initial_lr'])
 max_lr = float(config['Hyperparameters']['max_lr'])
 final_lr = float(config['Hyperparameters']['final_lr'])
 num_epochs = int(config['Hyperparameters']['num_epochs'])
-beta = float(config['Hyperparameters']['beta'])
+beta_min = 1 / float(config['Hyperparameters']['beta_min'])
 seed = int(config['Data']['seed'])
 training_model = config.get('Model', 'training_model')
 mask_ratio = float(config['Hyperparameters']['mask_ratio'])
@@ -49,8 +49,7 @@ tolerance = float(config['Callbacks']['tolerance'])
 
 parameters = {
     "latent_dim": latent_dim,
-    "hidden_dim_0": hidden_dim_0,
-    "hidden_dim_1": hidden_dim_1,
+    "hidden_dims": hidden_dims,
     "num_epochs": num_epochs,
     "training_model": training_model,
     "mask_ratio": mask_ratio,
@@ -92,15 +91,15 @@ train_input_dim = trainloader.dataset[0][0].shape[0]
 print(f"Train input dim: {train_input_dim}")
 
 if training_model == "VAE":
-    model = VariationalAutoencoder(train_input_dim, latent_dim, hidden_dim_0, hidden_dim_1, beta, dropout).to(device)
+    model = VariationalAutoencoder(train_input_dim, latent_dim, hidden_dims, dropout).to(device)
 elif training_model == "MAE":
     model = MaskedAutoencoder(train_input_dim, mask_ratio).to(device)
 else:
     raise ValueError(f"Unsupported model type. Expected VAE or MAE!")
 
 model_params = model.parameters()
-optimizer = optimizer_maker(opt_name, model_params)
-training = Training(trainloader, valloader, testloader, optimizer, model, labels, num_epochs, device, scheduler, step_size, gamma, patience,
+optimizer = optimizer_maker(opt_name, model_params, initial_lr)
+training = Training(trainloader, valloader, testloader, optimizer, model, labels, num_epochs, device, scheduler, beta_min, step_size, gamma, patience,
                     warmup_epochs, initial_lr, max_lr, final_lr, saved_model, run=run, data_min=data_min, data_max=data_max, data_mean=data_mean, data_std=data_std, hyperopt=hyperopt, tolerance=tolerance)
 
 if test_mode == 0:
