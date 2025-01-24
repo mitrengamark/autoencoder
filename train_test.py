@@ -5,6 +5,7 @@ from Factory.scheduler import scheduler_maker
 from data_process import DataProcess
 from Analyse.decrase_dim import visualize_bottleneck, plot_latent_space
 from Analyse.validation import reconstruction_accuracy
+from Data_analyse.plot_manouevre import ManouevrePlotter
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -235,6 +236,9 @@ class Training():
         whole_input = []
         whole_output = []
         # whole_masked_input = []
+
+        mplotter = ManouevrePlotter()
+
         with torch.no_grad():
             for data in self.testloader:
                 inputs, batch_labels = data
@@ -268,6 +272,8 @@ class Training():
         labels = torch.cat(labels_list, dim=0).numpy()
         whole_input = np.vstack(whole_input)
         whole_output = np.vstack(whole_output)
+
+        # mplotter.plot_manouevre(whole_input, whole_output)
 
         print(f'Test Loss: {test_loss / len(self.testloader):.4f}')
         # print(f'Bottleneck outputs shape: {bottleneck_outputs.shape}')

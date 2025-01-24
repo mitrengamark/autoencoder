@@ -56,11 +56,13 @@ class DataProcess:
 
     def normalize(self):
         """
-        Min-Max normalizálás az adatokhoz.
+        Min-Max normalizálás az adatokhoz oszloponként.
         """
-        self.data_min = self.data.min().min()
-        self.data_max = self.data.max().max()
-        data_normalized = (self.data - self.data_min) / (self.data_max - self.data_min)
+        self.data_min = self.data.min(dim=0).values  # Oszloponkénti minimum
+        self.data_max = self.data.max(dim=0).values  # Oszloponkénti maximum
+
+        # Min-Max normalizálás oszloponként
+        data_normalized = (self.data - self.data_min) / (self.data_max - self.data_min + 1e-8)
         return data_normalized
     
     def denormalize(self, data, data_min, data_max):
