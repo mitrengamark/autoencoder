@@ -2,7 +2,7 @@ import sys
 import os
 
 # Adja hozzá a projekt gyökérkönyvtárát a Python keresési útvonalához
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import optuna
 import torch
@@ -13,17 +13,17 @@ from Factory.masked_autoencoder import MaskedAutoencoder
 from Factory.optimizer import optimizer_maker
 from Factory.scheduler import scheduler_maker
 from train_test import Training
-from data_process import DataProcess    
+from data_process import DataProcess
 
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read("config.ini")
 
-seed = int(config['Data']['seed'])
-training_model = config.get('Model', 'training_model')
-file_path = config.get('Data', 'file_path')
-tolerance = float(config['Callbacks']['tolerance'])
-hyperopt = int(config['Hyperparameters']['hyperopt'])
-n_trials = int(config['Hyperparameters']['n_trials'])
+seed = int(config["Data"]["seed"])
+training_model = config.get("Model", "training_model")
+file_path = config.get("Data", "file_path")
+tolerance = float(config["Callbacks"]["tolerance"])
+hyperopt = int(config["Hyperparameters"]["hyperopt"])
+n_trials = int(config["Hyperparameters"]["n_trials"])
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if torch.cuda.is_available():
@@ -32,15 +32,20 @@ if torch.cuda.is_available():
 dp = DataProcess()
 
 if training_model == "VAE":
-    trainloader, valloader, testloader, data_min, data_max = dp.train_test_split(file_path=file_path, batch_size=batch_size)
+    trainloader, valloader, testloader, data_min, data_max = dp.train_test_split(
+        file_path=file_path, batch_size=batch_size
+    )
     data_mean = None
     data_std = None
 elif training_model == "MAE":
-    trainloader, valloader, testloader, data_mean, data_std = dp.train_test_split(file_path=file_path)
+    trainloader, valloader, testloader, data_mean, data_std = dp.train_test_split(
+        file_path=file_path
+    )
     data_min = None
     data_max = None
 else:
     raise ValueError(f"Unsupported model type. Expected VAE or MAE!")
+
 
 def objective(trial):
     # Hiperparaméterek kiválasztása Optuna segítségével
@@ -55,7 +60,9 @@ def objective(trial):
     # max_lr = trial.suggest_categorical("max_lr", [1e-2, 1e-3, 1e-4])
     # final_lr = trial.suggest_categorical("final_lr", [1e-4, 1e-5, 1e-6])
     batch_size = trial.suggest_categorical("batch_size", [16, 32, 64, 128, 256, 512])
-    optimizer_type = trial.suggest_categorical("optimizer", ['SGD', 'Adam', 'AdamW', 'Adagrad', 'RMSprop'])
+    optimizer_type = trial.suggest_categorical(
+        "optimizer", ["SGD", "Adam", "AdamW", "Adagrad", "RMSprop"]
+    )
     # gamma = trial.suggest_categorical("gamma", [0.5, 0.75, 0.9])
     num_epochs = trial.suggest_categorical("num_epochs", [100, 1000, 10000])
     # patience = trial.suggest_categorical("patience", [5, 20, 50, 100])
@@ -67,19 +74,18 @@ def objective(trial):
             hidden_dim_0=hidden_dim_0,
             hidden_dim_1=hidden_dim_1,
             beta=beta,
-            dropout=dropout
+            dropout=dropout,
         ).to(device)
     elif model_type == "MAE":
         model = MaskedAutoencoder(
             input_dim=trainloader.dataset[0].shape[0],
-            mask_ratio=trial.suggest_categorical("mask_ratio", [0.75, 0.8])
+            mask_ratio=trial.suggest_categorical("mask_ratio", [0.75, 0.8]),
         ).to(device)
     else:
         raise ValueError("Unsupported model type!")
-    
+
     optimizer = optimizer_maker(
-        optimizer_type=optimizer_type,
-        model_params=model.parameters()
+        optimizer_type=optimizer_type, model_params=model.parameters()
     )
 
     warmup_epochs = num_epochs * 0.1
@@ -91,21 +97,34 @@ def objective(trial):
         warmup_epochs=warmup_epochs,
         initial_lr=initial_lr,
         max_lr=max_lr,
-        final_lr=final_lr
+        final_lr=final_lr,
     )
 
     training = Training(
-        trainloader, valloader, testloader, optimizer, model, num_epochs,
-        device, scheduler, warmup_epochs=warmup_epochs, initial_lr=initial_lr, 
-        max_lr=max_lr, final_lr=final_lr, hyperopt=hyperopt, tolerance=tolerance # gamma=gamma, patience=patience
+        trainloader,
+        valloader,
+        testloader,
+        optimizer,
+        model,
+        num_epochs,
+        device,
+        scheduler,
+        warmup_epochs=warmup_epochs,
+        initial_lr=initial_lr,
+        max_lr=max_lr,
+        final_lr=final_lr,
+        hyperopt=hyperopt,
+        tolerance=tolerance,  # gamma=gamma, patience=patience
     )
 
     training.train()
     _, val_accuracy = training.validate()
 
     return val_accuracy
+
+
 # Optuna tanulmány létrehozása
-study = optuna.create_study(direction="maximize" , pruner=optuna.pruners.MedianPruner())
+study = optuna.create_study(direction="maximize", pruner=optuna.pruners.MedianPruner())
 study.optimize(objective, n_trials)
 
 # Legjobb paraméterek kiíratása

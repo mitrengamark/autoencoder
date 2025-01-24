@@ -41,7 +41,6 @@ class VariationalAutoencoder(nn.Module):
         decoder_layers.append(nn.Linear(self.hidden_dims[0], self.input_dim))
         decoder_layers.append(nn.Sigmoid())
         self.decoder = nn.Sequential(*decoder_layers)
-        
 
     def encode(self, x):
         shared_output = self.shared_encoder(x)
@@ -66,7 +65,7 @@ class VariationalAutoencoder(nn.Module):
         return x_, z_mean, z_log_var
 
     def loss(self, x, x_, z_mean, z_log_var, beta):
-        reconst_loss = F.mse_loss(x_, x, reduction='sum')
+        reconst_loss = F.mse_loss(x_, x, reduction="sum")
         kl_div = -0.5 * torch.sum(1 + z_log_var - z_mean.pow(2) - z_log_var.exp())
         loss = reconst_loss + beta * kl_div
         return loss, reconst_loss, beta * kl_div

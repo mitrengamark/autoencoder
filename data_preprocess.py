@@ -6,22 +6,15 @@ import numpy as np
 import re
 
 
-def print_keys(a, v):
-    mat_file_path = os.path.join("data", f"allando_v_chirp_a{a}_v{v}.mat")  # A fájl elérési útja
-    mat_content = scipy.io.loadmat(mat_file_path)
-
-    # Kulcsok kilistázása
-    print("A fájlban található kulcsok:")
-    for key in mat_content.keys():
-        print(key)
-
 def mat_to_csv():
     data_dir = "data"
-    mat_files = [f for f in os.listdir(data_dir) if f.endswith('.mat')]
+    mat_files = [f for f in os.listdir(data_dir) if f.endswith(".mat")]
 
     for mat_file in mat_files:
         mat_file_path = os.path.join(data_dir, mat_file)
-        mat_content = scipy.io.loadmat(mat_file_path, struct_as_record=False, squeeze_me=True)
+        mat_content = scipy.io.loadmat(
+            mat_file_path, struct_as_record=False, squeeze_me=True
+        )
 
         # Ellenőrizzük a betöltött adatok szerkezetét
         for key, value in mat_content.items():
@@ -29,8 +22,10 @@ def mat_to_csv():
                 print(f"Key: {key}, Value: {value}")
 
                 # Ha az adat egy struktúra, hagyjuk figyelmen kívül
-                if hasattr(value, '_fieldnames'):
-                    print(f"A '{key}' kulcs alatt található adat egy struktúra, kihagyva.")
+                if hasattr(value, "_fieldnames"):
+                    print(
+                        f"A '{key}' kulcs alatt található adat egy struktúra, kihagyva."
+                    )
                     continue
 
                 # Ha az adat egy oszlopvektor vagy 2D tömb, alakítsuk át DataFrame-é
@@ -41,7 +36,10 @@ def mat_to_csv():
                     df.to_csv(csv_file_path, index=False)
                     print(f"Az adatok sikeresen mentve lettek: {csv_file_path}")
                 else:
-                    print(f"A '{key}' kulcs alatt található adatok nem megfelelő formátumúak.")
+                    print(
+                        f"A '{key}' kulcs alatt található adatok nem megfelelő formátumúak."
+                    )
+
 
 def delete_csv_with_keyword(keyword):
     """
@@ -64,13 +62,45 @@ def delete_csv_with_keyword(keyword):
 
         print(f"Törölt fájlok ({len(deleted_files)}):")
     else:
-        print(f"Nem található olyan fájl a '{data_dir}' mappában, amely tartalmazza a(z) '{keyword}' kulcsszót.")
+        print(
+            f"Nem található olyan fájl a '{data_dir}' mappában, amely tartalmazza a(z) '{keyword}' kulcsszót."
+        )
+
 
 def collect_maoeuver_names():
     manoeuver_names = []
 
-    v_values = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125, 130, 135, 140]
-    ay_values = ['alacsony', 'kozepes', 'magas']
+    v_values = [
+        5,
+        10,
+        15,
+        20,
+        25,
+        30,
+        35,
+        40,
+        45,
+        50,
+        55,
+        60,
+        65,
+        70,
+        75,
+        80,
+        85,
+        90,
+        95,
+        100,
+        105,
+        110,
+        115,
+        120,
+        125,
+        130,
+        135,
+        140,
+    ]
+    ay_values = ["alacsony", "kozepes", "magas"]
     f_sin_values = [1, 3, 5, 7]
     a_sin_values = [2, 8]
     a_chirp_values = [1, 3, 5]
@@ -83,7 +113,7 @@ def collect_maoeuver_names():
         for ay_val in ay_values:
             manoeuver_names.append(f"allando_v_savvaltas_{ay_val}_v{v_val}")
 
-    # Szinuszos kormányszög 
+    # Szinuszos kormányszög
     for v_val in v_values:
         for f_val in f_sin_values:
             for a_val in a_sin_values:
@@ -101,14 +131,18 @@ def collect_maoeuver_names():
         for ay_val in ay_values:
             # String formázás, és "." helyett "_" használata
             pedal_val_str = str(pedal_val).replace(".", "_")
-            manoeuver_names.append(f"valtozo_v_savvaltas_gas_{ay_val}_pedal{pedal_val_str}")
+            manoeuver_names.append(
+                f"valtozo_v_savvaltas_gas_{ay_val}_pedal{pedal_val_str}"
+            )
 
     # Kettős sávváltás lassítással
     for pedal_val in pedal_values:
         for ay_val in ay_values:
             # String formázás, és "." helyett "_" használata
             pedal_val_str = str(pedal_val).replace(".", "_")
-            manoeuver_names.append(f"valtozo_v_savvaltas_fek_{ay_val}_pedal{pedal_val_str}")
+            manoeuver_names.append(
+                f"valtozo_v_savvaltas_fek_{ay_val}_pedal{pedal_val_str}"
+            )
 
     # Szinuszos kormányszög gyorsulással
     for a_val in a_sin_values:
@@ -116,7 +150,9 @@ def collect_maoeuver_names():
             for pedal_val in pedal_values:
                 # String formázás, és "." helyett "_" használata
                 pedal_val_str = str(pedal_val).replace(".", "_")
-                manoeuver_names.append(f"valtozo_v_sin_gas_a{a_val}_f{f_val}_pedal{pedal_val_str}")
+                manoeuver_names.append(
+                    f"valtozo_v_sin_gas_a{a_val}_f{f_val}_pedal{pedal_val_str}"
+                )
 
     # Szinuszos kormányszög lassítással
     for a_val in a_sin_values:
@@ -124,11 +160,16 @@ def collect_maoeuver_names():
             for pedal_val in pedal_values:
                 # String formázás, és "." helyett "_" használata
                 pedal_val_str = str(pedal_val).replace(".", "_")
-                manoeuver_names.append(f"valtozo_v_sin_fek_a{a_val}_f{f_val}_pedal{pedal_val_str}")
+                manoeuver_names.append(
+                    f"valtozo_v_sin_fek_a{a_val}_f{f_val}_pedal{pedal_val_str}"
+                )
 
     return manoeuver_names
 
-def merge_csv_for_manoeuvres(manoeuvre_names, input_dir="data", output_dir="data2", save=False):
+
+def merge_csv_for_manoeuvres(
+    manoeuvre_names, input_dir="data", output_dir="data2", save=False
+):
     """
     Az egyes manőverekhez tartozó .csv fájlokat egy közös .csv fájlba egyesíti.
 
@@ -145,8 +186,11 @@ def merge_csv_for_manoeuvres(manoeuvre_names, input_dir="data", output_dir="data
     for manoeuvre_name in manoeuvre_names:
         # Az adott manőverhez tartozó fájlok keresése
         pattern = re.compile(rf"^{re.escape(manoeuvre_name)}(_.*|\.csv)$")
-        matching_files = [f for f in glob.glob(os.path.join(input_dir, "*.csv"))
-                          if pattern.search(os.path.basename(f))]
+        matching_files = [
+            f
+            for f in glob.glob(os.path.join(input_dir, "*.csv"))
+            if pattern.search(os.path.basename(f))
+        ]
 
         if not matching_files:
             print(f"Nincs találat a {manoeuvre_name} manőverhez.")
@@ -163,7 +207,9 @@ def merge_csv_for_manoeuvres(manoeuvre_names, input_dir="data", output_dir="data
             file_lengths.append(len(df))
 
             # A változó neve a fájlnév utolsó "_" utáni része ".csv" nélkül
-            variable_name = re.search(r'_(.+)_([^_]+)\.csv$', os.path.basename(file)).group(2)
+            variable_name = re.search(
+                r"_(.+)_([^_]+)\.csv$", os.path.basename(file)
+            ).group(2)
             column_names.append(variable_name)
 
         # A legrövidebb fájl hossza
@@ -186,6 +232,7 @@ def merge_csv_for_manoeuvres(manoeuvre_names, input_dir="data", output_dir="data
             combined_df.to_csv(output_path, index=False)
             print(f"{manoeuvre_name} manőverhez tartozó fájl mentve: {output_path}")
 
+
 def rename_files(variable):
     """
     Az adott változót tartalmazó fájlok nevét úgy módosítja, hogy az utolsó "_" karakter törlődik belőlük.
@@ -194,24 +241,24 @@ def rename_files(variable):
     """
     # A 'data' mappában lévő fájlok keresése, amelyek tartalmazzák a 'variable'-t
     matching_files = [f for f in glob.glob("data/*") if variable in os.path.basename(f)]
-    
+
     # Minden egyező fájl feldolgozása
     for file_path in matching_files:
         dir_name = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
-        
+
         # Új név generálása az utolsó "_" törlésével
         if "_" in base_name:
             parts = base_name.rsplit("_", 1)  # Az utolsó "_" mentén bontás
             new_name = parts[0] + parts[1].replace(".csv", "") + ".csv"  # Az új fájlnév
             new_file_path = os.path.join(dir_name, new_name)
-            
+
             # Fájl átnevezése az eredeti helyén
             os.rename(file_path, new_file_path)
             print(f"{file_path} átnevezve erre: {new_file_path}")
         else:
             print(f"A fájlnévben nincs '_', így nem módosítottam: {file_path}")
-    
+
 
 # manouver_names = collect_maoeuver_names()
 # combined_vectors = merge_csv_for_manoeuvres(manouver_names[1:2], save=True)

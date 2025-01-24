@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from Factory.self_attention_factory import SelfAttention
 
+
 class MaskedAutoencoder(nn.Module):
     def __init__(self, input_dim, bottleneck_dim, mask_ratio, num_heads, dropout):
         super(MaskedAutoencoder, self).__init__()
@@ -20,8 +21,7 @@ class MaskedAutoencoder(nn.Module):
         self.decoder_self_attention = SelfAttention(input_dim, num_heads, dropout)
         self.positional_encoding = PositionalEncoding(input_dim)
         self.reconstruction_layer = nn.Sequential(
-            nn.Dropout(dropout),
-            nn.Linear(input_dim, input_dim)
+            nn.Dropout(dropout), nn.Linear(input_dim, input_dim)
         )
 
     def masking(self, x):
@@ -32,7 +32,9 @@ class MaskedAutoencoder(nn.Module):
 
     def encoder(self, x):
         masked_input, mask = self.masking(x)
-        encoded = self.self_attention(masked_input, )
+        encoded = self.self_attention(
+            masked_input,
+        )
         # bottleneck_output = self.encoder_bottleneck(encoded)  # Dimenziócsökkentés
         return encoded, mask, masked_input
 
@@ -52,17 +54,20 @@ class MaskedAutoencoder(nn.Module):
     def loss(self, input, reconstructed):
         loss_fn = nn.SmoothL1Loss()
         return loss_fn(input, reconstructed)
-    
+
 
 class PositionalEncoding(nn.Module):
     def __init__(self, input_dim, max_len=5000):
         super(PositionalEncoding, self).__init__()
         pe = torch.zeros(max_len, input_dim)
         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, input_dim, 2).float() * (-torch.log(torch.tensor(10000.0)) / input_dim))
+        div_term = torch.exp(
+            torch.arange(0, input_dim, 2).float()
+            * (-torch.log(torch.tensor(10000.0)) / input_dim)
+        )
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
-        self.register_buffer('pe', pe.unsqueeze(0))
+        self.register_buffer("pe", pe.unsqueeze(0))
 
     def forward(self, x):
-        return x + self.pe[:, :x.size(1)]
+        return x + self.pe[:, : x.size(1)]

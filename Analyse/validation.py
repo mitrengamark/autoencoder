@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 
+
 def reconstruction_accuracy(inputs, outputs, tolerance):
     """
     Számolja a rekonstrukciós pontosságot a bemenet és a kimenet között.
@@ -15,6 +16,8 @@ def reconstruction_accuracy(inputs, outputs, tolerance):
         outputs = torch.tensor(outputs)
 
     differences = torch.abs(inputs - outputs)  # Eltérések kiszámítása
-    accurate_reconstructions = (differences <= tolerance).float()  # Eltérés a tolerancián belül
+    accurate_reconstructions = (
+        differences <= tolerance
+    ).float()  # Eltérés a tolerancián belül
     accuracy = accurate_reconstructions.mean().item() * 100  # Pontosság százalékban
     return accuracy
