@@ -44,6 +44,9 @@ model_path = f"Models/{training_model}_{num_epochs}_{current_date}.pth"
 opt_name = config.get("Hyperparameters", "optimizer")
 hyperopt = int(config["Hyperparameters"]["hyperopt"])
 tolerance = float(config["Callbacks"]["tolerance"])
+num_manoeuvres = int(config["Data"]["num_manoeuvres"])
+n_clusters = int(config["Plot"]["n_clusters"])
+use_cosine_similarity = int(config["Plot"]["use_cosine_similarity"])
 
 parameters = {
     "latent_dim": latent_dim,
@@ -75,15 +78,29 @@ if torch.cuda.is_available():
 dp = DataProcess()
 
 if training_model == "VAE":
-    trainloader, valloader, testloader, data_min, data_max, labels = (
-        dp.train_test_split()
-    )
+    (
+        trainloader,
+        valloader,
+        testloader,
+        data_min,
+        data_max,
+        labels,
+        label_mapping,
+        sign_change_indices,
+    ) = dp.train_test_split()
     data_mean = None
     data_std = None
 elif training_model == "MAE":
-    trainloader, valloader, testloader, data_mean, data_std, labels = (
-        dp.train_test_split()
-    )
+    (
+        trainloader,
+        valloader,
+        testloader,
+        data_mean,
+        data_std,
+        labels,
+        label_mapping,
+        sign_change_indices,
+    ) = dp.train_test_split()
     data_min = None
     data_max = None
 else:
@@ -132,6 +149,11 @@ training = Training(
     data_std=data_std,
     hyperopt=hyperopt,
     tolerance=tolerance,
+    label_mapping=label_mapping,
+    sign_change_indices=sign_change_indices,
+    num_manoeuvres=num_manoeuvres,
+    n_clusters=n_clusters,
+    use_cosine_similarity=use_cosine_similarity,
 )
 
 if test_mode == 0:

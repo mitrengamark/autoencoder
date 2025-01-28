@@ -2,8 +2,7 @@ import torch
 from Factory.variational_autoencoder import VariationalAutoencoder
 from Factory.masked_autoencoder import MaskedAutoencoder
 from Factory.scheduler import scheduler_maker
-from data_process import DataProcess
-from Analyse.decrase_dim import visualize_bottleneck
+from Analyse.decrase_dim import Visualise
 from Analyse.validation import reconstruction_accuracy
 import matplotlib.pyplot as plt
 import numpy as np
@@ -38,6 +37,11 @@ class Training:
         data_std=None,
         hyperopt=None,
         tolerance=None,
+        label_mapping=None,
+        sign_change_indices=None,
+        num_manoeuvres=None,
+        n_clusters=None,
+        use_cosine_similarity=None,
     ):
 
         # Adatbetöltők
@@ -70,6 +74,7 @@ class Training:
 
         # Címkék
         self.labels = labels
+        self.label_mapping = label_mapping
 
         # Adatok normalizálásához szükséges statisztikák
         self.data_min = data_min
@@ -80,6 +85,10 @@ class Training:
         # Egyéb
         self.run = run
         self.device = device
+        self.sign_change_indices = sign_change_indices
+        self.num_manoeuvres = num_manoeuvres
+        self.n_clusters = n_clusters
+        self.use_cosine_similarity = use_cosine_similarity
 
         # Loss értékek tárolása
         self.losses = []
@@ -253,19 +262,35 @@ class Training:
         # Vizualizáció
         if isinstance(self.model, VariationalAutoencoder):
             bottleneck_outputs = bottleneck_outputs.numpy()
-            visualize_bottleneck(
+            vs = Visualise(
                 bottleneck_outputs=bottleneck_outputs,
                 labels=labels,
                 model_name="VAE",
+                label_mapping=self.label_mapping,
+                sign_change_indices=self.sign_change_indices,
+                num_manoeuvres=self.num_manoeuvres,
+                n_clusters=self.n_clusters,
+                use_cosine_similarity=self.use_cosine_similarity,
             )
+            vs.visualize_bottleneck()
+            vs.create_heatmap()
+            vs.kmeans_clustering()
         elif isinstance(self.model, MaskedAutoencoder):
             bottleneck_outputs_flattened = bottleneck_outputs.mean(dim=1).numpy()
             # bottleneck_outputs_flattened = bottleneck_outputs.view(-1, bottleneck_outputs.size(-1)).numpy()  # [batch_size * seq_len, feature_dim]
-            visualize_bottleneck(
+            vs = Visualise(
                 bottleneck_outputs=bottleneck_outputs_flattened,
                 labels=labels,
                 model_name="MAE",
+                label_mapping=self.label_mapping,
+                sign_change_indices=self.sign_change_indices,
+                num_manoeuvres=self.num_manoeuvres,
+                n_clusters=self.n_clusters,
+                use_cosine_similarity=self.use_cosine_similarity,
             )
+            vs.visualize_bottleneck()
+            vs.create_heatmap()
+            vs.kmeans_clustering()
 
         # Denormalizáció
 

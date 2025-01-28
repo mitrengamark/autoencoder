@@ -10,6 +10,8 @@ class DataProcess:
         config = configparser.ConfigParser()
         config.read("config.ini")
 
+        self.coloring_method = config.get("Plot", "coloring_method")
+        self.parameter = config.get("Plot", "parameter")
         self.num_workers = int(config["Data"]["num_workers"])
         self.batch_size = int(config["Hyperparameters"]["batch_size"])
         self.train_size = float(config["Data"]["train_size"])
@@ -23,10 +25,7 @@ class DataProcess:
             if file.endswith(".csv")
         ]
         num_manoeuvres = int(config["Data"]["num_manoeuvres"])
-
-        # Csak az első 2 fájlt tartjuk meg:
         self.file_paths = self.file_paths[:num_manoeuvres]
-
         self.labels = [
             os.path.splitext(os.path.basename(file))[0] for file in self.file_paths
         ]
@@ -79,9 +78,17 @@ class DataProcess:
 
     def load_and_label_data(self):
         combined_data = {label: [] for label in self.labels}
+        self.sign_change_indices = {}
 
         for file_path, label in zip(self.file_paths, self.labels):
             df = pd.read_csv(file_path)
+
+            # Ellenőrizzük, hogy a megadott paraméter létezik-e az adathalmazban
+            if self.parameter and self.parameter not in df.columns:
+                raise ValueError(
+                    f"A megadott paraméter '{self.parameter}' nem található az adathalmazban!"
+                )
+
             data_tensor = torch.tensor(df.values, dtype=torch.float32)
             self.data = data_tensor
 
@@ -94,10 +101,51 @@ class DataProcess:
 
             combined_data[label].append(normalized_data)
 
+            if self.parameter:
+                param_values = df[self.parameter].values
+                if self.coloring_method == "sign_change":
+                    # Előjelváltások detektálása a kiválasztott paraméteren
+                    sign_changes = np.diff(np.sign(param_values)) != 0
+                    indices = np.where(sign_changes)[0] + 1  # Az előjelváltás indexei
+                    self.sign_change_indices[label] = indices
+                elif self.coloring_method == "local_extrema":
+                    # Helyi szélsőértékek keresése
+                    first_derivative = np.diff(param_values)
+                    second_derivative = np.diff(np.sign(first_derivative))
+                    local_extrema_indices = (
+                        np.where(second_derivative != 0)[0] + 1
+                    )  # Helyi min./max.
+                    self.sign_change_indices[label] = local_extrema_indices
+                elif self.coloring_method == "inflection_points":
+                    # Első és második derivált kiszámítása
+                    first_derivative = np.diff(param_values)
+                    second_derivative = np.diff(first_derivative)
+
+                    # Második derivált előjelváltásainak detektálása
+                    inflexion_points = (
+                        np.where(np.diff(np.sign(second_derivative)) != 0)[0] + 1
+                    )  # Az inflexiós pontok indexei
+
+                    self.sign_change_indices[label] = inflexion_points
+                else:
+                    raise ValueError(
+                        f"Unsupported coloring method. Expected 'sign_change' or 'local_extrema'!"
+                    )
+
         self.data = {
             label: torch.cat(data_list, dim=0)
             for label, data_list in combined_data.items()
         }
+        print(
+            f"Data by manoeuvre: { {label: data.shape for label, data in self.data.items()} }"
+        )
+
+        # Debugging: Ellenőrzés
+        if self.parameter:
+            print(
+                f"Sign change indices for parameter '{self.parameter}': {self.sign_change_indices}"
+            )
+
         print(
             f"Data by manoeuvre: { {label: data.shape for label, data in self.data.items()} }"
         )
@@ -188,6 +236,8 @@ class DataProcess:
                 self.data_min,
                 self.data_max,
                 all_labels,
+                label_mapping,
+                self.sign_change_indices,
             )
         elif self.training_model == "MAE":
             return (
@@ -197,4 +247,6 @@ class DataProcess:
                 self.data_mean,
                 self.data_std,
                 all_labels,
-            )  # self.data_mean, self.data_std,
+                label_mapping,
+                self.sign_change_indices,
+            )
