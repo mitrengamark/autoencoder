@@ -154,6 +154,7 @@ training = Training(
     num_manoeuvres=num_manoeuvres,
     n_clusters=n_clusters,
     use_cosine_similarity=use_cosine_similarity,
+    model_name=training_model,
 )
 
 if test_mode == 0:

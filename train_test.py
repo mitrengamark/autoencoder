@@ -1,11 +1,13 @@
 import torch
+import matplotlib.pyplot as plt
+import numpy as np
 from Factory.variational_autoencoder import VariationalAutoencoder
 from Factory.masked_autoencoder import MaskedAutoencoder
 from Factory.scheduler import scheduler_maker
 from Analyse.decrase_dim import Visualise
 from Analyse.validation import reconstruction_accuracy
-import matplotlib.pyplot as plt
-import numpy as np
+from Synthesis.data_synthesis import remove_redundant_data
+from Synthesis.heat_map import create_comparison_heatmaps
 
 
 class Training:
@@ -42,6 +44,7 @@ class Training:
         num_manoeuvres=None,
         n_clusters=None,
         use_cosine_similarity=None,
+        model_name=None,
     ):
 
         # Adatbetöltők
@@ -51,6 +54,7 @@ class Training:
 
         # Modell és optimalizáló
         self.model = model
+        self.model_name = model_name
         self.optimizer = optimizer
 
         # Hiperparaméterek és tanítási konfigurációk
@@ -259,38 +263,29 @@ class Training:
         whole_input = np.vstack(whole_input)
         whole_output = np.vstack(whole_output)
 
-        # Vizualizáció
         if isinstance(self.model, VariationalAutoencoder):
             bottleneck_outputs = bottleneck_outputs.numpy()
-            vs = Visualise(
-                bottleneck_outputs=bottleneck_outputs,
-                labels=labels,
-                model_name="VAE",
-                label_mapping=self.label_mapping,
-                sign_change_indices=self.sign_change_indices,
-                num_manoeuvres=self.num_manoeuvres,
-                n_clusters=self.n_clusters,
-                use_cosine_similarity=self.use_cosine_similarity,
-            )
-            vs.visualize_bottleneck()
-            vs.create_heatmap()
-            vs.kmeans_clustering()
         elif isinstance(self.model, MaskedAutoencoder):
-            bottleneck_outputs_flattened = bottleneck_outputs.mean(dim=1).numpy()
+            bottleneck_outputs = bottleneck_outputs.mean(dim=1).numpy()
             # bottleneck_outputs_flattened = bottleneck_outputs.view(-1, bottleneck_outputs.size(-1)).numpy()  # [batch_size * seq_len, feature_dim]
-            vs = Visualise(
-                bottleneck_outputs=bottleneck_outputs_flattened,
-                labels=labels,
-                model_name="MAE",
-                label_mapping=self.label_mapping,
-                sign_change_indices=self.sign_change_indices,
-                num_manoeuvres=self.num_manoeuvres,
-                n_clusters=self.n_clusters,
-                use_cosine_similarity=self.use_cosine_similarity,
-            )
-            vs.visualize_bottleneck()
-            vs.create_heatmap()
-            vs.kmeans_clustering()
+
+        # Vizualizáció
+        vs = Visualise(
+            bottleneck_outputs=bottleneck_outputs,
+            labels=labels,
+            model_name=self.model_name,
+            label_mapping=self.label_mapping,
+            sign_change_indices=self.sign_change_indices,
+            num_manoeuvres=self.num_manoeuvres,
+            n_clusters=self.n_clusters,
+            use_cosine_similarity=self.use_cosine_similarity,
+        )
+        latent_data = vs.visualize_bottleneck()
+        vs.kmeans_clustering()
+
+        # Adat eltávolítás és szintetizálás
+        filtered_latent_data = remove_redundant_data(latent_data)
+        create_comparison_heatmaps(latent_data, filtered_latent_data)
 
         # Denormalizáció
 

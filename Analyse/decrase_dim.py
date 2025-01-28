@@ -4,7 +4,6 @@ import matplotlib.cm as cm
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.manifold import TSNE
-from scipy.stats import gaussian_kde
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_distances
 from sklearn.preprocessing import normalize
@@ -47,7 +46,7 @@ class Visualise:
         )
         assert len(self.bottleneck_outputs) == len(
             self.labels
-        ), "A bottleneck kimenetek és a címkék mérete nem egyezik!"
+        ), f"A bottleneck kimenetek ({len(self.bottleneck_outputs)}) és a címkék ({len(self.labels)}) mérete nem egyezik!"
 
         # Címképzés dinamikusan
         if self.model_name == "VAE":
@@ -67,6 +66,8 @@ class Visualise:
 
         print("T-SNE Visualization:")
         self.visualize_with_tsne()
+
+        return self.reduced_data
 
     def visualize_with_pca(self):
         """
@@ -266,45 +267,6 @@ class Visualise:
         plt.legend(title="Címkék", loc="best")
         plt.grid(True)
         plt.tight_layout()
-        plt.show()
-
-    def create_heatmap(self, grid_size=100):
-        """
-        Heatmap generálása a T-SNE eredmények alapján.
-
-        :param tsne_data: T-SNE által generált 2D adatok (numpy array, shape: [n_samples, 2]).
-        :param grid_size: A heatmap felbontása (rács mérete).
-        :return: Heatmap (numpy array).
-        """
-        x = self.reduced_data[:, 0]
-        y = self.reduced_data[:, 1]
-
-        # 2D grid létrehozása
-        x_grid = np.linspace(x.min(), x.max(), grid_size)
-        y_grid = np.linspace(y.min(), y.max(), grid_size)
-        x_grid, y_grid = np.meshgrid(x_grid, y_grid)
-
-        # Kernel Density Estimation (KDE) az adatokra
-        kde = gaussian_kde(np.vstack([x, y]))
-        z = kde(np.vstack([x_grid.ravel(), y_grid.ravel()]))
-
-        # Heatmap átalakítása 2D formátumra
-        heatmap = z.reshape(grid_size, grid_size)
-
-        # Heatmap létrehozása
-        plt.figure(figsize=(10, 8))
-        plt.imshow(
-            heatmap,
-            extent=[x_grid.min(), x_grid.max(), y_grid.min(), y_grid.max()],
-            origin="lower",
-            cmap="viridis",
-            aspect="auto",
-        )
-        plt.colorbar(label="Intenzitás")
-        plt.title("Heatmap - T-SNE Látenstér")
-        plt.xlabel("T-SNE Komponens 1")
-        plt.ylabel("T-SNE Komponens 2")
-        plt.grid(False)
         plt.show()
 
     def kmeans_clustering(self):
