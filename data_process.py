@@ -19,13 +19,28 @@ class DataProcess:
         self.seed = int(config["Data"]["seed"])
         self.training_model = config.get("Model", "training_model")
         self.data_dir = config.get("Data", "data_dir")
-        self.file_paths = [
+        selected_manoeuvres = config.get(
+            "Data", "selected_manoeuvres", fallback=""
+        ).split(",")
+        selected_manoeuvres = [
+            m.strip() + "_combined.csv" for m in selected_manoeuvres if m.strip()
+        ]
+
+        all_files = [
             os.path.join(self.data_dir, file)
             for file in os.listdir(self.data_dir)
             if file.endswith(".csv")
         ]
-        num_manoeuvres = int(config["Data"]["num_manoeuvres"])
-        self.file_paths = self.file_paths[:num_manoeuvres]
+        if selected_manoeuvres and selected_manoeuvres[0]:  # Ha nem üres a lista
+            self.file_paths = [
+                os.path.join(self.data_dir, file.strip())
+                for file in selected_manoeuvres
+                if file.strip() in os.listdir(self.data_dir)
+            ]
+        else:
+            num_manoeuvres = int(config["Data"]["num_manoeuvres"])
+            self.file_paths = all_files[:num_manoeuvres]
+
         self.labels = [
             os.path.splitext(os.path.basename(file))[0] for file in self.file_paths
         ]

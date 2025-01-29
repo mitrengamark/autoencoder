@@ -281,11 +281,11 @@ class Training:
             use_cosine_similarity=self.use_cosine_similarity,
         )
         latent_data = vs.visualize_bottleneck()
-        vs.kmeans_clustering()
+        # vs.kmeans_clustering()
 
-        # Adat eltávolítás és szintetizálás
-        filtered_latent_data = remove_redundant_data(latent_data)
-        create_comparison_heatmaps(latent_data, filtered_latent_data)
+        # # Adat eltávolítás és szintetizálás
+        # filtered_latent_data = remove_redundant_data(latent_data)
+        # create_comparison_heatmaps(latent_data, filtered_latent_data)
 
         # Denormalizáció
 

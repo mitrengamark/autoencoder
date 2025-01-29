@@ -4,7 +4,7 @@ from sklearn.cluster import DBSCAN
 from scipy.spatial import cKDTree
 
 
-def remove_redundant_data(latent_data, grid_size=50, max_sample=5):
+def remove_redundant_data(latent_data, grid_size=30, max_sample=3):
     """
     Eltávolítja a túl sűrűn előforduló adatokat a látenstérben.
 
