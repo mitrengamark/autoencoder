@@ -83,7 +83,7 @@ class Visualise:
 
         plt.figure(figsize=(8, 6))
         unique_labels = np.unique(self.labels)
-        colors = cm.get_cmap("tab10", len(unique_labels))
+        colors = cm.get_cmap("tab20", len(unique_labels))
 
         # Címkék szerinti szétválasztás
         for i, label in enumerate(unique_labels):
@@ -144,7 +144,7 @@ class Visualise:
 
         plt.figure(figsize=(8, 6))
         unique_labels = np.unique(self.labels)
-        colors = cm.get_cmap("tab10", len(unique_labels))
+        colors = cm.get_cmap("tab20", len(unique_labels))
 
         for i, label in enumerate(unique_labels):
             mask = self.labels == label
@@ -214,9 +214,21 @@ class Visualise:
         reduced_data = tsne.fit_transform(self.bottleneck_outputs)
         self.reduced_data = reduced_data
 
-        plt.figure(figsize=(8, 6))
+        plt.figure(figsize=(10, 7))
         unique_labels = np.unique(self.labels)
-        colors = cm.get_cmap("tab10", len(unique_labels))
+        num_labels = len(unique_labels)
+
+        if num_labels <= 10:
+            colors = cm.get_cmap("tab10", num_labels)
+            color_list = [colors(i) for i in range(num_labels)]
+        elif num_labels <= 20:
+            colors = cm.get_cmap("tab20", num_labels)
+            color_list = [colors(i) for i in range(num_labels)]
+        else:
+            color_list = cm.get_cmap("nipy_spectral", num_labels)(np.linspace(0, 1, num_labels))
+
+        markers = ["o", "s", "D", "P", "X", "^", "v", "<", ">"]  # Marker lista
+        marker_cycle = markers * (num_labels // len(markers) + 1)  # Marker ciklus
 
         for i, label in enumerate(unique_labels):
             mask = self.labels == label
@@ -253,7 +265,8 @@ class Visualise:
                         label_data[j, 0],
                         label_data[j, 1],
                         label=description if j == 0 else "",
-                        color=colors(i),
+                        color=color_list[i],
+                        marker=marker_cycle[i],
                         alpha=alphas[j],
                     )
 
@@ -264,7 +277,7 @@ class Visualise:
         plt.title(self.tsne_title)
         plt.xlabel("T-SNE Komponens 1")
         plt.ylabel("T-SNE Komponens 2")
-        plt.legend(title="Címkék", loc="best")
+        plt.legend(title="Manőverek", loc="best", fontsize="small", markerscale=0.8)
         plt.grid(True)
         plt.tight_layout()
         plt.show()
@@ -296,7 +309,7 @@ class Visualise:
 
             # Vizualizáció az osztályon belüli klaszterekkel
             plt.figure(figsize=(8, 6))
-            colors = plt.cm.tab10(np.linspace(0, 1, self.n_clusters))
+            colors = plt.cm.tab20(np.linspace(0, 1, self.n_clusters))
             for cluster_idx in range(self.n_clusters):
                 cluster_mask = class_clusters == cluster_idx
                 plt.scatter(

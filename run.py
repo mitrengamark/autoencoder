@@ -2,6 +2,8 @@ import torch
 import configparser
 import torch.utils.data
 import datetime
+import numpy as np
+import random
 from data_process import DataProcess
 from train_test import Training
 from Factory.variational_autoencoder import VariationalAutoencoder
@@ -47,6 +49,14 @@ tolerance = float(config["Callbacks"]["tolerance"])
 num_manoeuvres = int(config["Data"]["num_manoeuvres"])
 n_clusters = int(config["Plot"]["n_clusters"])
 use_cosine_similarity = int(config["Plot"]["use_cosine_similarity"])
+
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)  # Több GPU esetén
+np.random.seed(seed)
+random.seed(seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 parameters = {
     "latent_dim": latent_dim,

@@ -260,5 +260,13 @@ def rename_files(variable):
             print(f"A fájlnévben nincs '_', így nem módosítottam: {file_path}")
 
 
-manouver_names = collect_maoeuver_names()
-combined_vectors = merge_csv_for_manoeuvres(manouver_names, save=False)
+def aposztrof_nincs(manouver_names):
+    modified_list = [item.replace("'", "") for item in manouver_names]
+    with open("modified_list.txt", "w") as file:
+        file.write("\n".join(modified_list))
+    print(modified_list)
+
+
+# manouver_names = collect_maoeuver_names()
+# combined_vectors = merge_csv_for_manoeuvres(manouver_names, save=False)
+# aposztrof_nincs(manouver_names)

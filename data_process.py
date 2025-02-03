@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import torch
 import configparser
+import random
 
 
 class DataProcess:
@@ -27,19 +28,26 @@ class DataProcess:
         ]
 
         all_files = [
-            os.path.join(self.data_dir, file)
-            for file in os.listdir(self.data_dir)
-            if file.endswith(".csv")
+            file for file in os.listdir(self.data_dir) if file.endswith(".csv")
         ]
-        if selected_manoeuvres and selected_manoeuvres[0]:  # Ha nem üres a lista
+
+        if (
+            selected_manoeuvres and selected_manoeuvres[0]
+        ):  # Ha a felhasználó explicit megadott manővereket
             self.file_paths = [
                 os.path.join(self.data_dir, file.strip())
                 for file in selected_manoeuvres
-                if file.strip() in os.listdir(self.data_dir)
+                if file.strip() in all_files
             ]
         else:
             num_manoeuvres = int(config["Data"]["num_manoeuvres"])
-            self.file_paths = all_files[:num_manoeuvres]
+            # Véletlenszerű fájlválasztás
+            selected_files = random.sample(
+                all_files, min(num_manoeuvres, len(all_files))
+            )
+            self.file_paths = [
+                os.path.join(self.data_dir, file) for file in selected_files
+            ]
 
         self.labels = [
             os.path.splitext(os.path.basename(file))[0] for file in self.file_paths
