@@ -6,7 +6,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import optuna
 import torch
-import configparser
 from itertools import product
 from Factory.variational_autoencoder import VariationalAutoencoder
 from Factory.masked_autoencoder import MaskedAutoencoder
@@ -14,16 +13,16 @@ from Factory.optimizer import optimizer_maker
 from Factory.scheduler import scheduler_maker
 from train_test import Training
 from data_process import DataProcess
-
-config = configparser.ConfigParser()
-config.read("config.ini")
-
-seed = int(config["Data"]["seed"])
-training_model = config.get("Model", "training_model")
-file_path = config.get("Data", "file_path")
-tolerance = float(config["Callbacks"]["tolerance"])
-hyperopt = int(config["Hyperparameters"]["hyperopt"])
-n_trials = int(config["Hyperparameters"]["n_trials"])
+from load_config import (
+    seed,
+    training_model,
+    initial_lr,
+    max_lr,
+    final_lr,
+    tolerance,
+    hyperopt,
+    n_trials,
+)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if torch.cuda.is_available():
@@ -32,15 +31,11 @@ if torch.cuda.is_available():
 dp = DataProcess()
 
 if training_model == "VAE":
-    trainloader, valloader, testloader, data_min, data_max = dp.train_test_split(
-        file_path=file_path, batch_size=batch_size
-    )
+    trainloader, valloader, testloader, data_min, data_max = dp.train_test_split()
     data_mean = None
     data_std = None
 elif training_model == "MAE":
-    trainloader, valloader, testloader, data_mean, data_std = dp.train_test_split(
-        file_path=file_path
-    )
+    trainloader, valloader, testloader, data_mean, data_std = dp.train_test_split()
     data_min = None
     data_max = None
 else:

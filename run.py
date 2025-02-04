@@ -1,7 +1,5 @@
 import torch
-import configparser
 import torch.utils.data
-import datetime
 import numpy as np
 import random
 from data_process import DataProcess
@@ -10,46 +8,42 @@ from Factory.variational_autoencoder import VariationalAutoencoder
 from Factory.masked_autoencoder import MaskedAutoencoder
 from Factory.optimizer import optimizer_maker
 from Analyse.neptune_utils import init_neptune
+from load_config import (
+    seed,
+    latent_dim,
+    hidden_dims,
+    num_epochs,
+    dropout,
+    mask_ratio,
+    num_heads,
+    beta_min,
+    initial_lr,
+    max_lr,
+    final_lr,
+    scheduler,
+    step_size,
+    gamma,
+    patience,
+    opt_name,
+    training_model,
+    save_model,
+    test_mode,
+    model_path,
+    num_manoeuvres,
+    n_clusters,
+    use_cosine_similarity,
+    plot,
+    project_name,
+    api_token,
+    tolerance,
+    hyperopt,
+    bottleneck_dim,
+    model_path,
+    warmup_epochs,
+    saved_model,
+)
 
 torch.cuda.empty_cache()
-
-config = configparser.ConfigParser()
-config.read("config.ini")
-
-latent_dim = int(config["Dims"]["latent_dim"])
-bottleneck_dim = int(config["Dims"]["bottleneck_dim"])
-hidden_dims_str = config.get("Dims", "hidden_dims")
-hidden_dims = [int(dim) for dim in hidden_dims_str.strip("[]").split(", ")]
-initial_lr = float(config["Hyperparameters"]["initial_lr"])
-max_lr = float(config["Hyperparameters"]["max_lr"])
-final_lr = float(config["Hyperparameters"]["final_lr"])
-num_epochs = int(config["Hyperparameters"]["num_epochs"])
-beta_min = 1 / float(config["Hyperparameters"]["beta_min"])
-seed = int(config["Data"]["seed"])
-training_model = config.get("Model", "training_model")
-mask_ratio = float(config["Hyperparameters"]["mask_ratio"])
-num_heads = int(config["Hyperparameters"]["num_heads"])
-save_model = int(config["Model"]["save_model"])
-project_name = config.get("Callbacks", "neptune_project")
-api_token = config.get("Callbacks", "neptune_token")
-dropout = float(config["Hyperparameters"]["dropout"])
-scheduler = config.get("Hyperparameters", "scheduler")
-step_size = int(config["Hyperparameters"]["step_size"])
-gamma = float(config["Hyperparameters"]["gamma"])
-patience = int(config["Hyperparameters"]["patience"])
-plot = int(config["Callbacks"]["plot"])
-test_mode = int(config["Model"]["test_mode"])
-saved_model = config.get("Model", "model_path")
-warmup_epochs = num_epochs * 0.1
-current_date = datetime.datetime.now().strftime("%m_%d_%H_%M")
-model_path = f"Models/{training_model}_{num_epochs}_{current_date}.pth"
-opt_name = config.get("Hyperparameters", "optimizer")
-hyperopt = int(config["Hyperparameters"]["hyperopt"])
-tolerance = float(config["Callbacks"]["tolerance"])
-num_manoeuvres = int(config["Data"]["num_manoeuvres"])
-n_clusters = int(config["Plot"]["n_clusters"])
-use_cosine_similarity = int(config["Plot"]["use_cosine_similarity"])
-
 torch.manual_seed(seed)
 torch.cuda.manual_seed(seed)
 torch.cuda.manual_seed_all(seed)  # Több GPU esetén

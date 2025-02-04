@@ -2,28 +2,22 @@ import os
 import numpy as np
 import pandas as pd
 import torch
-import configparser
 import random
+from load_config import selected_manoeuvres, num_manoeuvres, data_dir, parameter, training_model, coloring_method, train_size, val_size, batch_size, num_workers
 
-
+ 
 class DataProcess:
     def __init__(self):
-        config = configparser.ConfigParser()
-        config.read("config.ini")
+        self.data_dir = data_dir
+        self.parameter = parameter
+        self.training_model = training_model
+        self.coloring_method = coloring_method
+        self.train_size = train_size
+        self.val_size = val_size
+        self.batch_size = batch_size
+        self.num_workers = num_workers
 
-        self.coloring_method = config.get("Plot", "coloring_method")
-        self.parameter = config.get("Plot", "parameter")
-        self.num_workers = int(config["Data"]["num_workers"])
-        self.batch_size = int(config["Hyperparameters"]["batch_size"])
-        self.train_size = float(config["Data"]["train_size"])
-        self.val_size = float(config["Data"]["val_size"])
-        self.seed = int(config["Data"]["seed"])
-        self.training_model = config.get("Model", "training_model")
-        self.data_dir = config.get("Data", "data_dir")
-        selected_manoeuvres = config.get(
-            "Data", "selected_manoeuvres", fallback=""
-        ).split(",")
-        selected_manoeuvres = [
+        selected_manoeuvres_list = [
             m.strip() + "_combined.csv" for m in selected_manoeuvres if m.strip()
         ]
 
@@ -32,15 +26,14 @@ class DataProcess:
         ]
 
         if (
-            selected_manoeuvres and selected_manoeuvres[0]
+            selected_manoeuvres_list and selected_manoeuvres_list[0]
         ):  # Ha a felhasználó explicit megadott manővereket
             self.file_paths = [
                 os.path.join(self.data_dir, file.strip())
-                for file in selected_manoeuvres
+                for file in selected_manoeuvres_list
                 if file.strip() in all_files
             ]
         else:
-            num_manoeuvres = int(config["Data"]["num_manoeuvres"])
             # Véletlenszerű fájlválasztás
             selected_files = random.sample(
                 all_files, min(num_manoeuvres, len(all_files))
@@ -181,8 +174,6 @@ class DataProcess:
 
     def train_test_split(self):
         self.load_and_label_data()
-
-        torch.manual_seed(self.seed)
 
         all_data = []
         all_labels = []
