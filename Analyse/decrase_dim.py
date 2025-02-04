@@ -225,10 +225,11 @@ class Visualise:
             colors = cm.get_cmap("tab20", num_labels)
             color_list = [colors(i) for i in range(num_labels)]
         else:
-            color_list = cm.get_cmap("nipy_spectral", num_labels)(np.linspace(0, 1, num_labels))
-
-        markers = ["o", "s", "D", "P", "X", "^", "v", "<", ">"]  # Marker lista
-        marker_cycle = markers * (num_labels // len(markers) + 1)  # Marker ciklus
+            color_list = cm.get_cmap("nipy_spectral", num_labels)(
+                np.linspace(0, 1, num_labels)
+            )
+            markers = ["o", "s", "D", "P", "X", "^", "v", "<", ">"]  # Marker lista
+            marker_cycle = markers * (num_labels // len(markers) + 1)  # Marker ciklus
 
         for i, label in enumerate(unique_labels):
             mask = self.labels == label
@@ -261,14 +262,23 @@ class Visualise:
                     )
             else:
                 for j in range(label_data.shape[0]):
-                    plt.scatter(
-                        label_data[j, 0],
-                        label_data[j, 1],
-                        label=description if j == 0 else "",
-                        color=color_list[i],
-                        marker=marker_cycle[i],
-                        alpha=alphas[j],
-                    )
+                    if num_labels > 20:
+                        plt.scatter(
+                            label_data[j, 0],
+                            label_data[j, 1],
+                            label=description if j == 0 else "",
+                            color=color_list[i],
+                            marker=marker_cycle[i],
+                            alpha=alphas[j],
+                        )
+                    else:
+                        plt.scatter(
+                            label_data[j, 0],
+                            label_data[j, 1],
+                            label=description if j == 0 else "",
+                            color=color_list[i],
+                            alpha=alphas[j],
+                        )
 
         handles, _ = plt.gca().get_legend_handles_labels()
         for handle in handles:

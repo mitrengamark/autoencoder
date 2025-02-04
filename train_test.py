@@ -8,7 +8,7 @@ from Analyse.decrase_dim import Visualise
 from Analyse.validation import reconstruction_accuracy
 from Synthesis.data_synthesis import remove_redundant_data
 from Synthesis.heat_map import create_comparison_heatmaps
-from Synthesis.manoeuvres_filtering import find_boundary_manoeuvres, plot_boundary
+from Synthesis.manoeuvres_filtering import ManoeuvresFiltering
 
 
 class Training:
@@ -282,11 +282,10 @@ class Training:
             use_cosine_similarity=self.use_cosine_similarity,
         )
         latent_data = vs.visualize_bottleneck()
-        vs.kmeans_clustering()
+        # vs.kmeans_clustering()
 
-        boundary_manoeuvres, boundary_indices = find_boundary_manoeuvres(latent_data, labels)
-        print("Határon lévő manőverek:", boundary_manoeuvres)
-        plot_boundary(latent_data, labels, boundary_indices)
+        mf = ManoeuvresFiltering(reduced_data=latent_data, labels=labels)
+        mf.filter_manoeuvres()
 
         # Adat eltávolítás és szintetizálás
         filtered_latent_data = remove_redundant_data(latent_data)
