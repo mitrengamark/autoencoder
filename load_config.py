@@ -31,6 +31,16 @@ gamma = float(config["Hyperparameters"]["gamma"])
 patience = int(config["Hyperparameters"]["patience"])
 opt_name = config.get("Hyperparameters", "optimizer")
 
+# Parameters
+eps = float(config["Parameters"]["eps"])
+min_samples = int(config["Parameters"]["min_samples"])
+n_clusters = int(config["Parameters"]["n_clusters"])
+
+grid_size = int(config["Parameters"]["grid_size"])
+
+grid = int(config["Parameters"]["grid"])
+max_sample = int(config["Parameters"]["max_sample"])
+
 # Model
 training_model = config.get("Model", "training_model")
 save_model = int(config["Model"]["save_model"])
@@ -44,9 +54,7 @@ num_manoeuvres = int(config["Data"]["num_manoeuvres"])
 train_size = float(config["Data"]["train_size"])
 val_size = float(config["Data"]["val_size"])
 seed = int(config["Data"]["seed"])
-selected_manoeuvres = config.get("Data", "selected_manoeuvres", fallback="").split(
-    ","
-)
+selected_manoeuvres = config.get("Data", "selected_manoeuvres", fallback="").split(",")
 
 # Plot
 parameter = config.get("Plot", "parameter")

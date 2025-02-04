@@ -1,3 +1,6 @@
+import os
+import hashlib
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -7,6 +10,7 @@ from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_distances
 from sklearn.preprocessing import normalize
+from load_config import plot
 
 
 class Visualise:
@@ -31,6 +35,25 @@ class Visualise:
         self.use_cosine_similarity = use_cosine_similarity
         self.max_iter = 100
         self.tol = 1e-4
+        self.tsne_cache_path = "Analyse/tsne_cache.pkl"
+        self.plot = plot
+
+    def compute_data_hash(self):
+        """Egyedi hash generálása a bemenetek alapján, hogy észleljük a változásokat"""
+        hasher = hashlib.sha256()
+        hasher.update(self.bottleneck_outputs.tobytes())
+        hasher.update(self.labels.tobytes())
+        return hasher.hexdigest()
+
+    def load_cached_tsne(self):
+        """Betölti a korábban kiszámított T-SNE eredményeket, ha a bemenet változatlan"""
+        if os.path.exists(self.tsne_cache_path):
+            with open(self.tsne_cache_path, "rb") as f:
+                cache = pickle.load(f)
+            if cache["hash"] == self.compute_data_hash():
+                print("Korábban kiszámított T-SNE eredmények betöltése...")
+                return cache["tsne_data"]
+        return None
 
     def visualize_bottleneck(self):
         """
@@ -204,93 +227,115 @@ class Visualise:
         """
         perplexity = min(50, max(5, self.bottleneck_outputs.shape[0] // 10))
 
-        tsne = TSNE(
-            n_components=2,
-            perplexity=perplexity,
-            learning_rate=200,
-            max_iter=1000,
-            random_state=42,
-        )
-        reduced_data = tsne.fit_transform(self.bottleneck_outputs)
+        # Ellenőrizzük, van-e cache-elt eredmény
+        cached_tsne = self.load_cached_tsne()
+        if cached_tsne is not None:
+            reduced_data = cached_tsne
+        else:
+            print("Új T-SNE számítás indítása...")
+            tsne = TSNE(
+                n_components=2,
+                perplexity=perplexity,
+                learning_rate=200,
+                max_iter=1000,
+                random_state=42,
+            )
+            reduced_data = tsne.fit_transform(self.bottleneck_outputs)
+            self.save_tsne_results(reduced_data)  # Mentjük az új eredményt
+
         self.reduced_data = reduced_data
 
-        plt.figure(figsize=(10, 7))
-        unique_labels = np.unique(self.labels)
-        num_labels = len(unique_labels)
+        if self.plot == 1:
+            plt.figure(figsize=(10, 7))
+            unique_labels = np.unique(self.labels)
+            num_labels = len(unique_labels)
 
-        if num_labels <= 10:
-            colors = cm.get_cmap("tab10", num_labels)
-            color_list = [colors(i) for i in range(num_labels)]
-        elif num_labels <= 20:
-            colors = cm.get_cmap("tab20", num_labels)
-            color_list = [colors(i) for i in range(num_labels)]
-        else:
-            color_list = cm.get_cmap("nipy_spectral", num_labels)(
-                np.linspace(0, 1, num_labels)
-            )
-            markers = ["o", "s", "D", "P", "X", "^", "v", "<", ">"]  # Marker lista
-            marker_cycle = markers * (num_labels // len(markers) + 1)  # Marker ciklus
-
-        for i, label in enumerate(unique_labels):
-            mask = self.labels == label
-            label_data = reduced_data[mask]
-            description = next(
-                (key for key, value in self.label_mapping.items() if value == label),
-                f"Manoeuvre {label}",
-            )
-            indices = (
-                self.sign_change_indices[description]
-                if self.sign_change_indices and description in self.sign_change_indices
-                else []
-            )
-            description = description.replace("_combined", "")
-            alphas = np.linspace(
-                0.1, 1.0, label_data.shape[0]
-            )  # Alpha értékek lineárisan növekednek
-            if self.num_manoeuvres == 1:
-                current_color = "blue"
-                for j in range(label_data.shape[0]):
-                    # Színezés előjelváltás alapján
-                    if j in indices:
-                        current_color = "red" if current_color == "blue" else "blue"
-                    plt.scatter(
-                        label_data[j, 0],
-                        label_data[j, 1],
-                        label=description if j == 0 else "",
-                        color=current_color,
-                        alpha=alphas[j],
-                    )
+            if num_labels <= 10:
+                colors = cm.get_cmap("tab10", num_labels)
+                color_list = [colors(i) for i in range(num_labels)]
+            elif num_labels <= 20:
+                colors = cm.get_cmap("tab20", num_labels)
+                color_list = [colors(i) for i in range(num_labels)]
             else:
-                for j in range(label_data.shape[0]):
-                    if num_labels > 20:
+                color_list = cm.get_cmap("nipy_spectral", num_labels)(
+                    np.linspace(0, 1, num_labels)
+                )
+                markers = ["o", "s", "D", "P", "X", "^", "v", "<", ">"]  # Marker lista
+                marker_cycle = markers * (
+                    num_labels // len(markers) + 1
+                )  # Marker ciklus
+
+            for i, label in enumerate(unique_labels):
+                mask = self.labels == label
+                label_data = reduced_data[mask]
+                description = next(
+                    (
+                        key
+                        for key, value in self.label_mapping.items()
+                        if value == label
+                    ),
+                    f"Manoeuvre {label}",
+                )
+                indices = (
+                    self.sign_change_indices[description]
+                    if self.sign_change_indices
+                    and description in self.sign_change_indices
+                    else []
+                )
+                description = description.replace("_combined", "")
+                alphas = np.linspace(
+                    0.1, 1.0, label_data.shape[0]
+                )  # Alpha értékek lineárisan növekednek
+                if self.num_manoeuvres == 1:
+                    current_color = "blue"
+                    for j in range(label_data.shape[0]):
+                        # Színezés előjelváltás alapján
+                        if j in indices:
+                            current_color = "red" if current_color == "blue" else "blue"
                         plt.scatter(
                             label_data[j, 0],
                             label_data[j, 1],
                             label=description if j == 0 else "",
-                            color=color_list[i],
-                            marker=marker_cycle[i],
+                            color=current_color,
                             alpha=alphas[j],
                         )
-                    else:
-                        plt.scatter(
-                            label_data[j, 0],
-                            label_data[j, 1],
-                            label=description if j == 0 else "",
-                            color=color_list[i],
-                            alpha=alphas[j],
-                        )
+                else:
+                    for j in range(label_data.shape[0]):
+                        if num_labels > 20:
+                            plt.scatter(
+                                label_data[j, 0],
+                                label_data[j, 1],
+                                label=description if j == 0 else "",
+                                color=color_list[i],
+                                marker=marker_cycle[i],
+                                alpha=alphas[j],
+                            )
+                        else:
+                            plt.scatter(
+                                label_data[j, 0],
+                                label_data[j, 1],
+                                label=description if j == 0 else "",
+                                color=color_list[i],
+                                alpha=alphas[j],
+                            )
 
-        handles, _ = plt.gca().get_legend_handles_labels()
-        for handle in handles:
-            handle.set_alpha(1.0)  # Legendben alpha érték kikapcsolása
+            handles, _ = plt.gca().get_legend_handles_labels()
+            for handle in handles:
+                handle.set_alpha(1.0)  # Legendben alpha érték kikapcsolása
 
-        plt.title(self.tsne_title)
-        plt.xlabel("T-SNE Komponens 1")
-        plt.ylabel("T-SNE Komponens 2")
-        plt.legend(title="Manőverek", loc="best", fontsize="small", markerscale=0.8)
-        plt.grid(True)
-        plt.tight_layout()
-        plt.show()
+            plt.title(self.tsne_title)
+            plt.xlabel("T-SNE Komponens 1")
+            plt.ylabel("T-SNE Komponens 2")
+            plt.legend(title="Manőverek", loc="best", fontsize="small", markerscale=0.8)
+            plt.grid(True)
+            plt.tight_layout()
+            plt.show()
+
+    def save_tsne_results(self, tsne_data):
+        """Elmenti a kiszámított T-SNE eredményeket fájlba"""
+        cache = {"hash": self.compute_data_hash(), "tsne_data": tsne_data}
+        with open(self.tsne_cache_path, "wb") as f:
+            pickle.dump(cache, f)
 
     def kmeans_clustering(self):
         unique_labels = np.unique(self.labels)

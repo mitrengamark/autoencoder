@@ -2,9 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
 from scipy.spatial import cKDTree
+from load_config import grid, max_sample
 
 
-def remove_redundant_data(latent_data, grid_size=30, max_sample=3):
+def remove_redundant_data(latent_data, grid_size=grid, max_sample=max_sample):
     """
     Eltávolítja a túl sűrűn előforduló adatokat a látenstérben.
 
@@ -49,13 +50,13 @@ def remove_redundant_data(latent_data, grid_size=30, max_sample=3):
     plt.figure(figsize=(10, 5))
 
     plt.subplot(1, 2, 1)
-    plt.scatter(latent_data[:, 0], latent_data[:, 1], s=5, alpha=0.5)
+    plt.scatter(latent_data[:, 0], latent_data[:, 1], s=5, alpha=1)
     plt.title("Eredeti Látenstér")
     plt.xlabel("T-SNE Komponens 1")
     plt.ylabel("T-SNE Komponens 2")
 
     plt.subplot(1, 2, 2)
-    plt.scatter(filtered_latent_data[:, 0], filtered_latent_data[:, 1], s=5, alpha=0.5)
+    plt.scatter(filtered_latent_data[:, 0], filtered_latent_data[:, 1], s=5, alpha=1)
     plt.title("Szűrt Látenstér (Redundáns Adatok Eltávolítva)")
     plt.xlabel("T-SNE Komponens 1")
     plt.ylabel("T-SNE Komponens 2")

@@ -284,12 +284,14 @@ class Training:
         latent_data = vs.visualize_bottleneck()
         # vs.kmeans_clustering()
 
-        mf = ManoeuvresFiltering(reduced_data=latent_data, labels=labels)
+        mf = ManoeuvresFiltering(
+            reduced_data=latent_data, labels=labels, label_mapping=self.label_mapping
+        )
         mf.filter_manoeuvres()
 
         # Adat eltávolítás és szintetizálás
-        filtered_latent_data = remove_redundant_data(latent_data)
-        create_comparison_heatmaps(latent_data, filtered_latent_data)
+        # filtered_latent_data = remove_redundant_data(latent_data)
+        # create_comparison_heatmaps(latent_data, filtered_latent_data)
 
         # Denormalizáció
 

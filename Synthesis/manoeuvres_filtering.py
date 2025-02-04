@@ -1,25 +1,54 @@
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.spatial import ConvexHull
+from sklearn.cluster import DBSCAN, KMeans
 from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.cluster import DBSCAN
 from collections import defaultdict
+
+# from random_data import (
+#     generate_clustered_data,
+#     generate_advanced_sinusoidal_spiral_data,
+# )
+# import sys
+# import os
+
+# # Hozzáadjuk a projekt gyökérkönyvtárát a Python elérési útvonalához
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from load_config import eps, min_samples, n_clusters
 
 
 class ManoeuvresFiltering:
-    def __init__(self, reduced_data=None, labels=None, eps=10, min_samples=100):
+    def __init__(
+        self,
+        reduced_data=None,
+        labels=None,
+        label_mapping=None,
+        eps=eps,
+        min_samples=min_samples,
+        n_clusters=n_clusters,
+    ):
         self.reduced_data = reduced_data
         self.labels = labels
+        self.label_mapping = label_mapping
         self.boundary_manoeuvres = set()
         self.boundary_indices = None
         self.eps = eps
         self.min_samples = min_samples
+        self.n_clusters = n_clusters
 
     def filter_manoeuvres(self):
         self.find_boundary_manoeuvres()
         self.plot_boundary()
-        self.dbscan_clustering()
-        self.plot_dbscan_clusters()
+        # self.dbscan_clustering()
+        # self.plot_dbscan_clusters()
+        cluster_info = self.kmeans_clustering()
+        self.plot_kmeans_clusters()
+        self.plot_cluster_info(cluster_info)
+        redundant_manoeuvres = self.filter_redundant_manoeuvres()
+        self.check_cluster_dominance()
+        self.filter_by_distance()
 
     def find_boundary_manoeuvres(self):
         """
@@ -32,60 +61,17 @@ class ManoeuvresFiltering:
         hull = ConvexHull(self.reduced_data)
         self.boundary_indices = hull.vertices  # A konvex burok indexei
 
-        self.boundary_manoeuvres = set(
-            self.labels[self.boundary_indices]
-        )  # A határon lévő manőverek címkéi
-        print("Határon lévő manőverek:", self.boundary_manoeuvres)
+        self.boundary_manoeuvres = {
+            int(label) for label in self.labels[self.boundary_indices]
+        }
+        reverse_label_mapping = {v: k for k, v in self.label_mapping.items()}
+        boundary_manoeuvre_names = {
+            reverse_label_mapping.get(label, f"Unknown_{label}")
+            for label in self.boundary_manoeuvres
+        }
+        print("Határon lévő manőverek:", boundary_manoeuvre_names)
 
-    def remove_redundant_manoeuvres(self):
-        """
-        Ha két manőver közel azonos térrészt fed le, akkor azt amelyik nem tartozik a határon lévő manőverek közé, el kell dobni.
-        Ha egyik sem tartozik a határon lévő manőverek közé, akkor mindegy melyiket dobjuk el.
-        """
-        unique_labels = np.unique(self.labels)
-        remaining_labels = set(unique_labels)  # Kezdetben az összes manőver megmarad
-        to_remove = set()
-
-        # Két manőver közötti távolságok számítása
-        for i, label_1 in enumerate(unique_labels):
-            if label_1 in to_remove:  # Ha már el lett távolítva, nem vizsgáljuk
-                continue
-            mask_1 = self.labels == label_1
-            points_1 = self.reduced_data[mask_1]
-
-            for j, label_2 in enumerate(unique_labels):
-                if i >= j or label_2 in to_remove:  # Ne nézzük kétszer ugyanazt a párt
-                    continue
-                mask_2 = self.labels == label_2
-                points_2 = self.reduced_data[mask_2]
-
-                # Két manőver közötti távolság kiszámítása
-                dist_matrix = euclidean_distances(points_1, points_2)
-                mean_distance = np.mean(dist_matrix)
-                mean_distances = []
-                mean_distances.append(mean_distance)
-
-                # Ha az átlagos távolság nagyon kicsi, akkor ezek lefedik ugyanazt a térrészt
-                if mean_distance < 60:  # A küszöb állítható
-                    if label_1 in self.boundary_manoeuvres:
-                        to_remove.add(label_2)
-                    elif label_2 in self.boundary_manoeuvres:
-                        to_remove.add(label_1)
-                    else:
-                        to_remove.add(
-                            label_2
-                        )  # Ha egyik sem határon lévő, akkor egyet eltávolítunk
-
-            print(f"Manőverek közötti átlagos távolságok: {mean_distances}")
-
-        remaining_labels -= to_remove
-        print(f"Eltávolított redundáns manőverek: {to_remove}")
-        print(f"Megmaradt manőverek: {remaining_labels}")
-
-        # Frissítjük az adatokat a megmaradt címkék szerint
-        mask_remaining = np.isin(self.labels, list(remaining_labels))
-        self.reduced_data = self.reduced_data[mask_remaining]
-        self.labels = self.labels[mask_remaining]
+    # -----------------------------------clustering-----------------------------------
 
     def dbscan_clustering(self):
         """
@@ -100,14 +86,48 @@ class ManoeuvresFiltering:
         for idx, cluster in enumerate(self.cluster_labels):
             if cluster == -1:
                 continue  # Zajadatok kihagyása
-            manoeuvre = self.labels[idx]
-            clusters_info[cluster][manoeuvre] += 1
+            manoeuvre_idx = self.labels[idx]
+            manoeuvre_name = next(
+                (
+                    name
+                    for name, value in self.label_mapping.items()
+                    if value == manoeuvre_idx
+                ),
+                f"Unknown_{manoeuvre_idx}",
+            )
+            clusters_info[cluster][manoeuvre_name] += 1
 
         print("DBSCAN klaszterek és tartalmuk:")
         for cluster, manoeuvres in clusters_info.items():
             print(f"Klaszter {cluster}: {dict(manoeuvres)}")
 
         return clusters_info
+
+    def kmeans_clustering(self):
+        kmeans = KMeans(n_clusters=self.n_clusters, random_state=42)
+        self.kmeans_labels = kmeans.fit_predict(self.reduced_data)
+
+        clusters_info = defaultdict(lambda: defaultdict(int))
+
+        for idx, cluster in enumerate(self.kmeans_labels):
+            manoeuvre_idx = self.labels[idx]
+            manoeuvre_name = next(
+                (
+                    name
+                    for name, value in self.label_mapping.items()
+                    if value == manoeuvre_idx
+                ),
+                f"Unknown_{manoeuvre_idx}",
+            )
+            clusters_info[cluster][manoeuvre_name] += 1
+
+        print("K-Means klaszterek és tartalmuk:")
+        for cluster, manoeuvres in clusters_info.items():
+            print(f"Klaszter {cluster}: {dict(manoeuvres)}")
+
+        return clusters_info
+
+    # -----------------------------------plotting-----------------------------------
 
     def plot_boundary(self):
         """
@@ -159,7 +179,6 @@ class ManoeuvresFiltering:
         plt.tight_layout()
         plt.show()
 
-
     def plot_dbscan_clusters(self):
         """
         A DBSCAN klaszterek vizualizációja.
@@ -196,3 +215,142 @@ class ManoeuvresFiltering:
         plt.grid(True)
         plt.tight_layout()
         plt.show()
+
+    def plot_kmeans_clusters(self):
+        plt.figure(figsize=(10, 6))
+        unique_clusters = np.unique(self.kmeans_labels)
+        colors = plt.cm.get_cmap("tab10", len(unique_clusters))
+
+        for cluster in unique_clusters:
+            mask = self.kmeans_labels == cluster
+            plt.scatter(
+                self.reduced_data[mask, 0],
+                self.reduced_data[mask, 1],
+                label=f"Klaszter {cluster}",
+                color=colors(cluster % 10),
+                alpha=0.7,
+                s=10,
+            )
+
+        plt.title("K-Means Klaszterek")
+        plt.xlabel("T-SNE Komponens 1")
+        plt.ylabel("T-SNE Komponens 2")
+        plt.legend(loc="best", fontsize="small", markerscale=0.7)
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+
+    def plot_cluster_info(self, clusters_info):
+        """
+        K-Means klaszterek oszlopdiagramjának létrehozása, amely megmutatja, hogy egyes klaszterekben
+        mely manőverek hány adatponttal szerepelnek.
+
+        :param clusters_info: Dictionary, amely tartalmazza a klasztereket és azokhoz tartozó manőverek számosságát.
+        """
+        num_clusters = len(clusters_info)
+        fig, axes = plt.subplots(
+            num_clusters, 1, figsize=(8, 4 * num_clusters), constrained_layout=True
+        )
+
+        if num_clusters == 1:
+            axes = [axes]
+
+        for i, (cluster, manoeuvres) in enumerate(clusters_info.items()):
+            manoeuvre_names = list(manoeuvres.keys())
+            counts = list(manoeuvres.values())
+
+            axes[i].barh(manoeuvre_names, counts, color="skyblue")
+            axes[i].set_title(f"Klaszter {cluster}")
+            axes[i].set_xlabel("Adatpontok száma")
+            axes[i].set_ylabel("Manőverek")
+            axes[i].grid(axis="x", linestyle="--", alpha=0.7)
+
+    plt.show()
+
+    # -----------------------------------redundant_manoeuvres-----------------------------------
+
+    def filter_redundant_manoeuvres(self, threshold=0.9):
+        """
+        Kiszűri a redundáns manővereket a Pearson-korreláció alapján.
+        threshold: A minimális korrelációs érték, amely felett két manőver redundánsnak számít.
+        """
+        print("Redundáns manőverek keresése...")
+
+        # Az adatok pandas DataFrame-be alakítása
+        df = pd.DataFrame(
+            self.reduced_data,
+            columns=[f"comp_{i}" for i in range(self.reduced_data.shape[1])],
+        )
+        df["labels"] = self.labels
+
+        # Kiszámítjuk a korrelációs mátrixot
+        correlation_matrix = df.drop("labels", axis=1).corr()
+
+        # Keresünk redundáns párokat
+        redundant_pairs = set()
+        for i in range(len(correlation_matrix.columns)):
+            for j in range(i + 1, len(correlation_matrix.columns)):
+                if abs(correlation_matrix.iloc[i, j]) > threshold:
+                    redundant_pairs.add(
+                        (correlation_matrix.columns[i], correlation_matrix.columns[j])
+                    )
+
+        print(f"Redundáns manőver párok: {redundant_pairs}")
+
+        return redundant_pairs
+
+    def check_cluster_dominance(self):
+        """
+        Klaszteren belüli dominancia ellenőrzése. Ha egy manőver túlságosan dominál egy klaszterben,
+        akkor lehet, hogy redundáns vagy rosszul definiált.
+        """
+        print("Klaszter dominancia vizsgálata...")
+
+        cluster_counts = defaultdict(lambda: defaultdict(int))
+
+        for idx, cluster in enumerate(self.kmeans_labels):
+            manoeuvre_idx = self.labels[idx]
+            cluster_counts[cluster][manoeuvre_idx] += 1
+
+        for cluster, manoeuvres in cluster_counts.items():
+            total = sum(manoeuvres.values())
+            for manoeuvre, count in manoeuvres.items():
+                ratio = count / total
+                if ratio > 0.8:  # Ha egy manőver >80%-ot fed le egy klaszteren belül
+                    print(
+                        f"Klaszter {cluster}: A(z) {manoeuvre} túlságosan dominál ({ratio:.2%})"
+                    )
+
+        return cluster_counts
+
+    def filter_by_distance(self, threshold=0.1):
+        """
+        Az euklideszi távolságok alapján kiszűri a redundáns manővereket.
+        Ha két manőver közötti távolság nagyon kicsi, az egyik elhagyható.
+        """
+        print("Távolsági redundancia szűrés...")
+
+        distances = euclidean_distances(self.reduced_data)
+        redundant_pairs = set()
+
+        for i in range(len(distances)):
+            for j in range(i + 1, len(distances)):  # Csak az egyik irányba vizsgáljuk
+                if distances[i, j] < threshold and self.labels[i] != self.labels[j]:
+                    # Hozzáadjuk a párokat rendezett formában, hogy ne legyen (3,5) és (5,3) külön
+                    redundant_pairs.add(tuple(sorted((self.labels[i], self.labels[j]))))
+
+        print(f"Redundáns manőver párok (távolság alapú): {redundant_pairs}")
+        return redundant_pairs
+
+
+# np.random.seed(42)
+# num_samples = 50000
+# num_clusters = 20
+# reduced_data, labels, label_mapping = generate_clustered_data(
+#     n_samples=num_samples, n_clusters=num_clusters
+# )
+# # reduced_data, labels = generate_advanced_sinusoidal_spiral_data(n_samples=num_samples, n_clusters=num_clusters)
+
+# # ManoeuvresFiltering osztály inicializálása és filter_manoeuvres meghívása
+# filtering = ManoeuvresFiltering(reduced_data=reduced_data, labels=labels, label_mapping=label_mapping)
+# filtering.filter_manoeuvres()
