@@ -49,6 +49,7 @@ class ManoeuvresFiltering:
         cluster_info = self.kmeans_clustering()
         self.plot_kmeans_clusters()
         self.plot_cluster_info(cluster_info)
+        self.find_uniformly_distributed_manoeuvres()
         filtered_reduced_data = self.remove_redundant_manoeuvres()
         return filtered_reduced_data
 
@@ -403,6 +404,45 @@ class ManoeuvresFiltering:
                     )
 
         return cluster_counts
+    
+    def find_uniformly_distributed_manoeuvres(self, threshold=0.05):
+        """
+        Megvizsgálja, hogy van-e olyan manőver, amely minden klaszterben nagyjából egyforma arányban oszlik meg.
+        - threshold: A maximális szórás, amely felett a manővert nem tekintjük egyenletesen eloszlónak.
+        """
+
+        print("Egyenletesen eloszló manőverek keresése...")
+
+        cluster_counts = defaultdict(lambda: defaultdict(int))
+        total_counts = defaultdict(int)
+
+        # Adatok összegyűjtése: klaszterenként megszámoljuk a manővereket
+        for idx, cluster in enumerate(self.kmeans_labels):
+            manoeuvre_idx = self.labels[idx]
+            cluster_counts[manoeuvre_idx][cluster] += 1
+            total_counts[manoeuvre_idx] += 1
+
+        uniformly_distributed_manoeuvres = []
+
+        for manoeuvre, cluster_distribution in cluster_counts.items():
+            total = total_counts[manoeuvre]
+            cluster_ratios = []
+
+            # Számoljuk ki az egyes klaszterekben lévő arányokat
+            for cluster in range(self.n_clusters):
+                ratio = cluster_distribution[cluster] / total if total > 0 else 0
+                cluster_ratios.append(ratio)
+
+            # Számoljuk ki a szórást
+            std_dev = np.std(cluster_ratios)
+            print(f"A(z) {manoeuvre} szórása: {std_dev:.4f}")
+
+            if std_dev < threshold:  # Ha az eloszlás szórása alacsony, akkor egyenletes
+                manoeuvre_name = self.reverse_label_mapping.get(manoeuvre, f"Unknown_{manoeuvre}")
+                uniformly_distributed_manoeuvres.append(manoeuvre_name)
+                print(f"A(z) {manoeuvre_name} egyenletesen oszlik el minden klaszterben (szórás: {std_dev:.4f})")
+
+        return uniformly_distributed_manoeuvres
 
     def filter_by_distance(self, threshold=0.1):
         """
