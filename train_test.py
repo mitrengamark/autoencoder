@@ -9,7 +9,7 @@ from Analyse.validation import reconstruction_accuracy
 from Synthesis.data_synthesis import remove_redundant_data, plot_removed_data
 from Synthesis.heat_map import create_comparison_heatmaps
 from Synthesis.manoeuvres_filtering import ManoeuvresFiltering
-
+from Config.load_config import num_manoeuvres
 
 class Training:
     def __init__(
@@ -282,22 +282,22 @@ class Training:
             use_cosine_similarity=self.use_cosine_similarity,
         )
         latent_data = vs.visualize_bottleneck()
-        # vs.kmeans_clustering()
-
-        mf = ManoeuvresFiltering(
-            reduced_data=latent_data, labels=labels, label_mapping=self.label_mapping
-        )
-        filtered_reduced_data = mf.filter_manoeuvres()
-        plot_removed_data(latent_data, filtered_reduced_data)
-        create_comparison_heatmaps(latent_data, filtered_reduced_data)
-
-        # filtered_latent_data = remove_redundant_data(latent_data)
-        # create_comparison_heatmaps(latent_data, filtered_latent_data)
+        if num_manoeuvres == 1:
+            vs.kmeans_clustering()
+            filtered_latent_data = remove_redundant_data(latent_data)
+            create_comparison_heatmaps(latent_data, filtered_latent_data)
+        else:
+            mf = ManoeuvresFiltering(
+                reduced_data=latent_data, labels=labels, label_mapping=self.label_mapping
+            )
+            filtered_reduced_data = mf.filter_manoeuvres()
+            plot_removed_data(latent_data, filtered_reduced_data)
+            create_comparison_heatmaps(latent_data, filtered_reduced_data)
 
         # Denormalizáció
 
-        # accuracy = reconstruction_accuracy(whole_input, whole_output, self.tolerance)
-        # print(f"Test Accuracy: {accuracy:.2f}%")
+        accuracy = reconstruction_accuracy(whole_input, whole_output, self.tolerance)
+        print(f"Test Accuracy: {accuracy:.2f}%")
 
     def save_model(self, path):
         torch.save(self.model.state_dict(), path)
