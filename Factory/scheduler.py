@@ -1,19 +1,18 @@
 import torch
 import numpy as np
+from Config.load_config import (
+    step_size,
+    gamma,
+    num_epochs,
+    patience,
+    warmup_epochs,
+    initial_lr,
+    max_lr,
+    final_lr,
+)
 
 
-def scheduler_maker(
-    scheduler=None,
-    optimizer=None,
-    step_size=None,
-    gamma=None,
-    num_epochs=None,
-    patience=None,
-    warmup_epochs=None,
-    initial_lr=None,
-    max_lr=None,
-    final_lr=None,
-):
+def scheduler_maker(optimizer=None):
     if scheduler == "StepLR":
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size, gamma)
     elif scheduler == "CosineAnnealingLR":
@@ -25,9 +24,7 @@ def scheduler_maker(
     elif scheduler == "ExponentialLR":
         scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma)
     elif scheduler == "WarmupCosine":
-        lr_lambda = warmup_cosine_lr(
-            num_epochs, warmup_epochs, initial_lr, max_lr, final_lr
-        )
+        lr_lambda = warmup_cosine_lr()
         scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
     else:
         raise ValueError(
@@ -37,7 +34,7 @@ def scheduler_maker(
     return scheduler
 
 
-def warmup_cosine_lr(num_epochs, warmup_epochs, initial_lr, max_lr, final_lr):
+def warmup_cosine_lr():
     def lr_lambda(epoch):
         if epoch < warmup_epochs:
             lr = initial_lr + (max_lr - initial_lr) * (epoch / warmup_epochs)

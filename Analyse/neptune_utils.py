@@ -1,7 +1,25 @@
 import neptune
+from Config.load_config import (
+    latent_dim,
+    hidden_dims,
+    num_epochs,
+    mask_ratio,
+    initial_lr,
+    max_lr,
+    final_lr,
+    scheduler,
+    training_model,
+    step_size,
+    gamma,
+    patience,
+    project_name,
+    api_token,
+    tolerance,
+    model_path,
+)
 
 
-def init_neptune(project_name, api_token, parameters=None):
+def init_neptune():
     """
     Inicializálja a Neptune.ai run-t és beállítja az alap paramétereket.
 
@@ -10,6 +28,22 @@ def init_neptune(project_name, api_token, parameters=None):
     :param parameters: Opcionális szótár, amely tartalmazza a futtatás paramétereit.
     :return: Neptune run objektum.
     """
+    parameters = {
+        "latent_dim": latent_dim,
+        "hidden_dims": hidden_dims,
+        "num_epochs": num_epochs,
+        "training_model": training_model,
+        "mask_ratio": mask_ratio,
+        "scheduler": scheduler,
+        "step_size": step_size,
+        "gamma": gamma,
+        "patience": patience,
+        "initial_lr": initial_lr,
+        "max_lr": max_lr,
+        "final_lr": final_lr,
+        "model": model_path,
+        "tolerance": tolerance,
+    }
     run = neptune.init_run(
         project=project_name,
         api_token=api_token,

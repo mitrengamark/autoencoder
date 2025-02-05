@@ -1,7 +1,8 @@
 import torch
+from Config.load_config import opt_name, scheduler, initial_lr
 
 
-def optimizer_maker(optimizer_type, model_params, lr, scheduler):
+def optimizer_maker(model_params):
     """
     Creates a PyTorch optimizer based on the specified type.
 
@@ -12,22 +13,23 @@ def optimizer_maker(optimizer_type, model_params, lr, scheduler):
     Returns:
     - optimizer: The instantiated optimizer.
     """
+    lr = initial_lr
     if scheduler == "WarmupCosine":
         lr = 1
 
-    if optimizer_type == "SGD":
+    if opt_name == "SGD":
         optimizer = torch.optim.SGD(model_params, lr)
-    elif optimizer_type == "Adam":
+    elif opt_name == "Adam":
         optimizer = torch.optim.Adam(model_params, lr)
-    elif optimizer_type == "AdamW":
+    elif opt_name == "AdamW":
         optimizer = torch.optim.AdamW(model_params, lr)
-    elif optimizer_type == "Adagrad":
+    elif opt_name == "Adagrad":
         optimizer = torch.optim.Adagrad(model_params, lr)
-    elif optimizer_type == "RMSprop":
+    elif opt_name == "RMSprop":
         optimizer = torch.optim.RMSprop(model_params, lr)
     else:
         raise ValueError(
-            f"Unsupported optimizer type: {optimizer_type}. Expected SGD, Adam, AdamW, Adagrad, or RMSprop."
+            f"Unsupported optimizer type: {opt_name}. Expected SGD, Adam, AdamW, Adagrad, or RMSprop."
         )
 
     return optimizer

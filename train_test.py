@@ -9,7 +9,17 @@ from Analyse.validation import reconstruction_accuracy
 from Synthesis.data_synthesis import remove_redundant_data, plot_removed_data
 from Synthesis.heat_map import create_comparison_heatmaps
 from Synthesis.manoeuvres_filtering import ManoeuvresFiltering
-from Config.load_config import num_manoeuvres
+from Config.load_config import (
+    num_manoeuvres,
+    training_model,
+    num_epochs,
+    scheduler,
+    beta_min,
+    hyperopt,
+    model_path,
+    saved_model,
+)
+
 
 class Training:
     def __init__(
@@ -17,35 +27,17 @@ class Training:
         trainloader=None,
         valloader=None,
         testloader=None,
-        test_mode=None,
         optimizer=None,
         model=None,
         labels=None,
-        num_epochs=None,
         device=None,
-        scheduler=None,
-        beta_min=None,
-        step_size=None,
-        gamma=None,
-        patience=None,
-        warmup_epochs=None,
-        initial_lr=None,
-        max_lr=None,
-        final_lr=None,
-        model_path=None,
         data_min=None,
         data_max=None,
         run=None,
         data_mean=None,
         data_std=None,
-        hyperopt=None,
-        tolerance=None,
-        label_mapping=None,
         sign_change_indices=None,
-        num_manoeuvres=None,
-        n_clusters=None,
-        use_cosine_similarity=None,
-        model_name=None,
+        label_mapping=None,
     ):
 
         # Adatbetöltők
@@ -55,27 +47,12 @@ class Training:
 
         # Modell és optimalizáló
         self.model = model
-        self.model_name = model_name
+        self.model_name = training_model
         self.optimizer = optimizer
 
         # Hiperparaméterek és tanítási konfigurációk
-        self.num_epochs = num_epochs
-        self.scheduler = scheduler
-        self.step_size = step_size
-        self.gamma = gamma
-        self.patience = patience
-        self.warmup_epochs = warmup_epochs
-        self.initial_lr = initial_lr
-        self.max_lr = max_lr
-        self.final_lr = final_lr
-        self.beta_min = beta_min
         self.beta = 0  # Dinamikus érték lesz tanítás során
-        self.tolerance = tolerance
-        self.hyperopt = hyperopt
-        self.test_mode = test_mode
-
-        # Modell mentéséhez szükséges útvonal
-        self.model_path = model_path
+        self.scheduler = scheduler
 
         # Címkék
         self.labels = labels
@@ -91,9 +68,6 @@ class Training:
         self.run = run
         self.device = device
         self.sign_change_indices = sign_change_indices
-        self.num_manoeuvres = num_manoeuvres
-        self.n_clusters = n_clusters
-        self.use_cosine_similarity = use_cosine_similarity
 
         # Loss értékek tárolása
         self.losses = []
@@ -103,28 +77,17 @@ class Training:
 
     def train(self):
         self.model.train()
-        if self.hyperopt == 0:
-            scheduler = scheduler_maker(
-                scheduler=self.scheduler,
-                optimizer=self.optimizer,
-                step_size=self.step_size,
-                gamma=self.gamma,
-                num_epochs=self.num_epochs,
-                patience=self.patience,
-                warmup_epochs=self.warmup_epochs,
-                initial_lr=self.initial_lr,
-                max_lr=self.max_lr,
-                final_lr=self.final_lr,
-            )
+        if hyperopt == 0:
+            scheduler = scheduler_maker(optimizer=self.optimizer)
 
-        for epoch in range(self.num_epochs):
+        for epoch in range(num_epochs):
             loss_per_episode = 0
             reconst_loss_per_epoch = 0
             kl_loss_per_epoch = 0
             train_accuracy = 0
-            self.beta = min(1.0, epoch / self.beta_min)
+            self.beta = min(1.0, epoch / beta_min)
             if epoch == 0:
-                self.beta = 1 / self.beta_min
+                self.beta = 1 / beta_min
 
             for data in self.trainloader:
                 inputs, _ = data
@@ -149,7 +112,7 @@ class Training:
                 else:
                     raise ValueError(f"Unsupported model type. Expected VAE or MAE!")
 
-                accuracy = reconstruction_accuracy(inputs, outputs, self.tolerance)
+                accuracy = reconstruction_accuracy(inputs, outputs)
                 train_accuracy += accuracy
 
                 self.optimizer.zero_grad()
@@ -170,12 +133,12 @@ class Training:
             val_loss, val_accuracy = self.validate()
             self.val_losses.append(val_loss)
 
-            if self.hyperopt == 0:
+            if hyperopt == 0:
                 if self.scheduler == "ReduceLROnPlateau":
                     scheduler.step(average_loss)
                 else:
                     scheduler.step()
-            elif self.hyperopt == 1:
+            elif hyperopt == 1:
                 self.scheduler.step()
             else:
                 raise ValueError("Unsupported hyperopt value. Expected 0 or 1.")
@@ -191,7 +154,7 @@ class Training:
                 self.run[f"validation/accuracy"].append(val_accuracy)
 
             print(
-                f"Epoch [{epoch+1}/{self.num_epochs}], Train Loss: {average_loss:.4f}, Train Accuracy: {average_accuracy:.2f}%, Val Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.2f}%"
+                f"Epoch [{epoch+1}/{num_epochs}], Train Loss: {average_loss:.4f}, Train Accuracy: {average_accuracy:.2f}%, Val Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.2f}%"
             )
 
         if self.run:
@@ -218,12 +181,12 @@ class Training:
                     raise ValueError("Unsupported model type. Expected VAE or MAE!")
 
                 val_loss += loss.item()
-                val_accuracy += reconstruction_accuracy(inputs, outputs, self.tolerance)
+                val_accuracy += reconstruction_accuracy(inputs, outputs)
         return val_loss / len(self.valloader), val_accuracy / len(self.valloader)
 
     def test(self):
         self.model.load_state_dict(
-            torch.load(self.model_path, map_location=self.device, weights_only=True)
+            torch.load(saved_model, map_location=self.device, weights_only=True)
         )
         self.model.to(self.device)
         self.model.eval()
@@ -277,9 +240,6 @@ class Training:
             model_name=self.model_name,
             label_mapping=self.label_mapping,
             sign_change_indices=self.sign_change_indices,
-            num_manoeuvres=self.num_manoeuvres,
-            n_clusters=self.n_clusters,
-            use_cosine_similarity=self.use_cosine_similarity,
         )
         latent_data = vs.visualize_bottleneck()
         if num_manoeuvres == 1:
@@ -288,7 +248,9 @@ class Training:
             create_comparison_heatmaps(latent_data, filtered_latent_data)
         else:
             mf = ManoeuvresFiltering(
-                reduced_data=latent_data, labels=labels, label_mapping=self.label_mapping
+                reduced_data=latent_data,
+                labels=labels,
+                label_mapping=self.label_mapping,
             )
             filtered_reduced_data = mf.filter_manoeuvres()
             plot_removed_data(latent_data, filtered_reduced_data)
@@ -296,12 +258,12 @@ class Training:
 
         # Denormalizáció
 
-        accuracy = reconstruction_accuracy(whole_input, whole_output, self.tolerance)
+        accuracy = reconstruction_accuracy(whole_input, whole_output)
         print(f"Test Accuracy: {accuracy:.2f}%")
 
-    def save_model(self, path):
-        torch.save(self.model.state_dict(), path)
-        print(f"Model saved to {path}")
+    def save_model(self):
+        torch.save(self.model.state_dict(), model_path)
+        print(f"Model saved to {model_path}")
 
     def plot_losses(self):
         if isinstance(self.model, VariationalAutoencoder):

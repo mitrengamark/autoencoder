@@ -2,10 +2,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.data
+from Config.load_config import hidden_dims, latent_dim, dropout
 
 
 class VariationalAutoencoder(nn.Module):
-    def __init__(self, input_dim, latent_dim, hidden_dims, dropout):
+    def __init__(self, input_dim):
         """
         :param input_dim: Bemeneti dimenziók száma.
         :param latent_dim: Latens tér dimenziója.

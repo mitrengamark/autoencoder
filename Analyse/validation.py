@@ -1,8 +1,9 @@
 import torch
 import numpy as np
+from Config.load_config import tolerance
 
 
-def reconstruction_accuracy(inputs, outputs, tolerance):
+def reconstruction_accuracy(inputs, outputs):
     """
     Számolja a rekonstrukciós pontosságot a bemenet és a kimenet között.
     :param inputs: Eredeti bemenet

@@ -1,14 +1,15 @@
 import torch
 import torch.nn as nn
 from Factory.self_attention_factory import SelfAttention
+from Config.load_config import mask_ratio, bottleneck_dim, num_heads, dropout
 
 
 class MaskedAutoencoder(nn.Module):
-    def __init__(self, input_dim, bottleneck_dim, mask_ratio, num_heads, dropout):
+    def __init__(self, input_dim):
         super(MaskedAutoencoder, self).__init__()
         self.mask_ratio = mask_ratio
         self.bottleneck_dim = bottleneck_dim
-        self.self_attention = SelfAttention(input_dim, num_heads, dropout)
+        self.self_attention = SelfAttention(input_dim)
         # self.encoder_bottleneck = nn.Sequential(
         #     nn.Dropout(dropout),
         #     nn.Linear(input_dim, bottleneck_dim),

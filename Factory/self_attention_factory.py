@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
+from Config.load_config import num_heads, dropout
 
 
 class SelfAttention(nn.Module):
-    def __init__(self, input_dim, num_heads, dropout, max_len=5000):
+    def __init__(self, input_dim, max_len=5000):
         super(SelfAttention, self).__init__()
         self.multi_head_attention = nn.MultiheadAttention(
             embed_dim=input_dim, num_heads=num_heads, dropout=dropout

@@ -11,7 +11,13 @@ from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_distances
 from sklearn.preprocessing import normalize
-from Config.load_config import tsneplot, dimension
+from Config.load_config import (
+    tsneplot,
+    dimension,
+    num_manoeuvres,
+    n_clusters,
+    use_cosine_similarity,
+)
 
 
 class Visualise:
@@ -22,23 +28,16 @@ class Visualise:
         model_name=None,
         label_mapping=None,
         sign_change_indices=None,
-        num_manoeuvres=None,
-        n_clusters=None,
-        use_cosine_similarity=None,
     ):
         self.bottleneck_outputs = bottleneck_outputs
         self.labels = labels
         self.model_name = model_name
         self.label_mapping = label_mapping
         self.sign_change_indices = sign_change_indices
-        self.num_manoeuvres = num_manoeuvres
-        self.n_clusters = n_clusters
-        self.use_cosine_similarity = use_cosine_similarity
         self.max_iter = 100
         self.tol = 1e-4
         self.tsne_cache_path = "Analyse/tsne_cache.pkl"
         self.plot = tsneplot
-        self.dimension = dimension
 
     def compute_data_hash(self):
         """Egyedi hash generálása a bemenetek alapján, hogy észleljük a változásokat"""
@@ -236,7 +235,7 @@ class Visualise:
         else:
             print("Új T-SNE számítás indítása...")
             tsne = TSNE(
-                n_components=self.dimension,
+                n_components=dimension,
                 perplexity=perplexity,
                 learning_rate=200,
                 max_iter=1000,
@@ -262,14 +261,10 @@ class Visualise:
                 color_list = cm.get_cmap("nipy_spectral", num_labels)(
                     np.linspace(0, 1, num_labels)
                 )
-                markers = ["o", "s", "D", "P", "X", "^", "v", "<", ">"]  # Marker lista
-                marker_cycle = markers * (
-                    num_labels // len(markers) + 1
-                )  # Marker ciklus
 
-            if self.dimension == 3:
+            if dimension == 3:
                 ax = plt.figure(figsize=(10, 7)).add_subplot(111, projection="3d")
-            elif self.dimension == 2:
+            elif dimension == 2:
                 ax = plt.gca()
             else:
                 raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
@@ -292,89 +287,90 @@ class Visualise:
                     else []
                 )
                 description = description.replace("_combined", "")
-                alphas = np.linspace(
-                    0.1, 1.0, label_data.shape[0]
-                )  # Alpha értékek lineárisan növekednek
-                if self.num_manoeuvres == 1:
+                if num_manoeuvres == 1:
                     current_color = "blue"
                     for j in range(label_data.shape[0]):
                         # Színezés előjelváltás alapján
                         if j in indices:
                             current_color = "red" if current_color == "blue" else "blue"
 
-                        if self.dimension == 3:
+                        if dimension == 3:
                             ax.scatter(
                                 label_data[j, 0],
                                 label_data[j, 1],
                                 label_data[j, 2],
                                 label=description if j == 0 else "",
                                 color=current_color,
-                                alpha=alphas[j],
+                                alpha=1,
+                                facecolors="none",
                             )
-                        elif self.dimension == 2:
+                        elif dimension == 2:
                             ax.scatter(
                                 label_data[j, 0],
                                 label_data[j, 1],
                                 label=description if j == 0 else "",
                                 color=current_color,
-                                alpha=alphas[j],
+                                alpha=1,
+                                facecolors="none",
                             )
                         else:
                             raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
                 else:
                     for j in range(label_data.shape[0]):
                         if num_labels > 20:
-                            if self.dimension == 3:
+                            if dimension == 3:
                                 ax.scatter(
                                     label_data[j, 0],
                                     label_data[j, 1],
                                     label_data[j, 2],
                                     label=description if j == 0 else "",
                                     color=color_list[i],
-                                    marker=marker_cycle[i],
-                                    alpha=alphas[j],
+                                    alpha=1,
+                                    facecolors="none",
                                 )
-                            elif self.dimension == 2:
+                            elif dimension == 2:
                                 ax.scatter(
                                     label_data[j, 0],
                                     label_data[j, 1],
                                     label=description if j == 0 else "",
                                     color=color_list[i],
-                                    marker=marker_cycle[i],
-                                    alpha=alphas[j],
+                                    alpha=1,
+                                    facecolors="none",
                                 )
                             else:
                                 raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
                         else:
-                            if self.dimension == 3:
+                            if dimension == 3:
                                 ax.scatter(
                                     label_data[j, 0],
                                     label_data[j, 1],
                                     label_data[j, 2],
                                     label=description if j == 0 else "",
                                     color=color_list[i],
-                                    alpha=alphas[j],
+                                    alpha=1,
+                                    facecolors="none",
                                 )
-                            elif self.dimension == 2:
+                            elif dimension == 2:
                                 ax.scatter(
                                     label_data[j, 0],
                                     label_data[j, 1],
                                     label=description if j == 0 else "",
                                     color=color_list[i],
-                                    alpha=alphas[j],
+                                    alpha=1,
+                                    facecolors="none",
                                 )
                             else:
                                 raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
 
-            handles, _ = ax.get_legend_handles_labels()
-            for handle in handles:
-                handle.set_alpha(1.0)  # Legendben alpha érték kikapcsolása
+            # handles, _ = ax.get_legend_handles_labels()
+            # for handle in handles:
+            #     handle.set_alpha(1.0)  # Legendben alpha érték kikapcsolása
 
             ax.set_title(self.tsne_title)
             ax.set_xlabel("T-SNE Komponens 1")
             ax.set_ylabel("T-SNE Komponens 2")
 
-            if self.dimension == 3:
+            if dimension == 3:
                 ax.set_zlabel("T-SNE Komponens 3")
 
             ax.legend(title="Manőverek", loc="best", fontsize="small", markerscale=0.8)
@@ -397,11 +393,11 @@ class Visualise:
             class_data = self.bottleneck_outputs[mask]
             reduced_class_data = self.reduced_data[mask]
 
-            if self.use_cosine_similarity:
+            if use_cosine_similarity:
                 class_clusters, _ = self.cosine_kmeans(class_data)
                 technique = "Cosine Similarity"
             else:
-                kmeans = KMeans(n_clusters=self.n_clusters, random_state=42)
+                kmeans = KMeans(n_clusters=n_clusters, random_state=42)
                 class_clusters = kmeans.fit_predict(class_data)
                 technique = "Euclidean Distance"
 
@@ -416,8 +412,8 @@ class Visualise:
 
             # Vizualizáció az osztályon belüli klaszterekkel
             plt.figure(figsize=(8, 6))
-            colors = plt.cm.tab20(np.linspace(0, 1, self.n_clusters))
-            for cluster_idx in range(self.n_clusters):
+            colors = plt.cm.tab20(np.linspace(0, 1, n_clusters))
+            for cluster_idx in range(n_clusters):
                 cluster_mask = class_clusters == cluster_idx
                 plt.scatter(
                     reduced_class_data[cluster_mask, 0],
@@ -439,7 +435,7 @@ class Visualise:
 
         # Véletlenszerű centroid inicializálás
         n_samples = data.shape[0]
-        random_indices = np.random.choice(n_samples, self.n_clusters, replace=False)
+        random_indices = np.random.choice(n_samples, n_clusters, replace=False)
         centroids = data[random_indices]
 
         print(f"max_iter értéke: {self.max_iter}, típusa: {type(self.max_iter)}")
@@ -452,7 +448,7 @@ class Visualise:
 
             # Új centroidok számítása
             new_centroids = []
-            for i in range(self.n_clusters):
+            for i in range(n_clusters):
                 cluster_points = data[labels == i]
                 if len(cluster_points) > 0:
                     centroid = np.mean(cluster_points, axis=0)
