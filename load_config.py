@@ -61,6 +61,8 @@ parameter = config.get("Plot", "parameter")
 coloring_method = config.get("Plot", "coloring_method")
 n_clusters = int(config["Plot"]["n_clusters"])
 use_cosine_similarity = int(config["Plot"]["use_cosine_similarity"])
+dimension = int(config["Plot"]["dimension"])
+tsneplot = int(config["Plot"]["tsneplot"])
 
 # Callbacks
 plot = int(config["Callbacks"]["plot"])

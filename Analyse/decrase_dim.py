@@ -4,13 +4,14 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from mpl_toolkits.mplot3d import Axes3D
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_distances
 from sklearn.preprocessing import normalize
-from load_config import plot
+from load_config import tsneplot, dimension
 
 
 class Visualise:
@@ -36,7 +37,8 @@ class Visualise:
         self.max_iter = 100
         self.tol = 1e-4
         self.tsne_cache_path = "Analyse/tsne_cache.pkl"
-        self.plot = plot
+        self.plot = tsneplot
+        self.dimension = dimension
 
     def compute_data_hash(self):
         """Egyedi hash generálása a bemenetek alapján, hogy észleljük a változásokat"""
@@ -234,7 +236,7 @@ class Visualise:
         else:
             print("Új T-SNE számítás indítása...")
             tsne = TSNE(
-                n_components=2,
+                n_components=self.dimension,
                 perplexity=perplexity,
                 learning_rate=200,
                 max_iter=1000,
@@ -265,6 +267,13 @@ class Visualise:
                     num_labels // len(markers) + 1
                 )  # Marker ciklus
 
+            if self.dimension == 3:
+                ax = plt.figure(figsize=(10, 7)).add_subplot(111, projection="3d")
+            elif self.dimension == 2:
+                ax = plt.gca()
+            else:
+                raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
+
             for i, label in enumerate(unique_labels):
                 mask = self.labels == label
                 label_data = reduced_data[mask]
@@ -292,42 +301,85 @@ class Visualise:
                         # Színezés előjelváltás alapján
                         if j in indices:
                             current_color = "red" if current_color == "blue" else "blue"
-                        plt.scatter(
-                            label_data[j, 0],
-                            label_data[j, 1],
-                            label=description if j == 0 else "",
-                            color=current_color,
-                            alpha=alphas[j],
-                        )
-                else:
-                    for j in range(label_data.shape[0]):
-                        if num_labels > 20:
-                            plt.scatter(
+
+                        if self.dimension == 3:
+                            ax.scatter(
+                                label_data[j, 0],
+                                label_data[j, 1],
+                                label_data[j, 2],
+                                label=description if j == 0 else "",
+                                color=current_color,
+                                alpha=alphas[j],
+                            )
+                        elif self.dimension == 2:
+                            ax.scatter(
                                 label_data[j, 0],
                                 label_data[j, 1],
                                 label=description if j == 0 else "",
-                                color=color_list[i],
-                                marker=marker_cycle[i],
+                                color=current_color,
                                 alpha=alphas[j],
                             )
                         else:
-                            plt.scatter(
-                                label_data[j, 0],
-                                label_data[j, 1],
-                                label=description if j == 0 else "",
-                                color=color_list[i],
-                                alpha=alphas[j],
-                            )
+                            raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
+                else:
+                    for j in range(label_data.shape[0]):
+                        if num_labels > 20:
+                            if self.dimension == 3:
+                                ax.scatter(
+                                    label_data[j, 0],
+                                    label_data[j, 1],
+                                    label_data[j, 2],
+                                    label=description if j == 0 else "",
+                                    color=color_list[i],
+                                    marker=marker_cycle[i],
+                                    alpha=alphas[j],
+                                )
+                            elif self.dimension == 2:
+                                ax.scatter(
+                                    label_data[j, 0],
+                                    label_data[j, 1],
+                                    label=description if j == 0 else "",
+                                    color=color_list[i],
+                                    marker=marker_cycle[i],
+                                    alpha=alphas[j],
+                                )
+                            else:
+                                raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
+                        else:
+                            if self.dimension == 3:
+                                ax.scatter(
+                                    label_data[j, 0],
+                                    label_data[j, 1],
+                                    label_data[j, 2],
+                                    label=description if j == 0 else "",
+                                    color=color_list[i],
+                                    alpha=alphas[j],
+                                )
+                            elif self.dimension == 2:
+                                ax.scatter(
+                                    label_data[j, 0],
+                                    label_data[j, 1],
+                                    label=description if j == 0 else "",
+                                    color=color_list[i],
+                                    alpha=alphas[j],
+                                )
+                            else:
+                                raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
 
-            handles, _ = plt.gca().get_legend_handles_labels()
+            handles, _ = ax.get_legend_handles_labels()
             for handle in handles:
                 handle.set_alpha(1.0)  # Legendben alpha érték kikapcsolása
 
-            plt.title(self.tsne_title)
-            plt.xlabel("T-SNE Komponens 1")
-            plt.ylabel("T-SNE Komponens 2")
-            plt.legend(title="Manőverek", loc="best", fontsize="small", markerscale=0.8)
-            plt.grid(True)
+            ax.set_title(self.tsne_title)
+            ax.set_xlabel("T-SNE Komponens 1")
+            ax.set_ylabel("T-SNE Komponens 2")
+
+            if self.dimension == 3:
+                ax.set_zlabel("T-SNE Komponens 3")
+
+            ax.legend(title="Manőverek", loc="best", fontsize="small", markerscale=0.8)
+            ax.grid(True)
+
             plt.tight_layout()
             plt.show()
 

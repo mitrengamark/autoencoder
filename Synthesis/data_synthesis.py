@@ -45,7 +45,10 @@ def remove_redundant_data(latent_data, grid_size=grid, max_sample=max_sample):
             filtered_latent_data.append(point)
 
     filtered_latent_data = np.array(filtered_latent_data)
+    plot_removed_data(latent_data, filtered_latent_data)
 
+
+def plot_removed_data(latent_data, filtered_latent_data):
     # Vizualizáció az eredeti és szűrt adatokkal
     plt.figure(figsize=(10, 5))
 

@@ -37,6 +37,7 @@ class ManoeuvresFiltering:
         self.eps = eps
         self.min_samples = min_samples
         self.n_clusters = n_clusters
+        self.reverse_label_mapping = {v: k for k, v in self.label_mapping.items()}
 
     def filter_manoeuvres(self):
         self.find_boundary_manoeuvres()
@@ -46,9 +47,8 @@ class ManoeuvresFiltering:
         cluster_info = self.kmeans_clustering()
         self.plot_kmeans_clusters()
         self.plot_cluster_info(cluster_info)
-        redundant_manoeuvres = self.filter_redundant_manoeuvres()
-        self.check_cluster_dominance()
-        self.filter_by_distance()
+        filtered_reduced_data = self.remove_redundant_manoeuvres()
+        return filtered_reduced_data
 
     def find_boundary_manoeuvres(self):
         """
@@ -64,12 +64,11 @@ class ManoeuvresFiltering:
         self.boundary_manoeuvres = {
             int(label) for label in self.labels[self.boundary_indices]
         }
-        reverse_label_mapping = {v: k for k, v in self.label_mapping.items()}
-        boundary_manoeuvre_names = {
-            reverse_label_mapping.get(label, f"Unknown_{label}")
+        self.boundary_manoeuvre_names = {
+            self.reverse_label_mapping.get(label, f"Unknown_{label}")
             for label in self.boundary_manoeuvres
         }
-        print("Határon lévő manőverek:", boundary_manoeuvre_names)
+        print("Határon lévő manőverek:", self.boundary_manoeuvre_names)
 
     # -----------------------------------clustering-----------------------------------
 
@@ -269,7 +268,7 @@ class ManoeuvresFiltering:
 
     # -----------------------------------redundant_manoeuvres-----------------------------------
 
-    def filter_redundant_manoeuvres(self, threshold=0.9):
+    def filter_redundant_manoeuvres(self, threshold=0.7):
         """
         Kiszűri a redundáns manővereket a Pearson-korreláció alapján.
         threshold: A minimális korrelációs érték, amely felett két manőver redundánsnak számít.
@@ -336,11 +335,78 @@ class ManoeuvresFiltering:
         for i in range(len(distances)):
             for j in range(i + 1, len(distances)):  # Csak az egyik irányba vizsgáljuk
                 if distances[i, j] < threshold and self.labels[i] != self.labels[j]:
-                    # Hozzáadjuk a párokat rendezett formában, hogy ne legyen (3,5) és (5,3) külön
                     redundant_pairs.add(tuple(sorted((self.labels[i], self.labels[j]))))
 
-        print(f"Redundáns manőver párok (távolság alapú): {redundant_pairs}")
+        redundant_manoeuvre_names = {
+            (
+                self.reverse_label_mapping.get(pair[0], f"Unknown_{pair[0]}"),
+                self.reverse_label_mapping.get(pair[1], f"Unknown_{pair[1]}"),
+            )
+            for pair in redundant_pairs
+        }
+
+        print(f"Redundáns manőver párok (távolság alapú): {redundant_manoeuvre_names}")
         return redundant_pairs
+
+    # -----------------------------------Remove_redundant_manoeuvers-----------------------------------
+
+    def remove_redundant_manoeuvres(self):
+        """
+        Kiszűri a redundáns manővereket a boundary manőverek figyelembevételével.
+        - Ha egy redundáns pár mindkét eleme boundary, akkor csak az egyik marad meg.
+        - Ha egy redundáns pár egyik tagja boundary, akkor a boundary nem marad meg.
+        - Ha egyik sem boundary, akkor csak az egyik marad meg.
+        - Ahány redundáns pár van, annyi redundáns manőver maradjon a végső listában.
+        """
+        redundant_manoeuvres = set()  # Halmaz a redundáns manőverek tárolására
+        boundary_manoeuvres = {
+            int(m) for m in self.boundary_manoeuvres
+        }  # Határon lévő manőverek
+
+        # Összegyűjtjük az összes redundáns párt
+        redundant_pairs = self.filter_redundant_manoeuvres()
+        redundant_pairs.update(self.filter_by_distance())  # Mindkét módszer eredményei
+
+        for pair in redundant_pairs:
+            a, b = int(pair[0]), int(pair[1])  # Kicsomagoljuk a párt
+
+            if a in boundary_manoeuvres and b in boundary_manoeuvres:
+                redundant_manoeuvres.add(
+                    a
+                )  # Ha mindkettő boundary, csak az elsőt tartjuk meg.
+            elif a in boundary_manoeuvres:
+                redundant_manoeuvres.add(b)  # Ha az 'a' boundary, akkor 'b' marad meg.
+            elif b in boundary_manoeuvres:
+                redundant_manoeuvres.add(a)  # Ha a 'b' boundary, akkor 'a' marad meg.
+            else:
+                redundant_manoeuvres.add(
+                    a
+                )  # Ha egyik sem boundary, az elsőt tartjuk meg.
+
+        redundant_manoeuvres = list({int(m) for m in redundant_manoeuvres})
+        redundant_manoeuvre_names = {
+            self.reverse_label_mapping.get(m, f"Unknown_{m}")
+            for m in redundant_manoeuvres
+        }
+        print("Boundary manőverek:", boundary_manoeuvres)
+        print("Redundáns párok:", redundant_pairs)
+        print("Végleges redundáns manőverek:", redundant_manoeuvres)
+        print("Végleges redundáns manőverek nevei:", redundant_manoeuvre_names)
+
+        # **Eltávolítjuk a redundáns manőverekhez tartozó adatokat**
+        mask = np.isin(
+            self.labels, redundant_manoeuvres, invert=True
+        )  # True, ha NEM redundáns
+        filtered_reduced_data = self.reduced_data[
+            mask
+        ]  # Csak a nem-redundáns adatokat tartjuk meg
+        filtered_labels = self.labels[mask]  # Frissítjük a címkéket is
+
+        print(
+            f"Redundáns manőverek eltávolítva, új adatméret: {filtered_reduced_data.shape}"
+        )
+
+        return filtered_reduced_data
 
 
 # np.random.seed(42)
