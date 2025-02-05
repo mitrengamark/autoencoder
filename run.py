@@ -8,7 +8,7 @@ from Factory.variational_autoencoder import VariationalAutoencoder
 from Factory.masked_autoencoder import MaskedAutoencoder
 from Factory.optimizer import optimizer_maker
 from Analyse.neptune_utils import init_neptune
-from load_config import (
+from Config.load_config import (
     seed,
     latent_dim,
     hidden_dims,

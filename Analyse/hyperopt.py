@@ -13,7 +13,7 @@ from Factory.optimizer import optimizer_maker
 from Factory.scheduler import scheduler_maker
 from train_test import Training
 from data_process import DataProcess
-from load_config import (
+from Config.load_config import (
     seed,
     training_model,
     initial_lr,

@@ -2,7 +2,7 @@ import configparser
 import datetime
 
 config = configparser.ConfigParser()
-config.read("config.ini")
+config.read("Config/config.ini")
 
 # Dims
 latent_dim = int(config["Dims"]["latent_dim"])
@@ -54,6 +54,7 @@ data_dir = config.get("Data", "data_dir")
 num_manoeuvres = int(config["Data"]["num_manoeuvres"])
 train_size = float(config["Data"]["train_size"])
 val_size = float(config["Data"]["val_size"])
+basic_method = int(config["Data"]["basic_method"])
 seed = int(config["Data"]["seed"])
 selected_manoeuvres = config.get("Data", "selected_manoeuvres", fallback="").split(",")
 

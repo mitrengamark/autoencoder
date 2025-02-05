@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
 from scipy.spatial import cKDTree
-from load_config import grid, max_sample
+from Config.load_config import grid, max_sample
 
 
 def remove_redundant_data(latent_data, grid_size=grid, max_sample=max_sample):

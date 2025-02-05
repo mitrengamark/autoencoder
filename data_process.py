@@ -3,9 +3,21 @@ import numpy as np
 import pandas as pd
 import torch
 import random
-from load_config import selected_manoeuvres, num_manoeuvres, data_dir, parameter, training_model, coloring_method, train_size, val_size, batch_size, num_workers
+from Config.load_config import (
+    selected_manoeuvres,
+    num_manoeuvres,
+    data_dir,
+    parameter,
+    training_model,
+    coloring_method,
+    train_size,
+    val_size,
+    batch_size,
+    num_workers,
+    basic_method,
+)
 
- 
+
 class DataProcess:
     def __init__(self):
         self.data_dir = data_dir
@@ -194,19 +206,30 @@ class DataProcess:
         # Train-val-test split
         n = all_data.size(0)
         train_size = int(self.train_size * n)
-        val_size = int(self.val_size * n)
+        if basic_method == 1:
+            val_size = int(self.val_size * n)
 
-        indices = torch.randperm(n)
-        train_indices = indices[:train_size]
-        val_indices = indices[train_size : train_size + val_size]
-        test_indices = indices[train_size + val_size :]
+            indices = torch.randperm(n)
+            train_indices = indices[:train_size]
+            val_indices = indices[train_size : train_size + val_size]
+            test_indices = indices[train_size + val_size :]
 
-        train_data = all_data[train_indices]
-        train_labels = all_labels[train_indices]
-        val_data = all_data[val_indices]
-        val_labels = all_labels[val_indices]
-        test_data = all_data[test_indices]
-        test_labels = all_labels[test_indices]
+            train_data = all_data[train_indices]
+            train_labels = all_labels[train_indices]
+            val_data = all_data[val_indices]
+            val_labels = all_labels[val_indices]
+            test_data = all_data[test_indices]
+            test_labels = all_labels[test_indices]
+        else:
+            train_indices = torch.arange(train_size)
+            val_indices = torch.arange(train_size, n)
+
+            train_data = all_data[train_indices]
+            train_labels = all_labels[train_indices]
+            val_data = all_data[val_indices]
+            val_labels = all_labels[val_indices]
+            test_data = all_data
+            test_labels = all_labels
 
         print(f"Train data shape: {train_data.shape}, Labels: {train_labels.shape}")
         print(f"Validation data shape: {val_data.shape}, Labels: {val_labels.shape}")

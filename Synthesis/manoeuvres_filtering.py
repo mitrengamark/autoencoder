@@ -6,7 +6,7 @@ from scipy.spatial import ConvexHull
 from sklearn.cluster import DBSCAN, KMeans
 from sklearn.metrics.pairwise import euclidean_distances
 from collections import defaultdict
-from load_config import method
+from Config.load_config import method
 
 # from random_data import (
 #     generate_clustered_data,
@@ -18,7 +18,7 @@ from load_config import method
 # # Hozzáadjuk a projekt gyökérkönyvtárát a Python elérési útvonalához
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from load_config import eps, min_samples, n_clusters
+from Config.load_config import eps, min_samples, n_clusters
 
 
 class ManoeuvresFiltering:

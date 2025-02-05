@@ -11,7 +11,7 @@ from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_distances
 from sklearn.preprocessing import normalize
-from load_config import tsneplot, dimension
+from Config.load_config import tsneplot, dimension
 
 
 class Visualise:

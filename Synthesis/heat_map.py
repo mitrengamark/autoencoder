@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
-from load_config import grid_size
+from Config.load_config import grid_size
 
 
 def create_comparison_heatmaps(original_data, filtered_data, grid_size=grid_size):
