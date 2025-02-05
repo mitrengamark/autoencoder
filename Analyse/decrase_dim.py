@@ -17,6 +17,8 @@ from Config.load_config import (
     num_manoeuvres,
     n_clusters,
     use_cosine_similarity,
+    coloring,
+    step,
 )
 
 
@@ -280,51 +282,28 @@ class Visualise:
                     ),
                     f"Manoeuvre {label}",
                 )
-                indices = (
-                    self.sign_change_indices[description]
-                    if self.sign_change_indices
-                    and description in self.sign_change_indices
-                    else []
-                )
                 description = description.replace("_combined", "")
                 if num_manoeuvres == 1:
-                    current_color = "blue"
-                    for j in range(label_data.shape[0]):
-                        # Színezés előjelváltás alapján
-                        if j in indices:
-                            current_color = "red" if current_color == "blue" else "blue"
+                    if coloring == 1:
+                        indices = (
+                            self.sign_change_indices[description]
+                            if self.sign_change_indices
+                            and description in self.sign_change_indices
+                            else []
+                        )
+                        current_color = "blue"
+                        for j in range(label_data.shape[0]):
+                            # Színezés előjelváltás alapján
+                            if j in indices:
+                                current_color = "red" if current_color == "blue" else "blue"
 
-                        if dimension == 3:
-                            ax.scatter(
-                                label_data[j, 0],
-                                label_data[j, 1],
-                                label_data[j, 2],
-                                label=description if j == 0 else "",
-                                color=current_color,
-                                alpha=1,
-                                facecolors="none",
-                            )
-                        elif dimension == 2:
-                            ax.scatter(
-                                label_data[j, 0],
-                                label_data[j, 1],
-                                label=description if j == 0 else "",
-                                color=current_color,
-                                alpha=1,
-                                facecolors="none",
-                            )
-                        else:
-                            raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
-                else:
-                    for j in range(label_data.shape[0]):
-                        if num_labels > 20:
                             if dimension == 3:
                                 ax.scatter(
                                     label_data[j, 0],
                                     label_data[j, 1],
                                     label_data[j, 2],
                                     label=description if j == 0 else "",
-                                    color=color_list[i],
+                                    color=current_color,
                                     alpha=1,
                                     facecolors="none",
                                 )
@@ -333,13 +312,41 @@ class Visualise:
                                     label_data[j, 0],
                                     label_data[j, 1],
                                     label=description if j == 0 else "",
-                                    color=color_list[i],
+                                    color=current_color,
                                     alpha=1,
                                     facecolors="none",
                                 )
                             else:
                                 raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
-                        else:
+                    else:
+                        cmap = cm.get_cmap("viridis", label_data.shape[0] // step + 1)  # Lépésenként színváltás
+                        for j in range(label_data.shape[0]):
+                            color_index = j // step  # Minden `step` elem után más szín
+                            color = cmap(color_index)
+
+                            if dimension == 3:
+                                ax.scatter(
+                                    label_data[j, 0],
+                                    label_data[j, 1],
+                                    label_data[j, 2],
+                                    label=description if j == 0 else "",
+                                    color=color,
+                                    alpha=1,
+                                    facecolors="none",
+                                )
+                            elif dimension == 2:
+                                ax.scatter(
+                                    label_data[j, 0],
+                                    label_data[j, 1],
+                                    label=description if j == 0 else "",
+                                    color=color,
+                                    alpha=1,
+                                    facecolors="none",
+                                )
+                            else:
+                                raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
+                else:
+                    for j in range(label_data.shape[0]):
                             if dimension == 3:
                                 ax.scatter(
                                     label_data[j, 0],
