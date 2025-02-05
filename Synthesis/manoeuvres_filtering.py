@@ -1,10 +1,12 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy.stats import spearmanr, kendalltau
 from scipy.spatial import ConvexHull
 from sklearn.cluster import DBSCAN, KMeans
 from sklearn.metrics.pairwise import euclidean_distances
 from collections import defaultdict
+from load_config import method
 
 # from random_data import (
 #     generate_clustered_data,
@@ -268,7 +270,7 @@ class ManoeuvresFiltering:
 
     # -----------------------------------redundant_manoeuvres-----------------------------------
 
-    def filter_redundant_manoeuvres(self, threshold=0.7):
+    def filter_redundant_manoeuvres_pearson(self, threshold=0.7):
         """
         Kiszűri a redundáns manővereket a Pearson-korreláció alapján.
         threshold: A minimális korrelációs érték, amely felett két manőver redundánsnak számít.
@@ -295,6 +297,86 @@ class ManoeuvresFiltering:
                     )
 
         print(f"Redundáns manőver párok: {redundant_pairs}")
+
+        return redundant_pairs
+
+    def filter_redundant_manoeuvres_spearman(self, threshold=0.7):
+        """
+        Kiszűri a redundáns manővereket a Spearman-korreláció alapján.
+        threshold: A minimális korrelációs érték, amely felett két manőver redundánsnak számít.
+        """
+        print("Spearman-alapú redundáns manőverek keresése...")
+
+        # Az adatok pandas DataFrame-be alakítása
+        df = pd.DataFrame(
+            self.reduced_data,
+            columns=[f"comp_{i}" for i in range(self.reduced_data.shape[1])],
+        )
+        df["labels"] = self.labels
+
+        # Kiszámítjuk a Spearman-korrelációs mátrixot
+        num_columns = df.drop("labels", axis=1).shape[1]
+        correlation_matrix = pd.DataFrame(
+            index=df.columns[:-1], columns=df.columns[:-1]
+        )
+
+        for i in range(num_columns):
+            for j in range(i, num_columns):
+                col1, col2 = df.columns[i], df.columns[j]
+                rho, _ = spearmanr(df[col1], df[col2])
+                correlation_matrix.loc[col1, col2] = rho
+                correlation_matrix.loc[col2, col1] = rho  # Mivel szimmetrikus
+
+        # Keresünk redundáns párokat
+        redundant_pairs = set()
+        for i in range(num_columns):
+            for j in range(i + 1, num_columns):
+                if abs(correlation_matrix.iloc[i, j]) > threshold:
+                    redundant_pairs.add(
+                        (correlation_matrix.index[i], correlation_matrix.columns[j])
+                    )
+
+        print(f"Redundáns manőver párok (Spearman): {redundant_pairs}")
+
+        return redundant_pairs
+
+    def filter_redundant_manoeuvres_kendall(self, threshold=0.7):
+        """
+        Kiszűri a redundáns manővereket a Kendall-tau korreláció alapján.
+        threshold: A minimális korrelációs érték, amely felett két manőver redundánsnak számít.
+        """
+        print("Kendall-alapú redundáns manőverek keresése...")
+
+        # Az adatok pandas DataFrame-be alakítása
+        df = pd.DataFrame(
+            self.reduced_data,
+            columns=[f"comp_{i}" for i in range(self.reduced_data.shape[1])],
+        )
+        df["labels"] = self.labels
+
+        # Kiszámítjuk a Kendall-tau korrelációs mátrixot
+        num_columns = df.drop("labels", axis=1).shape[1]
+        correlation_matrix = pd.DataFrame(
+            index=df.columns[:-1], columns=df.columns[:-1]
+        )
+
+        for i in range(num_columns):
+            for j in range(i, num_columns):
+                col1, col2 = df.columns[i], df.columns[j]
+                tau, _ = kendalltau(df[col1], df[col2])
+                correlation_matrix.loc[col1, col2] = tau
+                correlation_matrix.loc[col2, col1] = tau  # Mivel szimmetrikus
+
+        # Keresünk redundáns párokat
+        redundant_pairs = set()
+        for i in range(num_columns):
+            for j in range(i + 1, num_columns):
+                if abs(correlation_matrix.iloc[i, j]) > threshold:
+                    redundant_pairs.add(
+                        (correlation_matrix.index[i], correlation_matrix.columns[j])
+                    )
+
+        print(f"Redundáns manőver párok (Kendall): {redundant_pairs}")
 
         return redundant_pairs
 
@@ -363,10 +445,21 @@ class ManoeuvresFiltering:
             int(m) for m in self.boundary_manoeuvres
         }  # Határon lévő manőverek
 
-        # Összegyűjtjük az összes redundáns párt
-        redundant_pairs = self.filter_redundant_manoeuvres()
-        redundant_pairs.update(self.filter_by_distance())  # Mindkét módszer eredményei
+        print(f"Redundáns manőverek keresése {method} módszerrel...")
 
+        # Választott módszer szerint redundáns párok keresése
+        if method == "pearson":
+            redundant_pairs = self.filter_redundant_manoeuvres_pearson()
+        elif method == "spearman":
+            redundant_pairs = self.filter_redundant_manoeuvres_spearman()
+        elif method == "kendall":
+            redundant_pairs = self.filter_redundant_manoeuvres_kendall()
+        else:
+            raise ValueError(
+                "Érvénytelen módszer! Használható értékek: 'pearson', 'spearman', 'kendall'"
+            )
+
+        redundant_pairs.update(self.filter_by_distance())  # Mindkét módszer eredményei
         for pair in redundant_pairs:
             a, b = int(pair[0]), int(pair[1])  # Kicsomagoljuk a párt
 

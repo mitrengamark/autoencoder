@@ -35,6 +35,7 @@ opt_name = config.get("Hyperparameters", "optimizer")
 eps = float(config["Parameters"]["eps"])
 min_samples = int(config["Parameters"]["min_samples"])
 n_clusters = int(config["Parameters"]["n_clusters"])
+method = config.get("Parameters", "method")
 
 grid_size = int(config["Parameters"]["grid_size"])
 
