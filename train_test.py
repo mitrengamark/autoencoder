@@ -18,6 +18,7 @@ from Config.load_config import (
     hyperopt,
     model_path,
     saved_model,
+    save_fig,
 )
 
 
@@ -242,19 +243,20 @@ class Training:
             sign_change_indices=self.sign_change_indices,
         )
         latent_data = vs.visualize_bottleneck()
-        if num_manoeuvres == 1:
-            vs.kmeans_clustering()
-            filtered_latent_data = remove_redundant_data(latent_data)
-            create_comparison_heatmaps(latent_data, filtered_latent_data)
-        else:
-            mf = ManoeuvresFiltering(
-                reduced_data=latent_data,
-                labels=labels,
-                label_mapping=self.label_mapping,
-            )
-            filtered_reduced_data = mf.filter_manoeuvres()
-            plot_removed_data(latent_data, filtered_reduced_data)
-            create_comparison_heatmaps(latent_data, filtered_reduced_data)
+        if save_fig == 0:
+            if num_manoeuvres == 1:
+                vs.kmeans_clustering()
+                filtered_latent_data = remove_redundant_data(latent_data)
+                create_comparison_heatmaps(latent_data, filtered_latent_data)
+            else:
+                mf = ManoeuvresFiltering(
+                    reduced_data=latent_data,
+                    labels=labels,
+                    label_mapping=self.label_mapping,
+                )
+                filtered_reduced_data = mf.filter_manoeuvres()
+                plot_removed_data(latent_data, filtered_reduced_data)
+                create_comparison_heatmaps(latent_data, filtered_reduced_data)
 
         # Denormalizáció
 

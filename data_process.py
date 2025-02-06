@@ -15,6 +15,7 @@ from Config.load_config import (
     batch_size,
     num_workers,
     basic_method,
+    save_fig,
 )
 
 
@@ -46,13 +47,17 @@ class DataProcess:
                 if file.strip() in all_files
             ]
         else:
-            # Véletlenszerű fájlválasztás
-            selected_files = random.sample(
-                all_files, min(num_manoeuvres, len(all_files))
-            )
-            self.file_paths = [
-                os.path.join(self.data_dir, file) for file in selected_files
-            ]
+            if save_fig == 1:
+                pass
+            else:
+
+                # Véletlenszerű fájlválasztás
+                selected_files = random.sample(
+                    all_files, min(num_manoeuvres, len(all_files))
+                )
+                self.file_paths = [
+                    os.path.join(self.data_dir, file) for file in selected_files
+                ]
 
         self.labels = [
             os.path.splitext(os.path.basename(file))[0] for file in self.file_paths
@@ -118,7 +123,7 @@ class DataProcess:
                 )
 
             data_tensor = torch.tensor(df.values, dtype=torch.float32)
-            self.data = data_tensor
+            self.data = data_tensor #[2500:]
 
             if self.training_model == "VAE":
                 normalized_data = self.normalize()
@@ -167,13 +172,6 @@ class DataProcess:
         print(
             f"Data by manoeuvre: { {label: data.shape for label, data in self.data.items()} }"
         )
-
-        # Debugging: Ellenőrzés
-        if self.parameter:
-            print(
-                f"Sign change indices for parameter '{self.parameter}': {self.sign_change_indices}"
-            )
-
         print(
             f"Data by manoeuvre: { {label: data.shape for label, data in self.data.items()} }"
         )
@@ -235,33 +233,22 @@ class DataProcess:
         print(f"Validation data shape: {val_data.shape}, Labels: {val_labels.shape}")
         print(f"Test data shape: {test_data.shape}, Labels: {test_labels.shape}")
 
-        rest_data = train_data.shape[0] % self.batch_size
-        rest_data_procent = (rest_data / self.batch_size) * 100
-
-        if rest_data_procent >= 70:
-            drop_last = False
-        else:
-            drop_last = True
-
         trainloader = torch.utils.data.DataLoader(
             list(zip(train_data, train_labels)),
             batch_size=self.batch_size,
             shuffle=False,
-            drop_last=drop_last,
             num_workers=self.num_workers,
         )
         valloader = torch.utils.data.DataLoader(
             list(zip(val_data, val_labels)),
             batch_size=self.batch_size,
             shuffle=False,
-            drop_last=drop_last,
             num_workers=self.num_workers,
         )
         testloader = torch.utils.data.DataLoader(
             list(zip(test_data, test_labels)),
             batch_size=self.batch_size,
             shuffle=False,
-            drop_last=drop_last,
             num_workers=self.num_workers,
         )
 

@@ -67,6 +67,7 @@ use_cosine_similarity = int(config["Plot"]["use_cosine_similarity"])
 dimension = int(config["Plot"]["dimension"])
 tsneplot = int(config["Plot"]["tsneplot"])
 step = int(config["Plot"]["step"])
+save_fig = int(config["Plot"]["save_fig"])
 
 # Callbacks
 plot = int(config["Callbacks"]["plot"])

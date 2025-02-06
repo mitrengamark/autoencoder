@@ -4,13 +4,13 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from mpl_toolkits.mplot3d import Axes3D
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_distances
-from sklearn.preprocessing import normalize
+from Picture_saving.name_pictures import fig_names
+from Picture_saving.save_fig import save_figure
 from Config.load_config import (
     tsneplot,
     dimension,
@@ -19,6 +19,7 @@ from Config.load_config import (
     use_cosine_similarity,
     coloring,
     step,
+    save_fig,
 )
 
 
@@ -249,7 +250,7 @@ class Visualise:
         self.reduced_data = reduced_data
 
         if self.plot == 1:
-            plt.figure(figsize=(10, 7))
+            fig = plt.figure(figsize=(16, 8))
             unique_labels = np.unique(self.labels)
             num_labels = len(unique_labels)
 
@@ -265,12 +266,13 @@ class Visualise:
                 )
 
             if dimension == 3:
-                ax = plt.figure(figsize=(10, 7)).add_subplot(111, projection="3d")
+                ax = fig.add_subplot(111, projection="3d")
             elif dimension == 2:
                 ax = plt.gca()
             else:
                 raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
 
+            sc = None
             for i, label in enumerate(unique_labels):
                 mask = self.labels == label
                 label_data = reduced_data[mask]
@@ -295,7 +297,9 @@ class Visualise:
                         for j in range(label_data.shape[0]):
                             # Színezés előjelváltás alapján
                             if j in indices:
-                                current_color = "red" if current_color == "blue" else "blue"
+                                current_color = (
+                                    "red" if current_color == "blue" else "blue"
+                                )
 
                             if dimension == 3:
                                 ax.scatter(
@@ -319,13 +323,15 @@ class Visualise:
                             else:
                                 raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
                     else:
-                        cmap = cm.get_cmap("viridis", label_data.shape[0] // step + 1)  # Lépésenként színváltás
+                        cmap = cm.get_cmap(
+                            "turbo", label_data.shape[0] // step + 1
+                        )  # Lépésenként színváltás
                         for j in range(label_data.shape[0]):
                             color_index = j // step  # Minden `step` elem után más szín
                             color = cmap(color_index)
 
                             if dimension == 3:
-                                ax.scatter(
+                                sc = ax.scatter(
                                     label_data[j, 0],
                                     label_data[j, 1],
                                     label_data[j, 2],
@@ -335,7 +341,7 @@ class Visualise:
                                     facecolors="none",
                                 )
                             elif dimension == 2:
-                                ax.scatter(
+                                sc = ax.scatter(
                                     label_data[j, 0],
                                     label_data[j, 1],
                                     label=description if j == 0 else "",
@@ -347,31 +353,36 @@ class Visualise:
                                 raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
                 else:
                     for j in range(label_data.shape[0]):
-                            if dimension == 3:
-                                ax.scatter(
-                                    label_data[j, 0],
-                                    label_data[j, 1],
-                                    label_data[j, 2],
-                                    label=description if j == 0 else "",
-                                    color=color_list[i],
-                                    alpha=1,
-                                    facecolors="none",
-                                )
-                            elif dimension == 2:
-                                ax.scatter(
-                                    label_data[j, 0],
-                                    label_data[j, 1],
-                                    label=description if j == 0 else "",
-                                    color=color_list[i],
-                                    alpha=1,
-                                    facecolors="none",
-                                )
-                            else:
-                                raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
+                        if dimension == 3:
+                            ax.scatter(
+                                label_data[j, 0],
+                                label_data[j, 1],
+                                label_data[j, 2],
+                                label=description if j == 0 else "",
+                                color=color_list[i],
+                                alpha=1,
+                                facecolors="none",
+                            )
+                        elif dimension == 2:
+                            ax.scatter(
+                                label_data[j, 0],
+                                label_data[j, 1],
+                                label=description if j == 0 else "",
+                                color=color_list[i],
+                                alpha=1,
+                                facecolors="none",
+                            )
+                        else:
+                            raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
 
             # handles, _ = ax.get_legend_handles_labels()
             # for handle in handles:
             #     handle.set_alpha(1.0)  # Legendben alpha érték kikapcsolása
+
+            if sc is not None:
+                cbar = plt.colorbar(sc, ax=ax)  # Színskála hozzáadása
+                cbar.set_label("Idősorrend (lépések)")
+                cbar.mappable.set_cmap("turbo")
 
             ax.set_title(self.tsne_title)
             ax.set_xlabel("T-SNE Komponens 1")
@@ -384,6 +395,11 @@ class Visualise:
             ax.grid(True)
 
             plt.tight_layout()
+
+            if save_fig == 1:
+                save_path = fig_names(description)
+                save_figure(fig, save_path)
+
             plt.show()
 
     def save_tsne_results(self, tsne_data):

@@ -1,7 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.cluster import DBSCAN
-from scipy.spatial import cKDTree
 from Config.load_config import grid, max_sample
 
 
