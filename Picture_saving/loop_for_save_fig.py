@@ -24,8 +24,10 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if torch.cuda.is_available():
     torch.cuda.manual_seed(seed)
 
-for file_name in os.listdir(data_dir):
-    dp = DataProcess()
+all_files = [file for file in os.listdir(data_dir) if file.endswith(".csv")]
+for file_name in all_files:
+    print(f"{file_name} feldolgozása...")
+    dp = DataProcess(single_file=file_name)
 
     (
         _,
@@ -50,5 +52,7 @@ for file_name in os.listdir(data_dir):
         device=device,
         label_mapping=label_mapping,
     )
-    print(f"{file_name} feldolgozása...")
+
     training.test()
+
+print("Minden manőver feldolgozása befejeződött!")

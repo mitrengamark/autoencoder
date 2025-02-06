@@ -399,8 +399,8 @@ class Visualise:
             if save_fig == 1:
                 save_path = fig_names(description)
                 save_figure(fig, save_path)
-
-            plt.show()
+            else:
+                plt.show()
 
     def save_tsne_results(self, tsne_data):
         """Elmenti a kiszámított T-SNE eredményeket fájlba"""

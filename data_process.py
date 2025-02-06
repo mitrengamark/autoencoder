@@ -20,7 +20,7 @@ from Config.load_config import (
 
 
 class DataProcess:
-    def __init__(self):
+    def __init__(self, single_file=None):
         self.data_dir = data_dir
         self.parameter = parameter
         self.training_model = training_model
@@ -38,19 +38,20 @@ class DataProcess:
             file for file in os.listdir(self.data_dir) if file.endswith(".csv")
         ]
 
-        if (
-            selected_manoeuvres_list and selected_manoeuvres_list[0]
-        ):  # Ha a felhasználó explicit megadott manővereket
-            self.file_paths = [
-                os.path.join(self.data_dir, file.strip())
-                for file in selected_manoeuvres_list
-                if file.strip() in all_files
-            ]
+        if single_file:
+            # **Csak egy fájl feldolgozása**
+            self.file_paths = [os.path.join(self.data_dir, single_file)]
+            self.labels = [os.path.splitext(os.path.basename(single_file))[0]]
         else:
-            if save_fig == 1:
-                pass
+            if (
+                selected_manoeuvres_list and selected_manoeuvres_list[0]
+            ):  # Ha a felhasználó explicit megadott manővereket
+                self.file_paths = [
+                    os.path.join(self.data_dir, file.strip())
+                    for file in selected_manoeuvres_list
+                    if file.strip() in all_files
+                ]
             else:
-
                 # Véletlenszerű fájlválasztás
                 selected_files = random.sample(
                     all_files, min(num_manoeuvres, len(all_files))
@@ -59,9 +60,9 @@ class DataProcess:
                     os.path.join(self.data_dir, file) for file in selected_files
                 ]
 
-        self.labels = [
-            os.path.splitext(os.path.basename(file))[0] for file in self.file_paths
-        ]
+            self.labels = [
+                os.path.splitext(os.path.basename(file))[0] for file in self.file_paths
+            ]
 
         print("File paths:", self.file_paths)
         print("Labels:", self.labels)
