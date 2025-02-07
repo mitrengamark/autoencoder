@@ -68,22 +68,13 @@ class Visualise:
         :param model_name: A modell neve (pl. "VAE" vagy "MAE").
         :param label_mapping: A címkékhez tartozó szöveges leírások (dict).
         """
-        print(
-            f"Data shape: {self.bottleneck_outputs.shape}, Labels shape: {self.labels.shape}"
-        )
         assert len(self.bottleneck_outputs) == len(
             self.labels
         ), f"A bottleneck kimenetek ({len(self.bottleneck_outputs)}) és a címkék ({len(self.labels)}) mérete nem egyezik!"
 
-        # Címképzés dinamikusan
-        if self.model_name == "VAE":
-            self.pca_title = f"PCA - {self.model_name} Bottleneck"
-            self.lda_title = f"LDA - {self.model_name} Bottleneck"
-            self.tsne_title = f"T-SNE - {self.model_name} Bottleneck"
-        else:  # MAE esetén egyszerűsített cím
-            self.pca_title = f"PCA - {self.model_name} Bottleneck"
-            self.lda_title = f"LDA - {self.model_name} Bottleneck"
-            self.tsne_title = f"T-SNE - {self.model_name} Bottleneck"
+        self.pca_title = f"PCA - {self.model_name} Bottleneck"
+        self.lda_title = f"LDA - {self.model_name} Bottleneck"
+        self.tsne_title = f"T-SNE - {self.model_name} Bottleneck"
 
         # print("PCA Visualization:")
         # self.visualize_with_pca()

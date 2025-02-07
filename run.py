@@ -41,6 +41,7 @@ if training_model == "VAE":
         labels,
         label_mapping,
         sign_change_indices,
+        selected_columns,
     ) = dp.train_test_split()
     data_mean = None
     data_std = None
@@ -54,6 +55,7 @@ elif training_model == "MAE":
         labels,
         label_mapping,
         sign_change_indices,
+        selected_columns,
     ) = dp.train_test_split()
     data_min = None
     data_max = None
@@ -61,7 +63,6 @@ else:
     raise ValueError(f"Unsupported model type. Expected VAE or MAE!")
 
 train_input_dim = trainloader.dataset[0][0].shape[0]
-print(f"Train input dim: {train_input_dim}")
 
 if training_model == "VAE":
     model = VariationalAutoencoder(train_input_dim).to(device)
@@ -87,6 +88,7 @@ training = Training(
     data_std=data_std,
     sign_change_indices=sign_change_indices,
     label_mapping=label_mapping,
+    selected_columns=selected_columns,
 )
 
 if test_mode == 0:

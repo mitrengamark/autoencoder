@@ -73,7 +73,10 @@ save_fig = int(config["Plot"]["save_fig"])
 plot = int(config["Callbacks"]["plot"])
 project_name = config.get("Callbacks", "neptune_project")
 api_token = config.get("Callbacks", "neptune_token")
-tolerance = float(config["Callbacks"]["tolerance"])
+
+# Validation
+tolerance = float(config["Validation"]["tolerance"])
+parameters = config.get("Validation", "parameters").split(", ")
 
 # Egyéb változók
 hidden_dims = [int(dim) for dim in hidden_dims_str.strip("[]").split(", ")]

@@ -39,6 +39,7 @@ class Training:
         data_std=None,
         sign_change_indices=None,
         label_mapping=None,
+        selected_columns=None,
     ):
 
         # Adatbetöltők
@@ -58,6 +59,7 @@ class Training:
         # Címkék
         self.labels = labels
         self.label_mapping = label_mapping
+        self.selected_columns = selected_columns
 
         # Adatok normalizálásához szükséges statisztikák
         self.data_min = data_min
@@ -113,7 +115,7 @@ class Training:
                 else:
                     raise ValueError(f"Unsupported model type. Expected VAE or MAE!")
 
-                accuracy = reconstruction_accuracy(inputs, outputs)
+                accuracy = reconstruction_accuracy(inputs, outputs, self.selected_columns)
                 train_accuracy += accuracy
 
                 self.optimizer.zero_grad()
@@ -182,7 +184,7 @@ class Training:
                     raise ValueError("Unsupported model type. Expected VAE or MAE!")
 
                 val_loss += loss.item()
-                val_accuracy += reconstruction_accuracy(inputs, outputs)
+                val_accuracy += reconstruction_accuracy(inputs, outputs, self.selected_columns)
         return val_loss / len(self.valloader), val_accuracy / len(self.valloader)
 
     def test(self):
@@ -260,7 +262,7 @@ class Training:
 
         # Denormalizáció
 
-        accuracy = reconstruction_accuracy(whole_input, whole_output)
+        accuracy = reconstruction_accuracy(whole_input, whole_output, self.selected_columns)
         print(f"Test Accuracy: {accuracy:.2f}%")
 
     def save_model(self):

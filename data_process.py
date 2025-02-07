@@ -16,6 +16,7 @@ from Config.load_config import (
     num_workers,
     basic_method,
     save_fig,
+    parameters,
 )
 
 
@@ -117,6 +118,15 @@ class DataProcess:
         for file_path, label in zip(self.file_paths, self.labels):
             df = pd.read_csv(file_path)
 
+            self.selected_columns = [
+                df.columns.get_loc(param) for param in parameters if param in df.columns
+            ]
+
+            if not self.selected_columns:
+                raise ValueError("A megadott paraméterek egyike sem található a fájlban!")
+
+            print(f"Kiválasztott oszlopindexek {label}-hez: {self.selected_columns}")
+
             # Ellenőrizzük, hogy a megadott paraméter létezik-e az adathalmazban
             if self.parameter and self.parameter not in df.columns:
                 raise ValueError(
@@ -170,12 +180,6 @@ class DataProcess:
             label: torch.cat(data_list, dim=0)
             for label, data_list in combined_data.items()
         }
-        print(
-            f"Data by manoeuvre: { {label: data.shape for label, data in self.data.items()} }"
-        )
-        print(
-            f"Data by manoeuvre: { {label: data.shape for label, data in self.data.items()} }"
-        )
 
     def get_manoeuvre_specific_data(self):
         manoeuvre_data = {label: [] for label in torch.unique(self.data_labels)}
@@ -263,6 +267,7 @@ class DataProcess:
                 all_labels,
                 label_mapping,
                 self.sign_change_indices,
+                self.selected_columns,
             )
         elif self.training_model == "MAE":
             return (
@@ -274,4 +279,5 @@ class DataProcess:
                 all_labels,
                 label_mapping,
                 self.sign_change_indices,
+                self.selected_columns,
             )

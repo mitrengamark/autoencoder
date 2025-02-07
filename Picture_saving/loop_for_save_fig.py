@@ -26,33 +26,34 @@ if torch.cuda.is_available():
 
 all_files = [file for file in os.listdir(data_dir) if file.endswith(".csv")]
 for file_name in all_files:
-    print(f"{file_name} feldolgozása...")
-    dp = DataProcess(single_file=file_name)
+    if "savvaltas" in file_name:
+        print(f"{file_name} feldolgozása...")
+        dp = DataProcess(single_file=file_name)
 
-    (
-        _,
-        _,
-        testloader,
-        _,
-        _,
-        labels,
-        label_mapping,
-        _,
-    ) = dp.train_test_split()
+        (
+            _,
+            _,
+            testloader,
+            _,
+            _,
+            labels,
+            label_mapping,
+            _,
+        ) = dp.train_test_split()
 
-    test_input_dim = testloader.dataset[0][0].shape[0]
-    print(f"Test input dim: {test_input_dim}")
+        test_input_dim = testloader.dataset[0][0].shape[0]
+        print(f"Test input dim: {test_input_dim}")
 
-    model = VariationalAutoencoder(test_input_dim).to(device)
+        model = VariationalAutoencoder(test_input_dim).to(device)
 
-    training = Training(
-        testloader=testloader,
-        model=model,
-        labels=labels,
-        device=device,
-        label_mapping=label_mapping,
-    )
+        training = Training(
+            testloader=testloader,
+            model=model,
+            labels=labels,
+            device=device,
+            label_mapping=label_mapping,
+        )
 
-    training.test()
+        training.test()
 
 print("Minden manőver feldolgozása befejeződött!")
