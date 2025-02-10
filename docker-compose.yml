@@ -1,0 +1,39 @@
+services:
+  autoencoder:
+    build: .
+    image: autoencoder
+    tty: true
+    stdin_open: true
+    environment:
+      - QT_X11_NO_MITSHM=1
+      - HOST_USER=${USER}
+      - NVIDIA_VISIBLE_DEVICES=all
+    container_name: autoencoder_container
+    deploy:
+      resources:
+        limits:
+          memory: 24gb
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    ports:
+      - "2222:22"
+    networks:
+      - autoencoder_network
+
+  watchtower_miti:
+    image: containrrr/watchtower
+    container_name: watchtower_miti
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.docker/config.json:/config.json
+    command: --interval 30 --cleanup --label-enable
+    restart: unless-stopped
+    networks:
+      - autoencoder_network
+
+networks:
+  autoencoder_network:
+    driver: bridge
