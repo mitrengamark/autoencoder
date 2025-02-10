@@ -307,6 +307,7 @@ class Training:
             else:
                 mf = ManoeuvresFiltering(
                     reduced_data=latent_data,
+                    bottleneck_data=bottleneck_outputs,
                     labels=labels,
                     label_mapping=self.label_mapping,
                 )

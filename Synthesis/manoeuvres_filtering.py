@@ -1,12 +1,12 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.stats import spearmanr, kendalltau
-from scipy.spatial import ConvexHull
+from scipy.stats import pearsonr, spearmanr, kendalltau
 from sklearn.cluster import DBSCAN, KMeans
+from sklearn.preprocessing import normalize
 from sklearn.metrics.pairwise import euclidean_distances
 from collections import defaultdict
-from Config.load_config import method
+from Config.load_config import method, seed
 
 # from random_data import (
 #     generate_clustered_data,
@@ -25,6 +25,7 @@ class ManoeuvresFiltering:
     def __init__(
         self,
         reduced_data=None,
+        bottleneck_data=None,
         labels=None,
         label_mapping=None,
         eps=eps,
@@ -32,6 +33,7 @@ class ManoeuvresFiltering:
         n_clusters=n_clusters,
     ):
         self.reduced_data = reduced_data
+        self.bottleneck_data = bottleneck_data
         self.labels = labels
         self.label_mapping = label_mapping
         self.boundary_manoeuvres = set()
@@ -42,46 +44,26 @@ class ManoeuvresFiltering:
         self.reverse_label_mapping = {v: k for k, v in self.label_mapping.items()}
 
     def filter_manoeuvres(self):
-        self.find_boundary_manoeuvres()
-        self.plot_boundary()
         # self.dbscan_clustering()
         # self.plot_dbscan_clusters()
         cluster_info = self.kmeans_clustering()
-        self.plot_kmeans_clusters()
-        self.plot_cluster_info(cluster_info)
+
+        if self.bottleneck_data.shape[1] == 2:
+            self.plot_kmeans_clusters()
+            self.plot_cluster_info(cluster_info)
+
         self.find_uniformly_distributed_manoeuvres()
         filtered_reduced_data = self.remove_redundant_manoeuvres()
         return filtered_reduced_data
-
-    def find_boundary_manoeuvres(self):
-        """
-        Meghatározza a határon lévő manővereket a konvex burok segítségével.
-
-        :param reduced_data: A látenstér 2D-s adatai (numpy array, shape: [n_samples, 2])
-        :param labels: A pontokhoz tartozó manőverek címkéi
-        :return: Egy halmaz a határon lévő manőverek címkéivel
-        """
-        hull = ConvexHull(self.reduced_data)
-        self.boundary_indices = hull.vertices  # A konvex burok indexei
-
-        self.boundary_manoeuvres = {
-            int(label) for label in self.labels[self.boundary_indices]
-        }
-        self.boundary_manoeuvre_names = {
-            self.reverse_label_mapping.get(label, f"Unknown_{label}")
-            for label in self.boundary_manoeuvres
-        }
-        print("Határon lévő manőverek:", self.boundary_manoeuvre_names)
 
     # -----------------------------------clustering-----------------------------------
 
     def dbscan_clustering(self):
         """
-        DBSCAN klaszterezés végrehajtása, majd klaszterenként meghatározza,
-        hogy mely manőverek találhatók benne és hány adatpontjuk van.
+        DBSCAN klaszterezés végrehajtása az eredeti magasabb dimenziós térben.
         """
         dbscan = DBSCAN(eps=self.eps, min_samples=self.min_samples)
-        self.cluster_labels = dbscan.fit_predict(self.reduced_data)
+        self.cluster_labels = dbscan.fit_predict(self.bottleneck_data)
 
         clusters_info = defaultdict(lambda: defaultdict(int))
 
@@ -106,8 +88,14 @@ class ManoeuvresFiltering:
         return clusters_info
 
     def kmeans_clustering(self):
-        kmeans = KMeans(n_clusters=self.n_clusters, random_state=42)
-        self.kmeans_labels = kmeans.fit_predict(self.reduced_data)
+        """
+        K-Means klaszterezés Cosine Similarity alapján.
+        Az adatokat először normalizáljuk, hogy az Euklideszi távolság megfeleljen a Cosine távolságnak.
+        """
+        normalized_data = normalize(self.bottleneck_data, norm="l2")
+
+        kmeans = KMeans(n_clusters=self.n_clusters, random_state=seed)
+        self.kmeans_labels = kmeans.fit_predict(normalized_data)
 
         clusters_info = defaultdict(lambda: defaultdict(int))
 
@@ -130,56 +118,6 @@ class ManoeuvresFiltering:
         return clusters_info
 
     # -----------------------------------plotting-----------------------------------
-
-    def plot_boundary(self):
-        """
-        Kirajzolja a konvex burkot és a határon lévő manővereket.
-
-        :param reduced_data: A látenstér 2D-s adatai
-        :param labels: A pontokhoz tartozó manőverek címkéi
-        :param boundary_indices: A konvex burok által meghatározott indexek
-        """
-        plt.figure(figsize=(10, 6))
-
-        # Egyedi színek a címkékhez
-        unique_labels = np.unique(self.labels)
-        color_map = plt.get_cmap("tab20", len(unique_labels))
-        label_colors = {label: color_map(i) for i, label in enumerate(unique_labels)}
-
-        # Minden manőver pontjai
-        for label in unique_labels:
-            mask = self.labels == label
-            plt.scatter(
-                self.reduced_data[mask, 0],
-                self.reduced_data[mask, 1],
-                color=label_colors[label],
-                label=label,
-                alpha=0.5,
-                s=10,
-            )
-
-        # Határon lévő pontok kiemelése
-        plt.scatter(
-            self.reduced_data[self.boundary_indices, 0],
-            self.reduced_data[self.boundary_indices, 1],
-            color="black",
-            edgecolors="white",
-            s=40,
-            label="Határ",
-        )
-
-        # Konvex burok kirajzolása
-        hull = ConvexHull(self.reduced_data)
-        for simplex in hull.simplices:
-            plt.plot(self.reduced_data[simplex, 0], self.reduced_data[simplex, 1], "k-")
-
-        plt.title("Határon lévő manőverek azonosítása")
-        plt.xlabel("T-SNE Komponens 1")
-        plt.ylabel("T-SNE Komponens 2")
-        plt.legend(loc="best", fontsize="small", markerscale=0.7)
-        plt.grid(True)
-        plt.tight_layout()
-        plt.show()
 
     def plot_dbscan_clusters(self):
         """
@@ -273,29 +211,26 @@ class ManoeuvresFiltering:
 
     def filter_redundant_manoeuvres_pearson(self, threshold=0.7):
         """
-        Kiszűri a redundáns manővereket a Pearson-korreláció alapján.
+        Kiszűri a redundáns manővereket a Pearson-korreláció alapján többdimenziós adatok esetén.
         threshold: A minimális korrelációs érték, amely felett két manőver redundánsnak számít.
         """
-        print("Redundáns manőverek keresése...")
+        print("Redundáns manőverek keresése Pearson-korrelációval...")
 
-        # Az adatok pandas DataFrame-be alakítása
-        df = pd.DataFrame(
-            self.reduced_data,
-            columns=[f"comp_{i}" for i in range(self.reduced_data.shape[1])],
-        )
-        df["labels"] = self.labels
+        # Manőverenként átlagolunk minden dimenzióban
+        unique_labels = np.unique(self.labels)
+        mean_vectors = {label: np.mean(self.reduced_data[self.labels == label], axis=0) for label in unique_labels}
 
-        # Kiszámítjuk a korrelációs mátrixot
-        correlation_matrix = df.drop("labels", axis=1).corr()
-
-        # Keresünk redundáns párokat
+        # Keresünk redundáns manővereket
         redundant_pairs = set()
-        for i in range(len(correlation_matrix.columns)):
-            for j in range(i + 1, len(correlation_matrix.columns)):
-                if abs(correlation_matrix.iloc[i, j]) > threshold:
-                    redundant_pairs.add(
-                        (correlation_matrix.columns[i], correlation_matrix.columns[j])
-                    )
+        label_list = list(mean_vectors.keys())
+
+        for i in range(len(label_list)):
+            for j in range(i + 1, len(label_list)):
+                label1, label2 = label_list[i], label_list[j]
+                corr, _ = pearsonr(mean_vectors[label1], mean_vectors[label2])
+
+                if abs(corr) > threshold:
+                    redundant_pairs.add((label1, label2))
 
         print(f"Redundáns manőver párok: {redundant_pairs}")
 
@@ -404,7 +339,7 @@ class ManoeuvresFiltering:
                     )
 
         return cluster_counts
-    
+
     def find_uniformly_distributed_manoeuvres(self, threshold=0.05):
         """
         Megvizsgálja, hogy van-e olyan manőver, amely minden klaszterben nagyjából egyforma arányban oszlik meg.
@@ -438,9 +373,13 @@ class ManoeuvresFiltering:
             print(f"A(z) {manoeuvre} szórása: {std_dev:.4f}")
 
             if std_dev < threshold:  # Ha az eloszlás szórása alacsony, akkor egyenletes
-                manoeuvre_name = self.reverse_label_mapping.get(manoeuvre, f"Unknown_{manoeuvre}")
+                manoeuvre_name = self.reverse_label_mapping.get(
+                    manoeuvre, f"Unknown_{manoeuvre}"
+                )
                 uniformly_distributed_manoeuvres.append(manoeuvre_name)
-                print(f"A(z) {manoeuvre_name} egyenletesen oszlik el minden klaszterben (szórás: {std_dev:.4f})")
+                print(
+                    f"A(z) {manoeuvre_name} egyenletesen oszlik el minden klaszterben (szórás: {std_dev:.4f})"
+                )
 
         return uniformly_distributed_manoeuvres
 
