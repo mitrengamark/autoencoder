@@ -1,35 +1,38 @@
 import torch
 import numpy as np
-from Config.load_config import tolerance, parameters
+from Config.load_config import parameters
 
 
 def reconstruction_accuracy(inputs, outputs, selected_columns=None):
     """
-    Rekonstrukciós pontosság kiszámítása, csak bizonyos oszlopokat figyelembe véve.
+    Az egyes oszlopok eltérésének átlagát és az összes eltérés átlagát számolja ki.
 
     :param inputs: Az eredeti bemenet (numpy array vagy torch tensor).
     :param outputs: A generált kimenet (numpy array vagy torch tensor).
-    :param selected_columns: Az oszlopok indexeinek listája, amelyeket figyelembe kell venni.
-    :return: A rekonstrukciós pontosság százalékosan.
+    :param selected_columns: Az oszlopok indexeinek listája.
+    :return: Dictionary az egyes oszlopok eltéréseinek átlagával + az összes eltérés átlagával.
     """
     if isinstance(inputs, np.ndarray):
         inputs = torch.tensor(inputs, dtype=torch.float32)
     if isinstance(outputs, np.ndarray):
         outputs = torch.tensor(outputs, dtype=torch.float32)
 
-    column_mapping = {selected_columns[i]: parameters[i] for i in range(len(parameters))}
+    column_mapping = {
+        selected_columns[i]: parameters[i] for i in range(len(parameters))
+    }
 
     if selected_columns is not None:
         inputs = inputs[:, selected_columns]  # Csak a megadott oszlopokat használjuk
         outputs = outputs[:, selected_columns]
 
     differences = torch.abs(inputs - outputs)  # Eltérések kiszámítása
-    diff_1, diff_2, diff_3, diff_4, diff_5, diff_6, diff_7 = [
-        differences[:, i] for i in range(7)
-    ]
+    differences_dict = {
+        column_mapping[selected_columns[i]]: differences[:, i].mean().item()
+        for i in range(len(selected_columns))
+    }
 
-    # accurate_reconstructions = (
-    #     differences <= tolerance
-    # ).float()  # Eltérés a tolerancián belül
-    # accuracy = accurate_reconstructions.mean().item() * 100  # Pontosság százalékban
-    # return accuracy
+    # Az összes oszlop eltérésének átlaga
+    diff_average = differences.mean().item()
+    differences_dict["diff_average"] = diff_average
+
+    return differences_dict

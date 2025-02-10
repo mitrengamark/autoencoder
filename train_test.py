@@ -13,12 +13,13 @@ from Config.load_config import (
     num_manoeuvres,
     training_model,
     num_epochs,
-    scheduler,
+    scheduler_name,
     beta_min,
     hyperopt,
     model_path,
     saved_model,
     save_fig,
+    parameters,
 )
 
 
@@ -54,7 +55,7 @@ class Training:
 
         # Hiperparaméterek és tanítási konfigurációk
         self.beta = 0  # Dinamikus érték lesz tanítás során
-        self.scheduler = scheduler
+        self.scheduler_name = scheduler_name
 
         # Címkék
         self.labels = labels
@@ -87,7 +88,9 @@ class Training:
             loss_per_episode = 0
             reconst_loss_per_epoch = 0
             kl_loss_per_epoch = 0
-            train_accuracy = 0
+            train_differences = {param: [] for param in parameters}  # Listát tárolunk
+            train_total_differences = []
+
             self.beta = min(1.0, epoch / beta_min)
             if epoch == 0:
                 self.beta = 1 / beta_min
@@ -115,8 +118,18 @@ class Training:
                 else:
                     raise ValueError(f"Unsupported model type. Expected VAE or MAE!")
 
-                accuracy = reconstruction_accuracy(inputs, outputs, self.selected_columns)
-                train_accuracy += accuracy
+                # Eltérések kiszámítása minden egyes batch-re
+                batch_differences = reconstruction_accuracy(
+                    inputs, outputs, self.selected_columns
+                )
+
+                # Eltérések összeadása az epizódon belül
+                for param in parameters:  
+                    if param in batch_differences:  
+                        train_differences[param].append(batch_differences[param])
+
+                if "diff_average" in batch_differences:  
+                    train_total_differences.append(batch_differences["diff_average"]) 
 
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -124,41 +137,61 @@ class Training:
                 self.optimizer.step()
                 loss_per_episode += loss.item()
 
+            train_differences = {param: np.mean(train_differences[param]) for param in parameters}
+            train_total_difference = np.mean(train_total_differences)
+
             average_loss = loss_per_episode / len(self.trainloader)
-            average_accuracy = train_accuracy / len(self.trainloader)
             self.losses.append(round(average_loss, 4))
+
+            for param, avg_value in train_differences.items():
+                globals()[f"train_diff_{param}_average"] = avg_value  
+
+            globals()["train_diff_average"] = train_total_difference
+
             if isinstance(self.model, VariationalAutoencoder):
                 self.reconst_losses.append(
                     reconst_loss_per_epoch / len(self.trainloader)
                 )
                 self.kl_losses.append(kl_loss_per_epoch / len(self.trainloader))
 
-            val_loss, val_accuracy = self.validate()
+            val_loss, val_differences = self.validate()
             self.val_losses.append(val_loss)
 
             if hyperopt == 0:
-                if self.scheduler == "ReduceLROnPlateau":
+                if self.scheduler_name == "ReduceLROnPlateau":
                     scheduler.step(average_loss)
                 else:
                     scheduler.step()
             elif hyperopt == 1:
-                self.scheduler.step()
+                self.scheduler_name.step()
             else:
                 raise ValueError("Unsupported hyperopt value. Expected 0 or 1.")
 
             current_lr = self.optimizer.param_groups[0]["lr"]
-            print(f"Epoch {epoch+1}, Current Learning Rate: {current_lr:.6f}")
 
             if self.run:
                 self.run[f"train/loss"].append(average_loss)
-                self.run[f"train/accuracy"].append(average_accuracy)
                 self.run[f"learning_rate"].append(self.optimizer.param_groups[0]["lr"])
                 self.run[f"validation/loss"].append(val_loss)
-                self.run[f"validation/accuracy"].append(val_accuracy)
 
-            print(
-                f"Epoch [{epoch+1}/{num_epochs}], Train Loss: {average_loss:.4f}, Train Accuracy: {average_accuracy:.2f}%, Val Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.2f}%"
-            )
+                for param, avg_value in train_differences.items():
+                    self.run[f"train/{param}_average"].append(avg_value)
+
+                for param, avg_value in val_differences.items():
+                    self.run[f"validation/{param}_average"].append(avg_value)
+
+                self.run[f"train/diff_average"].append(train_total_difference)
+                self.run[f"validation/diff_average"].append(val_differences["diff_average"])
+
+            # Kiírás az egyes train és validation eltérésekre
+            train_differences_str = " | ".join([f"{param}: {train_differences[param]:.6f}" for param in parameters])
+            val_differences_str = " | ".join([f"{param}: {val_differences[param]:.6f}" for param in parameters])
+
+            print(f"Epoch [{epoch+1}/{num_epochs}], Current Learning Rate: {current_lr:.6f}")
+            print(f"Train Loss: {average_loss:.4f}")
+            print(f"Train Differences: {train_differences_str}\n **Total Avg: {train_total_difference:.6f}**")
+            print(f"Validation Loss: {val_loss:.4f}")
+            print(f"Validation Differences: {val_differences_str}\n **Total Avg: {val_differences['diff_average']:.6f}**")
 
         if self.run:
             self.run.stop()
@@ -167,11 +200,14 @@ class Training:
     def validate(self):
         self.model.eval()
         val_loss = 0
-        val_accuracy = 0
+        val_differences = {param: [] for param in parameters}  
+        val_total_differences = []
+
         with torch.no_grad():
             for data in self.valloader:
                 inputs, _ = data
                 inputs = inputs.to(self.device)
+
                 if isinstance(self.model, VariationalAutoencoder):
                     outputs, z_mean, z_log_var = self.model.forward(inputs)
                     loss, _, _ = self.model.loss(
@@ -184,8 +220,26 @@ class Training:
                     raise ValueError("Unsupported model type. Expected VAE or MAE!")
 
                 val_loss += loss.item()
-                val_accuracy += reconstruction_accuracy(inputs, outputs, self.selected_columns)
-        return val_loss / len(self.valloader), val_accuracy / len(self.valloader)
+                batch_differences = reconstruction_accuracy(inputs, outputs, self.selected_columns)
+
+                for param in parameters:  
+                    if param in batch_differences:  
+                        val_differences[param].append(batch_differences[param])
+
+                if "diff_average" in batch_differences:  
+                    val_total_differences.append(batch_differences["diff_average"])   
+
+        val_differences = {param: np.mean(val_differences[param]) for param in parameters}
+        val_total_difference = np.mean(val_total_differences)
+
+        globals()["val_diff_average"] = val_total_difference
+
+        for param, avg_value in val_differences.items():
+            globals()[f"val_diff_{param}_average"] = avg_value
+
+        val_differences["diff_average"] = val_total_difference
+
+        return val_loss / len(self.valloader), val_differences
 
     def test(self):
         self.model.load_state_dict(
@@ -262,8 +316,7 @@ class Training:
 
         # Denormalizáció
 
-        accuracy = reconstruction_accuracy(whole_input, whole_output, self.selected_columns)
-        print(f"Test Accuracy: {accuracy:.2f}%")
+        reconstruction_accuracy(whole_input, whole_output, self.selected_columns)
 
     def save_model(self):
         torch.save(self.model.state_dict(), model_path)

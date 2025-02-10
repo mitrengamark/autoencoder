@@ -15,7 +15,6 @@ from Config.load_config import (
     batch_size,
     num_workers,
     basic_method,
-    save_fig,
     parameters,
 )
 

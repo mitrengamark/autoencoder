@@ -7,14 +7,13 @@ from Config.load_config import (
     initial_lr,
     max_lr,
     final_lr,
-    scheduler,
+    scheduler_name,
     training_model,
     step_size,
     gamma,
     patience,
     project_name,
     api_token,
-    tolerance,
     model_path,
 )
 
@@ -34,7 +33,7 @@ def init_neptune():
         "num_epochs": num_epochs,
         "training_model": training_model,
         "mask_ratio": mask_ratio,
-        "scheduler": scheduler,
+        "scheduler": scheduler_name,
         "step_size": step_size,
         "gamma": gamma,
         "patience": patience,
@@ -42,7 +41,6 @@ def init_neptune():
         "max_lr": max_lr,
         "final_lr": final_lr,
         "model": model_path,
-        "tolerance": tolerance,
     }
     run = neptune.init_run(
         project=project_name,

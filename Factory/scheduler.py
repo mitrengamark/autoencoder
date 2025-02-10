@@ -9,21 +9,22 @@ from Config.load_config import (
     initial_lr,
     max_lr,
     final_lr,
+    scheduler_name,
 )
 
 
 def scheduler_maker(optimizer=None):
-    if scheduler == "StepLR":
+    if scheduler_name == "StepLR":
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size, gamma)
-    elif scheduler == "CosineAnnealingLR":
+    elif scheduler_name == "CosineAnnealingLR":
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
-    elif scheduler == "ReduceLROnPlateau":
+    elif scheduler_name == "ReduceLROnPlateau":
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer, mode="min", factor=gamma, patience=patience
         )
-    elif scheduler == "ExponentialLR":
+    elif scheduler_name == "ExponentialLR":
         scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma)
-    elif scheduler == "WarmupCosine":
+    elif scheduler_name == "WarmupCosine":
         lr_lambda = warmup_cosine_lr()
         scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
     else:

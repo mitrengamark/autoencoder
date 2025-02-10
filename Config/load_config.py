@@ -25,7 +25,7 @@ beta_min = 1 / float(config["Hyperparameters"]["beta_min"])
 initial_lr = float(config["Hyperparameters"]["initial_lr"])
 max_lr = float(config["Hyperparameters"]["max_lr"])
 final_lr = float(config["Hyperparameters"]["final_lr"])
-scheduler = config.get("Hyperparameters", "scheduler")
+scheduler_name = config.get("Hyperparameters", "scheduler_name")
 step_size = int(config["Hyperparameters"]["step_size"])
 gamma = float(config["Hyperparameters"]["gamma"])
 patience = int(config["Hyperparameters"]["patience"])
@@ -75,7 +75,6 @@ project_name = config.get("Callbacks", "neptune_project")
 api_token = config.get("Callbacks", "neptune_token")
 
 # Validation
-tolerance = float(config["Validation"]["tolerance"])
 parameters = config.get("Validation", "parameters").split(", ")
 
 # Egyéb változók

@@ -1,5 +1,5 @@
 import torch
-from Config.load_config import opt_name, scheduler, initial_lr
+from Config.load_config import opt_name, scheduler_name, initial_lr
 
 
 def optimizer_maker(model_params):
@@ -14,7 +14,7 @@ def optimizer_maker(model_params):
     - optimizer: The instantiated optimizer.
     """
     lr = initial_lr
-    if scheduler == "WarmupCosine":
+    if scheduler_name == "WarmupCosine":
         lr = 1
 
     if opt_name == "SGD":
