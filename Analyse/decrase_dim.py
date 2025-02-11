@@ -212,15 +212,8 @@ class Visualise:
         plt.tight_layout()
         plt.show()
 
-    def visualize_with_tsne(self):
-        """
-        Adatok vizualizálása T-SNE használatával.
-
-        :param data: A bemeneti adatok (numpy array).
-        :param labels: Az egyes mintákhoz tartozó címkék (list).
-        :param title: A grafikon címe.
-        """
-        perplexity = min(50, max(5, self.bottleneck_outputs.shape[0] // 10))
+    def calculate_tsne(self, data):
+        perplexity = min(50, max(5, data.shape[0] // 10))
 
         # Ellenőrizzük, van-e cache-elt eredmény
         cached_tsne = self.load_cached_tsne()
@@ -235,10 +228,20 @@ class Visualise:
                 max_iter=1000,
                 random_state=42,
             )
-            reduced_data = tsne.fit_transform(self.bottleneck_outputs)
+            reduced_data = tsne.fit_transform(data)
             self.save_tsne_results(reduced_data)  # Mentjük az új eredményt
 
         self.reduced_data = reduced_data
+
+    def visualize_with_tsne(self):
+        """
+        Adatok vizualizálása T-SNE használatával.
+
+        :param data: A bemeneti adatok (numpy array).
+        :param labels: Az egyes mintákhoz tartozó címkék (list).
+        :param title: A grafikon címe.
+        """
+        self.calculate_tsne(self.bottleneck_outputs)
 
         if self.plot == 1:
             fig = plt.figure(figsize=(16, 8))
@@ -266,7 +269,7 @@ class Visualise:
             sc = None
             for i, label in enumerate(unique_labels):
                 mask = self.labels == label
-                label_data = reduced_data[mask]
+                label_data = self.reduced_data[mask]
                 description = next(
                     (
                         key

@@ -23,17 +23,6 @@ services:
     networks:
       - autoencoder_network
 
-  watchtower_miti:
-    image: containrrr/watchtower
-    container_name: watchtower_miti
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ~/.docker/config.json:/config.json
-    command: --interval 30 --cleanup --label-enable
-    restart: unless-stopped
-    networks:
-      - autoencoder_network
-
 networks:
   autoencoder_network:
     driver: bridge

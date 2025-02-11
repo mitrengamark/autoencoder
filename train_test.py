@@ -311,7 +311,8 @@ class Training:
                     labels=labels,
                     label_mapping=self.label_mapping,
                 )
-                filtered_reduced_data = mf.filter_manoeuvres()
+                filtered_reduced_data, filtered_labels = mf.filter_manoeuvres()
+                filtered_latent_data = vs.calculate_tsne(filtered_reduced_data)
                 plot_removed_data(latent_data, filtered_reduced_data)
                 create_comparison_heatmaps(latent_data, filtered_reduced_data)
 

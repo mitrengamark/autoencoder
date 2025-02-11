@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 from scipy.stats import pearsonr, spearmanr, kendalltau
 from sklearn.cluster import DBSCAN, KMeans
 from sklearn.preprocessing import normalize
-from sklearn.metrics.pairwise import euclidean_distances
-from collections import defaultdict
+from sklearn.metrics.pairwise import cosine_similarity
+from collections import defaultdict, Counter
 from Config.load_config import method, seed
 
 # from random_data import (
@@ -46,15 +46,15 @@ class ManoeuvresFiltering:
     def filter_manoeuvres(self):
         # self.dbscan_clustering()
         # self.plot_dbscan_clusters()
-        cluster_info = self.kmeans_clustering()
 
         if self.bottleneck_data.shape[1] == 2:
+            cluster_info = self.kmeans_clustering()
             self.plot_kmeans_clusters()
             self.plot_cluster_info(cluster_info)
 
-        self.find_uniformly_distributed_manoeuvres()
-        filtered_reduced_data = self.remove_redundant_manoeuvres()
-        return filtered_reduced_data
+        # self.find_uniformly_distributed_manoeuvres()
+        filtered_reduced_data, filtered_labels = self.remove_redundant_manoeuvres()
+        return filtered_reduced_data, filtered_labels
 
     # -----------------------------------clustering-----------------------------------
 
@@ -218,7 +218,10 @@ class ManoeuvresFiltering:
 
         # Manőverenként átlagolunk minden dimenzióban
         unique_labels = np.unique(self.labels)
-        mean_vectors = {label: np.mean(self.reduced_data[self.labels == label], axis=0) for label in unique_labels}
+        mean_vectors = {
+            label: np.mean(self.reduced_data[self.labels == label], axis=0)
+            for label in unique_labels
+        }
 
         # Keresünk redundáns manővereket
         redundant_pairs = set()
@@ -238,39 +241,29 @@ class ManoeuvresFiltering:
 
     def filter_redundant_manoeuvres_spearman(self, threshold=0.7):
         """
-        Kiszűri a redundáns manővereket a Spearman-korreláció alapján.
+        Kiszűri a redundáns manővereket a Spearman-korreláció alapján többdimenziós adatok esetén.
         threshold: A minimális korrelációs érték, amely felett két manőver redundánsnak számít.
         """
         print("Spearman-alapú redundáns manőverek keresése...")
 
-        # Az adatok pandas DataFrame-be alakítása
-        df = pd.DataFrame(
-            self.reduced_data,
-            columns=[f"comp_{i}" for i in range(self.reduced_data.shape[1])],
-        )
-        df["labels"] = self.labels
+        # Manőverenként átlagolunk minden dimenzióban
+        unique_labels = np.unique(self.labels)
+        mean_vectors = {
+            label: np.mean(self.reduced_data[self.labels == label], axis=0)
+            for label in unique_labels
+        }
 
-        # Kiszámítjuk a Spearman-korrelációs mátrixot
-        num_columns = df.drop("labels", axis=1).shape[1]
-        correlation_matrix = pd.DataFrame(
-            index=df.columns[:-1], columns=df.columns[:-1]
-        )
-
-        for i in range(num_columns):
-            for j in range(i, num_columns):
-                col1, col2 = df.columns[i], df.columns[j]
-                rho, _ = spearmanr(df[col1], df[col2])
-                correlation_matrix.loc[col1, col2] = rho
-                correlation_matrix.loc[col2, col1] = rho  # Mivel szimmetrikus
-
-        # Keresünk redundáns párokat
+        # Keresünk redundáns manővereket
         redundant_pairs = set()
-        for i in range(num_columns):
-            for j in range(i + 1, num_columns):
-                if abs(correlation_matrix.iloc[i, j]) > threshold:
-                    redundant_pairs.add(
-                        (correlation_matrix.index[i], correlation_matrix.columns[j])
-                    )
+        label_list = list(mean_vectors.keys())
+
+        for i in range(len(label_list)):
+            for j in range(i + 1, len(label_list)):
+                label1, label2 = label_list[i], label_list[j]
+                rho, _ = spearmanr(mean_vectors[label1], mean_vectors[label2])
+
+                if abs(rho) > threshold:
+                    redundant_pairs.add((label1, label2))
 
         print(f"Redundáns manőver párok (Spearman): {redundant_pairs}")
 
@@ -278,39 +271,29 @@ class ManoeuvresFiltering:
 
     def filter_redundant_manoeuvres_kendall(self, threshold=0.7):
         """
-        Kiszűri a redundáns manővereket a Kendall-tau korreláció alapján.
+        Kiszűri a redundáns manővereket a Kendall-tau korreláció alapján többdimenziós adatok esetén.
         threshold: A minimális korrelációs érték, amely felett két manőver redundánsnak számít.
         """
         print("Kendall-alapú redundáns manőverek keresése...")
 
-        # Az adatok pandas DataFrame-be alakítása
-        df = pd.DataFrame(
-            self.reduced_data,
-            columns=[f"comp_{i}" for i in range(self.reduced_data.shape[1])],
-        )
-        df["labels"] = self.labels
+        # Manőverenként átlagolunk minden dimenzióban
+        unique_labels = np.unique(self.labels)
+        mean_vectors = {
+            label: np.mean(self.reduced_data[self.labels == label], axis=0)
+            for label in unique_labels
+        }
 
-        # Kiszámítjuk a Kendall-tau korrelációs mátrixot
-        num_columns = df.drop("labels", axis=1).shape[1]
-        correlation_matrix = pd.DataFrame(
-            index=df.columns[:-1], columns=df.columns[:-1]
-        )
-
-        for i in range(num_columns):
-            for j in range(i, num_columns):
-                col1, col2 = df.columns[i], df.columns[j]
-                tau, _ = kendalltau(df[col1], df[col2])
-                correlation_matrix.loc[col1, col2] = tau
-                correlation_matrix.loc[col2, col1] = tau  # Mivel szimmetrikus
-
-        # Keresünk redundáns párokat
+        # Keresünk redundáns manővereket
         redundant_pairs = set()
-        for i in range(num_columns):
-            for j in range(i + 1, num_columns):
-                if abs(correlation_matrix.iloc[i, j]) > threshold:
-                    redundant_pairs.add(
-                        (correlation_matrix.index[i], correlation_matrix.columns[j])
-                    )
+        label_list = list(mean_vectors.keys())
+
+        for i in range(len(label_list)):
+            for j in range(i + 1, len(label_list)):
+                label1, label2 = label_list[i], label_list[j]
+                tau, _ = kendalltau(mean_vectors[label1], mean_vectors[label2])
+
+                if abs(tau) > threshold:
+                    redundant_pairs.add((label1, label2))
 
         print(f"Redundáns manőver párok (Kendall): {redundant_pairs}")
 
@@ -383,19 +366,27 @@ class ManoeuvresFiltering:
 
         return uniformly_distributed_manoeuvres
 
-    def filter_by_distance(self, threshold=0.1):
+    def filter_by_distance(self, threshold=0.9):
         """
-        Az euklideszi távolságok alapján kiszűri a redundáns manővereket.
-        Ha két manőver közötti távolság nagyon kicsi, az egyik elhagyható.
-        """
-        print("Távolsági redundancia szűrés...")
+        Cosine Similarity alapján kiszűri a redundáns manővereket.
+        Ha két manőver közötti Cosine Similarity nagyon nagy (pl. 0.9+), az egyik elhagyható.
 
-        distances = euclidean_distances(self.reduced_data)
+        threshold: Az a hasonlósági küszöb, amely felett két manőver redundánsnak számít.
+        """
+        print("Távolsági redundancia szűrés Cosine Similarity használatával...")
+
+        # Cosine Similarity mátrix számítása
+        similarity_matrix = cosine_similarity(self.bottleneck_data)
+
         redundant_pairs = set()
+        num_samples = similarity_matrix.shape[0]
 
-        for i in range(len(distances)):
-            for j in range(i + 1, len(distances)):  # Csak az egyik irányba vizsgáljuk
-                if distances[i, j] < threshold and self.labels[i] != self.labels[j]:
+        for i in range(num_samples):
+            for j in range(i + 1, num_samples):  # Csak az egyik irányba vizsgáljuk
+                if (
+                    similarity_matrix[i, j] > threshold
+                    and self.labels[i] != self.labels[j]
+                ):
                     redundant_pairs.add(tuple(sorted((self.labels[i], self.labels[j]))))
 
         redundant_manoeuvre_names = {
@@ -406,64 +397,68 @@ class ManoeuvresFiltering:
             for pair in redundant_pairs
         }
 
-        print(f"Redundáns manőver párok (távolság alapú): {redundant_manoeuvre_names}")
+        print(
+            f"Redundáns manőver párok (Cosine Similarity): {redundant_manoeuvre_names}"
+        )
+
         return redundant_pairs
 
     # -----------------------------------Remove_redundant_manoeuvers-----------------------------------
 
     def remove_redundant_manoeuvres(self):
         """
-        Kiszűri a redundáns manővereket a boundary manőverek figyelembevételével.
-        - Ha egy redundáns pár mindkét eleme boundary, akkor csak az egyik marad meg.
-        - Ha egy redundáns pár egyik tagja boundary, akkor a boundary nem marad meg.
-        - Ha egyik sem boundary, akkor csak az egyik marad meg.
-        - Ahány redundáns pár van, annyi redundáns manőver maradjon a végső listában.
+        Kiszűri a redundáns manővereket a következő módszerekkel:
+        - Pearson korreláció
+        - Spearman korreláció
+        - Kendall korreláció
+        - Cosine Similarity
+
+        **Működés:**
+        1. Az összes redundáns pár összegyűjtése.
+        2. A legtöbbször szereplő címke kiválasztása.
+        3. A kiválasztott címkét hozzáadjuk a redundáns manőverek listájához.
+        4. Az ehhez a címkéhez tartozó összes párt eltávolítjuk a redundáns párok listájából.
+        5. Ismételjük, amíg vannak redundáns párok.
         """
-        redundant_manoeuvres = set()  # Halmaz a redundáns manőverek tárolására
-        boundary_manoeuvres = {
-            int(m) for m in self.boundary_manoeuvres
-        }  # Határon lévő manőverek
+        print(f"Redundáns manőverek keresése több módszerrel...")
 
-        print(f"Redundáns manőverek keresése {method} módszerrel...")
+        # Összegyűjtjük az összes redundáns párt
+        redundant_pairs = set()
+        redundant_pairs.update(self.filter_redundant_manoeuvres_pearson())
+        redundant_pairs.update(self.filter_redundant_manoeuvres_spearman())
+        redundant_pairs.update(self.filter_redundant_manoeuvres_kendall())
+        redundant_pairs.update(self.filter_by_distance())
 
-        # Választott módszer szerint redundáns párok keresése
-        if method == "pearson":
-            redundant_pairs = self.filter_redundant_manoeuvres_pearson()
-        elif method == "spearman":
-            redundant_pairs = self.filter_redundant_manoeuvres_spearman()
-        elif method == "kendall":
-            redundant_pairs = self.filter_redundant_manoeuvres_kendall()
-        else:
-            raise ValueError(
-                "Érvénytelen módszer! Használható értékek: 'pearson', 'spearman', 'kendall'"
-            )
+        print(f"Összesített redundáns párok: {redundant_pairs}")
 
-        redundant_pairs.update(self.filter_by_distance())  # Mindkét módszer eredményei
-        for pair in redundant_pairs:
-            a, b = int(pair[0]), int(pair[1])  # Kicsomagoljuk a párt
+        # Ha nincs redundáns pár, nincs mit szűrni
+        if not redundant_pairs:
+            print("Nincsenek redundáns manőverek.")
+            return set()
 
-            if a in boundary_manoeuvres and b in boundary_manoeuvres:
-                redundant_manoeuvres.add(
-                    a
-                )  # Ha mindkettő boundary, csak az elsőt tartjuk meg.
-            elif a in boundary_manoeuvres:
-                redundant_manoeuvres.add(b)  # Ha az 'a' boundary, akkor 'b' marad meg.
-            elif b in boundary_manoeuvres:
-                redundant_manoeuvres.add(a)  # Ha a 'b' boundary, akkor 'a' marad meg.
-            else:
-                redundant_manoeuvres.add(
-                    a
-                )  # Ha egyik sem boundary, az elsőt tartjuk meg.
+        # Lépésenként eltávolítandó manőverek
+        redundant_manoeuvres = set()
 
-        redundant_manoeuvres = list({int(m) for m in redundant_manoeuvres})
-        redundant_manoeuvre_names = {
-            self.reverse_label_mapping.get(m, f"Unknown_{m}")
-            for m in redundant_manoeuvres
-        }
-        print("Boundary manőverek:", boundary_manoeuvres)
-        print("Redundáns párok:", redundant_pairs)
-        print("Végleges redundáns manőverek:", redundant_manoeuvres)
-        print("Végleges redundáns manőverek nevei:", redundant_manoeuvre_names)
+        while redundant_pairs:
+            # Számláljuk, hogy melyik címke hányszor szerepel a redundáns párokban
+            counter = Counter()
+            for a, b in redundant_pairs:
+                counter[a] += 1
+                counter[b] += 1
+
+            # Kiválasztjuk azt a címkét, amelyik a legtöbbször szerepel
+            most_common_label, _ = counter.most_common(1)[0]
+            redundant_manoeuvres.add(most_common_label)
+
+            # Töröljük az összes párt, ahol ez a címke szerepelt
+            redundant_pairs = {
+                pair for pair in redundant_pairs if most_common_label not in pair
+            }
+
+        print(f"Végleges redundáns manőverek: {redundant_manoeuvres}")
+
+        # Ellenőrizzük, hogy a redundant_manoeuvres megfelelő típusú-e
+        redundant_manoeuvres = np.array(list(redundant_manoeuvres))
 
         # **Eltávolítjuk a redundáns manőverekhez tartozó adatokat**
         mask = np.isin(
@@ -478,7 +473,7 @@ class ManoeuvresFiltering:
             f"Redundáns manőverek eltávolítva, új adatméret: {filtered_reduced_data.shape}"
         )
 
-        return filtered_reduced_data
+        return filtered_reduced_data, filtered_labels  # A címkéket is visszaadjuk
 
 
 # np.random.seed(42)
