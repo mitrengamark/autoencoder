@@ -39,6 +39,7 @@ for file_name in all_files:
             labels,
             label_mapping,
             _,
+            _,
         ) = dp.train_test_split()
 
         test_input_dim = testloader.dataset[0][0].shape[0]
