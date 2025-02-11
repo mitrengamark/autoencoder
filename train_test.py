@@ -312,7 +312,10 @@ class Training:
                     label_mapping=self.label_mapping,
                 )
                 filtered_reduced_data, filtered_labels = mf.filter_manoeuvres()
-                filtered_latent_data = vs.calculate_tsne(filtered_reduced_data)
+                if latent_data == 2:
+                    filtered_latent_data = filtered_reduced_data
+                else:
+                    filtered_latent_data = vs.calculate_tsne(filtered_reduced_data)
                 plot_removed_data(latent_data, filtered_reduced_data)
                 create_comparison_heatmaps(latent_data, filtered_reduced_data)
 

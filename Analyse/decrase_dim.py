@@ -20,6 +20,7 @@ from Config.load_config import (
     coloring,
     step,
     save_fig,
+    latent_dim,
 )
 
 
@@ -241,7 +242,11 @@ class Visualise:
         :param labels: Az egyes mintákhoz tartozó címkék (list).
         :param title: A grafikon címe.
         """
-        self.calculate_tsne(self.bottleneck_outputs)
+        if latent_dim == 2:
+            self.reduced_data = self.bottleneck_outputs
+        else:
+            self.calculate_tsne(self.bottleneck_outputs)
+
 
         if self.plot == 1:
             fig = plt.figure(figsize=(16, 8))
