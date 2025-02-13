@@ -9,6 +9,7 @@ from Analyse.validation import reconstruction_accuracy
 from Synthesis.data_synthesis import remove_redundant_data, plot_removed_data
 from Synthesis.heat_map import create_comparison_heatmaps
 from Synthesis.manoeuvres_filtering import ManoeuvresFiltering
+from Synthesis.data_shapeing import detect_outliers
 from Config.load_config import (
     num_manoeuvres,
     training_model,
@@ -302,9 +303,10 @@ class Training:
         latent_data = vs.visualize_bottleneck()
         if save_fig == 0:
             if num_manoeuvres == 1:
-                vs.kmeans_clustering()
-                filtered_latent_data = remove_redundant_data(latent_data)
-                create_comparison_heatmaps(latent_data, filtered_latent_data)
+                # vs.kmeans_clustering()
+                detect_outliers(latent_data[2500:])
+                # filtered_latent_data = remove_redundant_data(latent_data[2500:])
+                # create_comparison_heatmaps(latent_data[2500:], filtered_latent_data)
             else:
                 mf = ManoeuvresFiltering(
                     reduced_data=latent_data,
