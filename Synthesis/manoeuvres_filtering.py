@@ -6,7 +6,6 @@ from sklearn.cluster import DBSCAN, KMeans
 from sklearn.preprocessing import normalize
 from sklearn.metrics.pairwise import cosine_similarity
 from collections import defaultdict, Counter
-from Config.load_config import method, seed
 
 # from random_data import (
 #     generate_clustered_data,
@@ -18,7 +17,7 @@ from Config.load_config import method, seed
 # # Hozzáadjuk a projekt gyökérkönyvtárát a Python elérési útvonalához
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from Config.load_config import eps, min_samples, n_clusters
+from Config.load_config import eps, min_samples, n_clusters, seed
 
 
 class ManoeuvresFiltering:
@@ -366,7 +365,7 @@ class ManoeuvresFiltering:
 
         return uniformly_distributed_manoeuvres
 
-    def filter_by_distance(self, threshold=0.9):
+    def filter_by_distance(self, threshold=0.1, batch_size=5000):
         """
         Cosine Similarity alapján kiszűri a redundáns manővereket.
         Ha két manőver közötti Cosine Similarity nagyon nagy (pl. 0.9+), az egyik elhagyható.
@@ -375,19 +374,17 @@ class ManoeuvresFiltering:
         """
         print("Távolsági redundancia szűrés Cosine Similarity használatával...")
 
-        # Cosine Similarity mátrix számítása
-        similarity_matrix = cosine_similarity(self.bottleneck_data)
-
+        n = self.bottleneck_data.shape[0]
         redundant_pairs = set()
-        num_samples = similarity_matrix.shape[0]
 
-        for i in range(num_samples):
-            for j in range(i + 1, num_samples):  # Csak az egyik irányba vizsgáljuk
-                if (
-                    similarity_matrix[i, j] > threshold
-                    and self.labels[i] != self.labels[j]
-                ):
-                    redundant_pairs.add(tuple(sorted((self.labels[i], self.labels[j]))))
+        for i in range(0, n, batch_size):
+            batch_data = self.bottleneck_data[i : i + batch_size]
+            similarities = cosine_similarity(batch_data, self.bottleneck_data)
+
+            for row_idx, row in enumerate(similarities):
+                for j in range(n):
+                    if row[j] > threshold and self.labels[i + row_idx] != self.labels[j]:
+                        redundant_pairs.add(tuple(sorted((self.labels[i + row_idx], self.labels[j]))))
 
         redundant_manoeuvre_names = {
             (
@@ -424,9 +421,9 @@ class ManoeuvresFiltering:
 
         # Összegyűjtjük az összes redundáns párt
         redundant_pairs = set()
-        redundant_pairs.update(self.filter_redundant_manoeuvres_pearson())
-        redundant_pairs.update(self.filter_redundant_manoeuvres_spearman())
-        redundant_pairs.update(self.filter_redundant_manoeuvres_kendall())
+        # redundant_pairs.update(self.filter_redundant_manoeuvres_pearson())
+        # redundant_pairs.update(self.filter_redundant_manoeuvres_spearman())
+        # redundant_pairs.update(self.filter_redundant_manoeuvres_kendall())
         redundant_pairs.update(self.filter_by_distance())
 
         print(f"Összesített redundáns párok: {redundant_pairs}")
@@ -485,5 +482,5 @@ class ManoeuvresFiltering:
 # # reduced_data, labels = generate_advanced_sinusoidal_spiral_data(n_samples=num_samples, n_clusters=num_clusters)
 
 # # ManoeuvresFiltering osztály inicializálása és filter_manoeuvres meghívása
-# filtering = ManoeuvresFiltering(reduced_data=reduced_data, labels=labels, label_mapping=label_mapping)
+# filtering = ManoeuvresFiltering(bottleneck_data=reduced_data, labels=labels, label_mapping=label_mapping)
 # filtering.filter_manoeuvres()

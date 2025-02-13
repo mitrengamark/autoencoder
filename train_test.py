@@ -20,6 +20,7 @@ from Config.load_config import (
     saved_model,
     save_fig,
     parameters,
+    latent_dim,
 )
 
 
@@ -312,7 +313,7 @@ class Training:
                     label_mapping=self.label_mapping,
                 )
                 filtered_reduced_data, filtered_labels = mf.filter_manoeuvres()
-                if latent_data == 2:
+                if filtered_reduced_data == 2:
                     filtered_latent_data = filtered_reduced_data
                 else:
                     filtered_latent_data = vs.calculate_tsne(filtered_reduced_data)

@@ -247,6 +247,7 @@ class Visualise:
         else:
             self.calculate_tsne(self.bottleneck_outputs)
 
+        print(f"Reduced data shape: {self.reduced_data.shape}")
 
         if self.plot == 1:
             fig = plt.figure(figsize=(16, 8))
