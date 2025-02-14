@@ -32,7 +32,7 @@ def detect_outliers(data):
         label="OPTICS Outlierek",
     )
     plt.legend()
-    plt.title("OPTICS és Convex Hull - Outlier Detekció")
+    plt.title("OPTICS - Outlier Detekció")
     plt.show()
 
     return outlier_indices

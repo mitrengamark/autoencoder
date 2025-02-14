@@ -6,10 +6,11 @@ from Factory.masked_autoencoder import MaskedAutoencoder
 from Factory.scheduler import scheduler_maker
 from Analyse.decrase_dim import Visualise
 from Analyse.validation import reconstruction_accuracy
-from Synthesis.data_synthesis import remove_redundant_data, plot_removed_data
-from Synthesis.heat_map import create_comparison_heatmaps
-from Synthesis.manoeuvres_filtering import ManoeuvresFiltering
-from Synthesis.data_shapeing import detect_outliers
+from Reduction.data_synthesis import remove_redundant_data, plot_removed_data
+from Reduction.heat_map import create_comparison_heatmaps
+from Reduction.manoeuvres_filtering import ManoeuvresFiltering
+from Reduction.data_shapeing import detect_outliers
+from Reduction.inconsistent_points import filter_inconsistent_points
 from Config.load_config import (
     num_manoeuvres,
     training_model,
@@ -304,7 +305,10 @@ class Training:
         if save_fig == 0:
             if num_manoeuvres == 1:
                 # vs.kmeans_clustering()
-                detect_outliers(latent_data[2500:])
+                outlier_indices = detect_outliers(latent_data[2500:])
+                filtered_data = np.delete(latent_data[2500:], outlier_indices, axis=0)
+                time_labels = np.arange(len(filtered_data))
+                filtered_data, filtered_labels = filter_inconsistent_points(filtered_data, time_labels, threshold=0.5)
                 # filtered_latent_data = remove_redundant_data(latent_data[2500:])
                 # create_comparison_heatmaps(latent_data[2500:], filtered_latent_data)
             else:
@@ -323,6 +327,8 @@ class Training:
                 create_comparison_heatmaps(latent_data, filtered_reduced_data)
 
         # Denormalizáció
+        removed_data_procentage = ((bottleneck_outputs.shape[0] - filtered_data.shape[0]) * 100) / bottleneck_outputs.shape[0]
+        print(f"Reduced bottleneck shape: {filtered_data.shape}, Removed data: {removed_data_procentage:.2f}%")
 
         reconstruction_accuracy(whole_input, whole_output, self.selected_columns)
 

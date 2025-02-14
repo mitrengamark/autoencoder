@@ -4,8 +4,6 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from sklearn.decomposition import PCA
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_distances
@@ -21,6 +19,7 @@ from Config.load_config import (
     step,
     save_fig,
     latent_dim,
+    removing_steps,
 )
 
 
@@ -143,6 +142,11 @@ class Visualise:
             for i, label in enumerate(unique_labels):
                 mask = self.labels == label
                 label_data = self.reduced_data[mask]
+
+                label_data = np.delete(
+                    label_data, np.arange(0, len(label_data), removing_steps), axis=0
+                )
+
                 description = next(
                     (
                         key

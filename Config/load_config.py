@@ -68,6 +68,7 @@ dimension = int(config["Plot"]["dimension"])
 tsneplot = int(config["Plot"]["tsneplot"])
 step = int(config["Plot"]["step"])
 save_fig = int(config["Plot"]["save_fig"])
+removing_steps = int(config["Plot"]["removing_steps"])
 
 # Callbacks
 plot = int(config["Callbacks"]["plot"])
