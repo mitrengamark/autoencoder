@@ -40,6 +40,7 @@ class Training:
         device=None,
         data_min=None,
         data_max=None,
+        scaler=None,
         run=None,
         data_mean=None,
         data_std=None,
@@ -77,6 +78,7 @@ class Training:
         self.data_max = data_max.to(self.device)
         self.data_mean = data_mean.to(self.device)
         self.data_std = data_std.to(self.device)
+        self.scaler = scaler
 
         # Loss értékek tárolása
         self.losses = []
@@ -143,6 +145,20 @@ class Training:
                         )
                         outputs = self.dp.denormalize(
                             data=outputs, data_min=self.data_min, data_max=self.data_max
+                        )
+                    elif normalization == "robust_scaler":
+                        inputs = self.dp.robust_scaler_denormalize(
+                            data=inputs, scaler=self.scaler
+                        )
+                        outputs = self.dp.robust_scaler_denormalize(
+                            data=outputs, scaler=self.scaler
+                        )
+                    elif normalization == "log_transform":
+                        inputs = self.dp.log_transform_denormalize(data=inputs)
+                        outputs = self.dp.log_transform_denormalize(data=outputs)
+                    else:
+                        raise ValueError(
+                            "Unsupported normalization method. Expected 'min_max', 'z_score', 'robust_scaler' or 'log_transform'!"
                         )
 
                 # Eltérések kiszámítása minden egyes batch-re
@@ -279,6 +295,20 @@ class Training:
                         outputs = self.dp.denormalize(
                             data=outputs, data_min=self.data_min, data_max=self.data_max
                         )
+                    elif normalization == "robust_scaler":
+                        inputs = self.dp.robust_scaler_denormalize(
+                            data=inputs, scaler=self.scaler
+                        )
+                        outputs = self.dp.robust_scaler_denormalize(
+                            data=outputs, scaler=self.scaler
+                        )
+                    elif normalization == "log_transform":
+                        inputs = self.dp.log_transform_denormalize(data=inputs)
+                        outputs = self.dp.log_transform_denormalize(data=outputs)
+                    else:
+                        raise ValueError(
+                            "Unsupported normalization method. Expected 'min_max', 'z_score', 'robust_scaler' or 'log_transform'!"
+                        )
 
                 val_loss += loss.item()
                 batch_differences = reconstruction_accuracy(
@@ -373,8 +403,8 @@ class Training:
                 filtered_data, filtered_labels = filter_inconsistent_points(
                     filtered_data, time_labels, threshold=0.5
                 )
-                # filtered_latent_data = remove_redundant_data(latent_data[2500:])
-                # create_comparison_heatmaps(latent_data[2500:], filtered_latent_data)
+                filtered_latent_data = remove_redundant_data(filtered_data)
+                create_comparison_heatmaps(filtered_data, filtered_latent_data)
             else:
                 mf = ManoeuvresFiltering(
                     reduced_data=latent_data,
@@ -412,6 +442,20 @@ class Training:
                 )
                 whole_output = self.dp.z_score_denormalize(
                     data=whole_output, data_mean=self.data_mean, data_std=self.data_std
+                )
+            elif normalization == "robust_scaler":
+                whole_input = self.dp.robust_scaler_denormalize(
+                    data=whole_input, scaler=self.scaler
+                )
+                whole_output = self.dp.robust_scaler_denormalize(
+                    data=whole_output, scaler=self.scaler
+                )
+            elif normalization == "log_transform":
+                whole_input = self.dp.log_transform_denormalize(data=whole_input)
+                whole_output = self.dp.log_transform_denormalize(data=whole_output)
+            else:
+                raise ValueError(
+                    "Unsupported normalization method. Expected 'min_max', 'z_score', 'robust_scaler' or 'log_transform'!"
                 )
 
         reconstruction_accuracy(whole_input, whole_output, self.selected_columns)

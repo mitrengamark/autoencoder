@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import torch
 import random
+from sklearn.preprocessing import RobustScaler
 from Config.load_config import (
     selected_manoeuvres,
     num_manoeuvres,
@@ -85,6 +86,29 @@ class DataProcess:
         self.max = all_data.max(dim=0).values
         self.mean = all_data.mean(dim=0)
         self.std = all_data.std(dim=0) + 1e-8  # Stabilitás
+        self.scaler = RobustScaler()
+        self.scaler.fit(all_data.numpy())  
+
+    def robust_scaler_normalize(self, data):
+        """RobustScaler alapú normalizálás."""
+        data_normalized = self.scaler.transform(data.numpy())
+        return torch.tensor(data_normalized, dtype=torch.float32)
+
+    def robust_scaler_denormalize(self, data, scaler):
+        """RobustScaler alapú visszaállítás (denormalizálás)."""
+        data_denormalized = scaler.inverse_transform(data.numpy())
+        return torch.tensor(data_denormalized, dtype=torch.float32)
+
+    def log_transform_normalize(self, data):
+        """Log-transzformáció alapú normalizálás (negatívakhoz is)."""
+        data_normalized = np.sign(data) * np.log1p(np.abs(data))
+        return torch.tensor(data_normalized, dtype=torch.float32)
+
+    def log_transform_denormalize(self, data):
+        """Log-transzformáció alapú visszaállítás (denormalizálás)."""
+        data = data.cpu().detach().numpy()
+        data_denormalized = np.sign(data) * np.expm1(np.abs(data))
+        return torch.tensor(data_denormalized, dtype=torch.float32)
 
     def z_score_normalize(self, data):
         """
@@ -154,9 +178,13 @@ class DataProcess:
                 normalized_data = self.normalize(data_tensor)
             elif normalization == "z_score":
                 normalized_data = self.z_score_normalize(data_tensor)
+            elif normalization == "robust_scaler":
+                normalized_data = self.robust_scaler_normalize(data_tensor)
+            elif normalization == "log_transform":
+                normalized_data = self.log_transform_normalize(data_tensor)
             else:
                 raise ValueError(
-                    "Unsupported normalization method. Expected 'min_max' or 'z_score'!"
+                    "Unsupported normalization method. Expected 'min_max', 'z_score', 'robust_scaler' or 'log_transform'!"
                 )
 
             combined_data[label].append(normalized_data)
@@ -281,6 +309,7 @@ class DataProcess:
             self.max,
             self.mean,
             self.std,
+            self.scaler,
             all_labels,
             label_mapping,
             self.sign_change_indices,
