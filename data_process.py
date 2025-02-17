@@ -67,50 +67,64 @@ class DataProcess:
         print("File paths:", self.file_paths)
         print("Labels:", self.labels)
 
-    def z_score_normalize(self):
+    def compute_global_stats(self):
         """
-        Z-score standardizálás az adatokhoz.
+        Az összes manőver együttes min-max és mean-std értékeinek kiszámítása.
         """
-        self.data_mean = self.data.mean(dim=0)
-        self.data_std = self.data.std(dim=0)
-        # self.data_mean = self.data.mean().mean()
-        # self.data_std = self.data.std().std()
-        data_standardized = (self.data - self.data_mean) / (self.data_std + 1e-8)
+        all_data = []
+        for file_path in self.file_paths:
+            df = pd.read_csv(file_path)
+            data_tensor = torch.tensor(df.values, dtype=torch.float32)
+            all_data.append(data_tensor)
+
+        all_data = torch.cat(all_data, dim=0)  # Összes manőver összevonása
+
+        # Globális min-max és z-score értékek
+        self.min = all_data.min(dim=0).values
+        self.max = all_data.max(dim=0).values
+        self.mean = all_data.mean(dim=0)
+        self.std = all_data.std(dim=0) + 1e-8  # Stabilitás
+
+    def z_score_normalize(self, data):
+        """
+        Globális Z-score standardizálás a megadott adatokra.
+        """
+        data_standardized = (data - self.mean) / self.std
         return data_standardized
 
-    def z_score_denormalize(self, data, data_mean, data_std):
+    def z_score_denormalize(self, data):
         """
-        Az adatok denormalizálása (visszatranszformálás az eredeti skálára).
+        Az adatok denormalizálása (Z-score alapján visszatranszformálás az eredeti skálára).
+
+        data: torch.Tensor - A standardizált adatok
+        mean: torch.Tensor - Az eredeti adatok oszloponkénti átlaga
+        std: torch.Tensor - Az eredeti adatok oszloponkénti szórása
+
+        Visszaadja: torch.Tensor - Az eredeti skálára visszaállított adatok
         """
-        print("Data Type:", type(data))
-        print("Data Mean Type:", type(data_mean))
-        print("Data Std Type:", type(data_std))
-        data = torch.tensor(data) if isinstance(data, np.ndarray) else data
-        print("Data Type 2:", type(data))
-        data_denormalized = (data * data_std) + data_mean
+        data_denormalized = data * self.std + self.mean
         return data_denormalized
 
-    def normalize(self):
+    def normalize(self, data):
         """
-        Min-Max normalizálás az adatokhoz oszloponként.
+        Globális min-max normalizálás a megadott adatokra.
         """
-        self.data_min = self.data.min(dim=0).values  # Oszloponkénti minimum
-        self.data_max = self.data.max(dim=0).values  # Oszloponkénti maximum
-
-        # Min-Max normalizálás oszloponként
-        data_normalized = (self.data - self.data_min) / (
-            self.data_max - self.data_min + 1e-8
+        data_normalized = (data - self.min) / (
+            self.max - self.min + 1e-8
         )
         return data_normalized
 
-    def denormalize(self, data, data_min, data_max):
+    def denormalize(self, data):
         """
-        Az adatok denormalizálása (visszatranszformálás az eredeti skálára).
+        Globális min-max alapján történő visszaskálázás.
         """
-        data_denormalized = data * (data_max - data_min) + data_min
+        data_denormalized = data * (self.max - self.min) + self.min
         return data_denormalized
 
     def load_and_label_data(self):
+        # Először számítsuk ki a globális statisztikákat
+        self.compute_global_stats()
+
         combined_data = {label: [] for label in self.labels}
         self.sign_change_indices = {}
 
@@ -136,9 +150,9 @@ class DataProcess:
             self.data = data_tensor #[2500:]
 
             if self.training_model == "VAE":
-                normalized_data = self.normalize()
+                normalized_data = self.normalize(data_tensor)
             elif self.training_model == "MAE":
-                normalized_data = self.z_score_normalize()
+                normalized_data = self.z_score_normalize(data_tensor)
             else:
                 raise ValueError("Unsupported model type. Expected 'VAE' or 'MAE'!")
 
@@ -261,8 +275,8 @@ class DataProcess:
                 trainloader,
                 valloader,
                 testloader,
-                self.data_min,
-                self.data_max,
+                self.min,
+                self.max,
                 all_labels,
                 label_mapping,
                 self.sign_change_indices,
@@ -273,8 +287,8 @@ class DataProcess:
                 trainloader,
                 valloader,
                 testloader,
-                self.data_mean,
-                self.data_std,
+                self.mean,
+                self.std,
                 all_labels,
                 label_mapping,
                 self.sign_change_indices,
