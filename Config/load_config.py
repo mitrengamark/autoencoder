@@ -49,6 +49,7 @@ test_mode = int(config["Model"]["test_mode"])
 saved_model = config.get("Model", "model_path")
 
 # Data
+normalization = config.get("Data", "normalization")
 num_workers = int(config["Data"]["num_workers"])
 data_dir = config.get("Data", "data_dir")
 num_manoeuvres = int(config["Data"]["num_manoeuvres"])
@@ -77,6 +78,7 @@ api_token = config.get("Callbacks", "neptune_token")
 
 # Validation
 parameters = config.get("Validation", "parameters").split(", ")
+validation_method = config.get("Validation", "validation_method")
 
 # Egyéb változók
 hidden_dims = [int(dim) for dim in hidden_dims_str.strip("[]").split(", ")]

@@ -16,6 +16,7 @@ from Config.load_config import (
     num_workers,
     basic_method,
     parameters,
+    normalization,
 )
 
 
@@ -92,7 +93,7 @@ class DataProcess:
         data_standardized = (data - self.mean) / self.std
         return data_standardized
 
-    def z_score_denormalize(self, data):
+    def z_score_denormalize(self, data, data_mean, data_std):
         """
         Az adatok denormalizálása (Z-score alapján visszatranszformálás az eredeti skálára).
 
@@ -102,23 +103,21 @@ class DataProcess:
 
         Visszaadja: torch.Tensor - Az eredeti skálára visszaállított adatok
         """
-        data_denormalized = data * self.std + self.mean
+        data_denormalized = data * data_std + data_mean
         return data_denormalized
 
     def normalize(self, data):
         """
         Globális min-max normalizálás a megadott adatokra.
         """
-        data_normalized = (data - self.min) / (
-            self.max - self.min + 1e-8
-        )
+        data_normalized = (data - self.min) / (self.max - self.min + 1e-8)
         return data_normalized
 
-    def denormalize(self, data):
+    def denormalize(self, data, data_min, data_max):
         """
         Globális min-max alapján történő visszaskálázás.
         """
-        data_denormalized = data * (self.max - self.min) + self.min
+        data_denormalized = data * (data_max - data_min) + data_min
         return data_denormalized
 
     def load_and_label_data(self):
@@ -136,7 +135,9 @@ class DataProcess:
             ]
 
             if not self.selected_columns:
-                raise ValueError("A megadott paraméterek egyike sem található a fájlban!")
+                raise ValueError(
+                    "A megadott paraméterek egyike sem található a fájlban!"
+                )
 
             print(f"Kiválasztott oszlopindexek {label}-hez: {self.selected_columns}")
 
@@ -147,14 +148,16 @@ class DataProcess:
                 )
 
             data_tensor = torch.tensor(df.values, dtype=torch.float32)
-            self.data = data_tensor #[2500:]
+            self.data = data_tensor  # [2500:]
 
-            if self.training_model == "VAE":
+            if normalization == "min_max":
                 normalized_data = self.normalize(data_tensor)
-            elif self.training_model == "MAE":
+            elif normalization == "z_score":
                 normalized_data = self.z_score_normalize(data_tensor)
             else:
-                raise ValueError("Unsupported model type. Expected 'VAE' or 'MAE'!")
+                raise ValueError(
+                    "Unsupported normalization method. Expected 'min_max' or 'z_score'!"
+                )
 
             combined_data[label].append(normalized_data)
 
@@ -270,27 +273,16 @@ class DataProcess:
             num_workers=self.num_workers,
         )
 
-        if self.training_model == "VAE":
-            return (
-                trainloader,
-                valloader,
-                testloader,
-                self.min,
-                self.max,
-                all_labels,
-                label_mapping,
-                self.sign_change_indices,
-                self.selected_columns,
-            )
-        elif self.training_model == "MAE":
-            return (
-                trainloader,
-                valloader,
-                testloader,
-                self.mean,
-                self.std,
-                all_labels,
-                label_mapping,
-                self.sign_change_indices,
-                self.selected_columns,
-            )
+        return (
+            trainloader,
+            valloader,
+            testloader,
+            self.min,
+            self.max,
+            self.mean,
+            self.std,
+            all_labels,
+            label_mapping,
+            self.sign_change_indices,
+            self.selected_columns,
+        )

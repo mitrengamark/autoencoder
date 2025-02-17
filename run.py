@@ -31,36 +31,19 @@ if torch.cuda.is_available():
 
 dp = DataProcess()
 
-if training_model == "VAE":
-    (
-        trainloader,
-        valloader,
-        testloader,
-        data_min,
-        data_max,
-        labels,
-        label_mapping,
-        sign_change_indices,
-        selected_columns,
-    ) = dp.train_test_split()
-    data_mean = None
-    data_std = None
-elif training_model == "MAE":
-    (
-        trainloader,
-        valloader,
-        testloader,
-        data_mean,
-        data_std,
-        labels,
-        label_mapping,
-        sign_change_indices,
-        selected_columns,
-    ) = dp.train_test_split()
-    data_min = None
-    data_max = None
-else:
-    raise ValueError(f"Unsupported model type. Expected VAE or MAE!")
+(
+    trainloader,
+    valloader,
+    testloader,
+    data_min,
+    data_max,
+    data_mean,
+    data_std,
+    labels,
+    label_mapping,
+    sign_change_indices,
+    selected_columns,
+) = dp.train_test_split()
 
 train_input_dim = trainloader.dataset[0][0].shape[0]
 

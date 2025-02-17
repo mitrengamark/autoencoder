@@ -11,6 +11,7 @@ from Reduction.heat_map import create_comparison_heatmaps
 from Reduction.manoeuvres_filtering import ManoeuvresFiltering
 from Reduction.data_shapeing import detect_outliers
 from Reduction.inconsistent_points import filter_inconsistent_points
+from data_process import DataProcess
 from Config.load_config import (
     num_manoeuvres,
     training_model,
@@ -22,7 +23,8 @@ from Config.load_config import (
     saved_model,
     save_fig,
     parameters,
-    latent_dim,
+    validation_method,
+    normalization,
 )
 
 
@@ -65,22 +67,24 @@ class Training:
         self.label_mapping = label_mapping
         self.selected_columns = selected_columns
 
-        # Adatok normalizálásához szükséges statisztikák
-        self.data_min = data_min
-        self.data_max = data_max
-        self.data_mean = data_mean
-        self.data_std = data_std
-
         # Egyéb
         self.run = run
         self.device = device
         self.sign_change_indices = sign_change_indices
+
+        # Adatok normalizálásához szükséges statisztikák
+        self.data_min = data_min.to(self.device)
+        self.data_max = data_max.to(self.device)
+        self.data_mean = data_mean.to(self.device)
+        self.data_std = data_std.to(self.device)
 
         # Loss értékek tárolása
         self.losses = []
         self.reconst_losses = []
         self.kl_losses = []
         self.val_losses = []
+
+        self.dp = DataProcess()
 
     def train(self):
         self.model.train()
@@ -121,18 +125,38 @@ class Training:
                 else:
                     raise ValueError(f"Unsupported model type. Expected VAE or MAE!")
 
+                if validation_method == "denormalized":
+                    if normalization == "z_score":
+                        inputs = self.dp.z_score_denormalize(
+                            data=inputs,
+                            data_mean=self.data_mean,
+                            data_std=self.data_std,
+                        )
+                        outputs = self.dp.z_score_denormalize(
+                            data=outputs,
+                            data_mean=self.data_mean,
+                            data_std=self.data_std,
+                        )
+                    elif normalization == "min_max":
+                        inputs = self.dp.denormalize(
+                            data=inputs, data_min=self.data_min, data_max=self.data_max
+                        )
+                        outputs = self.dp.denormalize(
+                            data=outputs, data_min=self.data_min, data_max=self.data_max
+                        )
+
                 # Eltérések kiszámítása minden egyes batch-re
                 batch_differences = reconstruction_accuracy(
                     inputs, outputs, self.selected_columns
                 )
 
                 # Eltérések összeadása az epizódon belül
-                for param in parameters:  
-                    if param in batch_differences:  
+                for param in parameters:
+                    if param in batch_differences:
                         train_differences[param].append(batch_differences[param])
 
-                if "diff_average" in batch_differences:  
-                    train_total_differences.append(batch_differences["diff_average"]) 
+                if "diff_average" in batch_differences:
+                    train_total_differences.append(batch_differences["diff_average"])
 
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -140,14 +164,16 @@ class Training:
                 self.optimizer.step()
                 loss_per_episode += loss.item()
 
-            train_differences = {param: np.mean(train_differences[param]) for param in parameters}
+            train_differences = {
+                param: np.mean(train_differences[param]) for param in parameters
+            }
             train_total_difference = np.mean(train_total_differences)
 
             average_loss = loss_per_episode / len(self.trainloader)
             self.losses.append(round(average_loss, 4))
 
             for param, avg_value in train_differences.items():
-                globals()[f"train_diff_{param}_average"] = avg_value  
+                globals()[f"train_diff_{param}_average"] = avg_value
 
             globals()["train_diff_average"] = train_total_difference
 
@@ -184,17 +210,29 @@ class Training:
                     self.run[f"validation/{param}_average"].append(avg_value)
 
                 self.run[f"train/diff_average"].append(train_total_difference)
-                self.run[f"validation/diff_average"].append(val_differences["diff_average"])
+                self.run[f"validation/diff_average"].append(
+                    val_differences["diff_average"]
+                )
 
             # Kiírás az egyes train és validation eltérésekre
-            train_differences_str = " | ".join([f"{param}: {train_differences[param]:.6f}" for param in parameters])
-            val_differences_str = " | ".join([f"{param}: {val_differences[param]:.6f}" for param in parameters])
+            train_differences_str = " | ".join(
+                [f"{param}: {train_differences[param]:.6f}" for param in parameters]
+            )
+            val_differences_str = " | ".join(
+                [f"{param}: {val_differences[param]:.6f}" for param in parameters]
+            )
 
-            print(f"Epoch [{epoch+1}/{num_epochs}], Current Learning Rate: {current_lr:.6f}")
+            print(
+                f"Epoch [{epoch+1}/{num_epochs}], Current Learning Rate: {current_lr:.6f}"
+            )
             print(f"Train Loss: {average_loss:.4f}")
-            print(f"Train Differences: {train_differences_str}\n **Total Avg: {train_total_difference:.6f}**")
+            print(
+                f"Train Differences: {train_differences_str}\n **Total Avg: {train_total_difference:.6f}**"
+            )
             print(f"Validation Loss: {val_loss:.4f}")
-            print(f"Validation Differences: {val_differences_str}\n **Total Avg: {val_differences['diff_average']:.6f}**")
+            print(
+                f"Validation Differences: {val_differences_str}\n **Total Avg: {val_differences['diff_average']:.6f}**"
+            )
 
         if self.run:
             self.run.stop()
@@ -203,7 +241,7 @@ class Training:
     def validate(self):
         self.model.eval()
         val_loss = 0
-        val_differences = {param: [] for param in parameters}  
+        val_differences = {param: [] for param in parameters}
         val_total_differences = []
 
         with torch.no_grad():
@@ -222,17 +260,41 @@ class Training:
                 else:
                     raise ValueError("Unsupported model type. Expected VAE or MAE!")
 
-                val_loss += loss.item()
-                batch_differences = reconstruction_accuracy(inputs, outputs, self.selected_columns)
+                if validation_method == "denormalized":
+                    if normalization == "z_score":
+                        inputs = self.dp.z_score_denormalize(
+                            data=inputs,
+                            data_mean=self.data_mean,
+                            data_std=self.data_std,
+                        )
+                        outputs = self.dp.z_score_denormalize(
+                            data=outputs,
+                            data_mean=self.data_mean,
+                            data_std=self.data_std,
+                        )
+                    elif normalization == "min_max":
+                        inputs = self.dp.denormalize(
+                            data=inputs, data_min=self.data_min, data_max=self.data_max
+                        )
+                        outputs = self.dp.denormalize(
+                            data=outputs, data_min=self.data_min, data_max=self.data_max
+                        )
 
-                for param in parameters:  
-                    if param in batch_differences:  
+                val_loss += loss.item()
+                batch_differences = reconstruction_accuracy(
+                    inputs, outputs, self.selected_columns
+                )
+
+                for param in parameters:
+                    if param in batch_differences:
                         val_differences[param].append(batch_differences[param])
 
-                if "diff_average" in batch_differences:  
-                    val_total_differences.append(batch_differences["diff_average"])   
+                if "diff_average" in batch_differences:
+                    val_total_differences.append(batch_differences["diff_average"])
 
-        val_differences = {param: np.mean(val_differences[param]) for param in parameters}
+        val_differences = {
+            param: np.mean(val_differences[param]) for param in parameters
+        }
         val_total_difference = np.mean(val_total_differences)
 
         globals()["val_diff_average"] = val_total_difference
@@ -308,7 +370,9 @@ class Training:
                 outlier_indices = detect_outliers(latent_data[2500:])
                 filtered_data = np.delete(latent_data[2500:], outlier_indices, axis=0)
                 time_labels = np.arange(len(filtered_data))
-                filtered_data, filtered_labels = filter_inconsistent_points(filtered_data, time_labels, threshold=0.5)
+                filtered_data, filtered_labels = filter_inconsistent_points(
+                    filtered_data, time_labels, threshold=0.5
+                )
                 # filtered_latent_data = remove_redundant_data(latent_data[2500:])
                 # create_comparison_heatmaps(latent_data[2500:], filtered_latent_data)
             else:
@@ -327,8 +391,28 @@ class Training:
                 create_comparison_heatmaps(latent_data, filtered_reduced_data)
 
         # Denormalizáció
-        removed_data_procentage = ((bottleneck_outputs.shape[0] - filtered_data.shape[0]) * 100) / bottleneck_outputs.shape[0]
-        print(f"Reduced bottleneck shape: {filtered_data.shape}, Removed data: {removed_data_procentage:.2f}%")
+        removed_data_procentage = (
+            (bottleneck_outputs.shape[0] - filtered_data.shape[0]) * 100
+        ) / bottleneck_outputs.shape[0]
+        print(
+            f"Reduced bottleneck shape: {filtered_data.shape}, Removed data: {removed_data_procentage:.2f}%"
+        )
+
+        if validation_method == "denormalized":
+            if normalization == "min_max":
+                whole_input = self.dp.denormalize(
+                    data=whole_input, data_min=self.data_min, data_max=self.data_max
+                )
+                whole_output = self.dp.denormalize(
+                    data=whole_output, data_min=self.data_min, data_max=self.data_max
+                )
+            elif normalization == "z_score":
+                whole_input = self.dp.z_score_denormalize(
+                    data=whole_input, data_mean=self.data_mean, data_std=self.data_std
+                )
+                whole_output = self.dp.z_score_denormalize(
+                    data=whole_output, data_mean=self.data_mean, data_std=self.data_std
+                )
 
         reconstruction_accuracy(whole_input, whole_output, self.selected_columns)
 
