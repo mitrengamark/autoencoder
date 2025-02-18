@@ -1,6 +1,7 @@
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 from Factory.variational_autoencoder import VariationalAutoencoder
 from Factory.masked_autoencoder import MaskedAutoencoder
 from Factory.scheduler import scheduler_maker
@@ -25,6 +26,7 @@ from Config.load_config import (
     parameters,
     validation_method,
     normalization,
+    removing_steps,
 )
 
 
@@ -252,7 +254,8 @@ class Training:
 
         if self.run:
             self.run.stop()
-            self.plot_losses()
+
+        self.plot_losses()
 
     def validate(self):
         self.model.eval()
@@ -397,8 +400,12 @@ class Training:
         if save_fig == 0:
             if num_manoeuvres == 1:
                 # vs.kmeans_clustering()
-                outlier_indices = detect_outliers(latent_data[2500:])
-                filtered_data = np.delete(latent_data[2500:], outlier_indices, axis=0)
+                reduced_latent_data = vs.visualize_bottleneck(removing_steps=removing_steps)
+                manoeuvres_start_length = 2500 - (math.floor(2500 / removing_steps))
+                outlier_indices = detect_outliers(reduced_latent_data[manoeuvres_start_length:])
+                filtered_data = np.delete(
+                    reduced_latent_data[manoeuvres_start_length:], outlier_indices, axis=0
+                )
                 time_labels = np.arange(len(filtered_data))
                 filtered_data, filtered_labels = filter_inconsistent_points(
                     filtered_data, time_labels, threshold=0.5

@@ -19,7 +19,6 @@ from Config.load_config import (
     step,
     save_fig,
     latent_dim,
-    removing_steps,
 )
 
 
@@ -100,7 +99,7 @@ class Visualise:
 
         self.reduced_data = reduced_data
 
-    def visualize_with_tsne(self):
+    def visualize_with_tsne(self, removing_steps=1):
         """
         Adatok vizualizálása T-SNE használatával.
 
@@ -143,9 +142,10 @@ class Visualise:
                 mask = self.labels == label
                 label_data = self.reduced_data[mask]
 
-                label_data = np.delete(
-                    label_data, np.arange(0, len(label_data), removing_steps), axis=0
-                )
+                if removing_steps > 1:
+                    label_data = np.delete(
+                        label_data, np.arange(0, len(label_data), removing_steps), axis=0
+                    )
 
                 description = next(
                     (
