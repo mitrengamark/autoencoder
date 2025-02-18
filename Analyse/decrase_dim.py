@@ -58,7 +58,7 @@ class Visualise:
                 return cache["tsne_data"]
         return None
 
-    def visualize_bottleneck(self):
+    def visualize_bottleneck(self, removing_steps=1):
         """
         Vizualizálja a bottleneck kimeneteket PCA vagy T-SNE segítségével.
 
@@ -74,7 +74,7 @@ class Visualise:
         self.tsne_title = f"T-SNE - {self.model_name} Bottleneck"
 
         print("T-SNE Visualization:")
-        self.visualize_with_tsne()
+        self.visualize_with_tsne(removing_steps)
 
         return self.reduced_data
 

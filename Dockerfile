@@ -43,6 +43,19 @@ COPY requirements.txt .
 RUN python3 -m pip install --upgrade pip && \
     python3 -m pip install --no-cache-dir -r requirements.txt
 
-COPY . /root/autoencoder
+RUN useradd -m -s /bin/bash miti && \
+    usermod -aG sudo miti
 
-CMD ["/usr/sbin/sshd", "-D"]
+RUN mkdir -p /home/miti/autoencoder
+COPY . /home/miti/autoencoder
+
+RUN chown -R miti:miti /home/miti/autoencoder
+
+# USER root
+USER miti
+
+WORKDIR /home/miti/autoencoder
+
+
+# CMD ["/usr/sbin/sshd", "-D"]
+CMD ["/bin/bash"]
