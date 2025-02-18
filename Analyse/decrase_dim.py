@@ -74,7 +74,7 @@ class Visualise:
         self.tsne_title = f"T-SNE - {self.model_name} Bottleneck"
 
         print("T-SNE Visualization:")
-        self.visualize_with_tsne(removing_steps)
+        self.visualize_with_tsne(removing_steps=removing_steps)
 
         return self.reduced_data
 
@@ -112,6 +112,11 @@ class Visualise:
         else:
             self.calculate_tsne(self.bottleneck_outputs)
 
+        if removing_steps > 1:
+            self.reduced_data = np.delete(
+                self.reduced_data, np.arange(0, len(self.reduced_data), removing_steps), axis=0
+            )
+
         print(f"Reduced data shape: {self.reduced_data.shape}")
 
         if self.plot == 1:
@@ -141,11 +146,6 @@ class Visualise:
             for i, label in enumerate(unique_labels):
                 mask = self.labels == label
                 label_data = self.reduced_data[mask]
-
-                if removing_steps > 1:
-                    label_data = np.delete(
-                        label_data, np.arange(0, len(label_data), removing_steps), axis=0
-                    )
 
                 description = next(
                     (
