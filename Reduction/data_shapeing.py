@@ -15,12 +15,16 @@ def detect_outliers(data):
     
     OPTICS-alapú outlier detektálás
     """
+    print(f"Outlierek detektálása...")
+
     optics = OPTICS(min_samples=10, xi=0.05, min_cluster_size=0.1)
     labels = optics.fit_predict(data)
 
     optics_outliers = labels == -1  # OPTICS által megjelölt outlierek
 
     outlier_indices = np.where(optics_outliers)[0]  # Az outlierek sorindexei
+
+    print(f"Törölt adatok száma: {len(outlier_indices)}")
 
     # Vizualizáció
     plt.figure(figsize=(8, 6))

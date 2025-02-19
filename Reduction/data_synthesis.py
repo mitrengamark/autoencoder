@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from Config.load_config import grid, max_sample
+from Config.load_config import grid, max_sample, removing_steps
 
 
 def remove_redundant_data(latent_data, grid_size=grid, max_sample=max_sample):
@@ -46,6 +46,21 @@ def remove_redundant_data(latent_data, grid_size=grid, max_sample=max_sample):
     plot_removed_data(latent_data, filtered_latent_data)
 
     return filtered_latent_data
+
+
+def remove_data_step_by_step(data):
+    """
+    Az adathalmazból minden `step`-edik elemet eltávolítja.
+
+    :param data: Az eredeti adathalmaz (numpy array, N x D méretű)
+    :return: A ritkított adathalmaz (numpy array)
+    """
+    mask = np.ones(len(data), dtype=bool)  # Kezdetben minden elemet megtartunk
+    mask[::removing_steps] = False  # Minden `step`-edik elemre False-t állítunk (ezeket töröljük)
+    filtered_data = data[mask]
+    plot_removed_data(data, filtered_data)
+    
+    return filtered_data
 
 
 def plot_removed_data(latent_data, filtered_latent_data):

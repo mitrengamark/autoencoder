@@ -58,27 +58,7 @@ class Visualise:
                 return cache["tsne_data"]
         return None
 
-    def visualize_bottleneck(self, removing_steps=1):
-        """
-        Vizualizálja a bottleneck kimeneteket PCA vagy T-SNE segítségével.
-
-        :param bottleneck_outputs: A bottleneck által generált adatok (numpy array).
-        :param labels: Az egyes mintákhoz tartozó címkék (list vagy numpy array).
-        :param model_name: A modell neve (pl. "VAE" vagy "MAE").
-        :param label_mapping: A címkékhez tartozó szöveges leírások (dict).
-        """
-        assert len(self.bottleneck_outputs) == len(
-            self.labels
-        ), f"A bottleneck kimenetek ({len(self.bottleneck_outputs)}) és a címkék ({len(self.labels)}) mérete nem egyezik!"
-
-        self.tsne_title = f"T-SNE - {self.model_name} Bottleneck"
-
-        print("T-SNE Visualization:")
-        self.visualize_with_tsne(removing_steps=removing_steps)
-
-        return self.reduced_data
-
-    def calculate_tsne(self, data):
+    def calculate_tsne(self, data, removing_steps=1):
         perplexity = min(50, max(5, data.shape[0] // 10))
 
         # Ellenőrizzük, van-e cache-elt eredmény
@@ -97,9 +77,14 @@ class Visualise:
             reduced_data = tsne.fit_transform(data)
             self.save_tsne_results(reduced_data)  # Mentjük az új eredményt
 
+        if removing_steps > 1:
+            indices_to_keep = np.delete(np.arange(len(reduced_data)), np.arange(0, len(reduced_data), removing_steps))
+            reduced_data = reduced_data[indices_to_keep]
+            self.labels = self.labels[indices_to_keep] 
+
         self.reduced_data = reduced_data
 
-    def visualize_with_tsne(self, removing_steps=1):
+    def visualize_with_tsne(self, removing_steps=1, plot=tsneplot):
         """
         Adatok vizualizálása T-SNE használatával.
 
@@ -107,19 +92,23 @@ class Visualise:
         :param labels: Az egyes mintákhoz tartozó címkék (list).
         :param title: A grafikon címe.
         """
+        assert len(self.bottleneck_outputs) == len(
+            self.labels
+        ), f"A bottleneck kimenetek ({len(self.bottleneck_outputs)}) és a címkék ({len(self.labels)}) mérete nem egyezik!"
+
+        self.tsne_title = f"T-SNE - {self.model_name} Bottleneck"
+
+        if plot == 1:
+            print("T-SNE Visualization:")
+
         if latent_dim == 2:
             self.reduced_data = self.bottleneck_outputs
         else:
-            self.calculate_tsne(self.bottleneck_outputs)
-
-        if removing_steps > 1:
-            self.reduced_data = np.delete(
-                self.reduced_data, np.arange(0, len(self.reduced_data), removing_steps), axis=0
-            )
+            self.calculate_tsne(self.bottleneck_outputs, removing_steps=removing_steps)
 
         print(f"Reduced data shape: {self.reduced_data.shape}")
 
-        if self.plot == 1:
+        if plot == 1:
             fig = plt.figure(figsize=(16, 8))
             unique_labels = np.unique(self.labels)
             num_labels = len(unique_labels)
@@ -272,6 +261,8 @@ class Visualise:
                 save_figure(fig, save_path)
             else:
                 plt.show()
+
+        return self.reduced_data
 
     def save_tsne_results(self, tsne_data):
         """Elmenti a kiszámított T-SNE eredményeket fájlba"""

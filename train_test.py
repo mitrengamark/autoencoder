@@ -7,7 +7,11 @@ from Factory.masked_autoencoder import MaskedAutoencoder
 from Factory.scheduler import scheduler_maker
 from Analyse.decrase_dim import Visualise
 from Analyse.validation import reconstruction_accuracy
-from Reduction.data_synthesis import remove_redundant_data, plot_removed_data
+from Reduction.data_synthesis import (
+    remove_redundant_data,
+    plot_removed_data,
+    remove_data_step_by_step,
+)
 from Reduction.heat_map import create_comparison_heatmaps
 from Reduction.manoeuvres_filtering import ManoeuvresFiltering
 from Reduction.data_shapeing import detect_outliers
@@ -396,22 +400,24 @@ class Training:
             label_mapping=self.label_mapping,
             sign_change_indices=self.sign_change_indices,
         )
-        latent_data = vs.visualize_bottleneck()
+        latent_data = vs.visualize_with_tsne()
         if save_fig == 0:
             if num_manoeuvres == 1:
                 # vs.kmeans_clustering()
-                reduced_latent_data = vs.visualize_bottleneck(removing_steps=removing_steps)
-                manoeuvres_start_length = 2500 - (math.floor(2500 / removing_steps))
-                outlier_indices = detect_outliers(reduced_latent_data[manoeuvres_start_length:])
-                filtered_data = np.delete(
-                    reduced_latent_data[manoeuvres_start_length:], outlier_indices, axis=0
-                )
+                outlier_indices = detect_outliers(latent_data[2500:])
+                filtered_data = np.delete(latent_data[2500:], outlier_indices, axis=0)
+                print(f"Reduced data shape: {filtered_data.shape}")
                 time_labels = np.arange(len(filtered_data))
                 filtered_data, filtered_labels = filter_inconsistent_points(
                     filtered_data, time_labels, threshold=0.5
                 )
-                filtered_latent_data = remove_redundant_data(filtered_data)
+                print(f"Reduced data shape: {filtered_data.shape}")
+                filtered_latent_data = remove_data_step_by_step(filtered_data)
+                print(f"Reduced data shape: {filtered_latent_data.shape}")
+                # filtered_latent_data = remove_redundant_data(filtered_data)
                 create_comparison_heatmaps(filtered_data, filtered_latent_data)
+                plot_removed_data(latent_data, filtered_latent_data)
+                create_comparison_heatmaps(latent_data, filtered_latent_data)
             else:
                 mf = ManoeuvresFiltering(
                     reduced_data=latent_data,
@@ -429,10 +435,10 @@ class Training:
 
         # Denormalizáció
         removed_data_procentage = (
-            (bottleneck_outputs.shape[0] - filtered_data.shape[0]) * 100
+            (bottleneck_outputs.shape[0] - filtered_latent_data.shape[0]) * 100
         ) / bottleneck_outputs.shape[0]
         print(
-            f"Reduced bottleneck shape: {filtered_data.shape}, Removed data: {removed_data_procentage:.2f}%"
+            f"Final reduced bottleneck shape: {filtered_latent_data.shape}, Removed data: {removed_data_procentage:.2f}%"
         )
 
         if validation_method == "denormalized":

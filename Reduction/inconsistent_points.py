@@ -12,6 +12,8 @@ def filter_inconsistent_points(data, labels, threshold=0.1):
     :param threshold: A maximális megengedett térbeli távolság (pl. 0.2)
     :return: A megtisztított adat és címke tömb, valamint a törölt pontok indexei
     """
+    print(f"Idő különbségek keresése...")
+    
     # Távolságmátrix számítása (Euklidészi távolság)
     dist_matrix = distance.cdist(data, data, metric="euclidean")
 
