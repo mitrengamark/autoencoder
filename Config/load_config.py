@@ -69,7 +69,11 @@ dimension = int(config["Plot"]["dimension"])
 tsneplot = int(config["Plot"]["tsneplot"])
 step = int(config["Plot"]["step"])
 save_fig = int(config["Plot"]["save_fig"])
-removing_steps = int(config["Plot"]["removing_steps"])
+
+# Filtering
+removing_steps = int(config["Filtering"]["removing_steps"])
+inconsistent_points_distance = float(config["Filtering"]["inconsistent_points_distance"])
+time_difference = int(config["Filtering"]["time_difference"])
 
 # Callbacks
 plot = int(config["Callbacks"]["plot"])

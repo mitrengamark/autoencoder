@@ -15,7 +15,10 @@ from Reduction.data_synthesis import (
 from Reduction.heat_map import create_comparison_heatmaps
 from Reduction.manoeuvres_filtering import ManoeuvresFiltering
 from Reduction.data_shapeing import detect_outliers
-from Reduction.inconsistent_points import filter_inconsistent_points
+from Reduction.inconsistent_points import (
+    filter_inconsistent_points,
+    filter_outliers_by_grid,
+)
 from data_process import DataProcess
 from Config.load_config import (
     num_manoeuvres,
@@ -409,7 +412,11 @@ class Training:
                 print(f"Reduced data shape: {filtered_data.shape}")
                 time_labels = np.arange(len(filtered_data))
                 filtered_data, filtered_labels = filter_inconsistent_points(
-                    filtered_data, time_labels, threshold=0.5
+                    filtered_data, time_labels
+                )
+                print(f"Reduced data shape: {filtered_data.shape}")
+                filtered_data, filtered_labels = filter_outliers_by_grid(
+                    filtered_data, time_labels
                 )
                 print(f"Reduced data shape: {filtered_data.shape}")
                 filtered_latent_data = remove_data_step_by_step(filtered_data)
