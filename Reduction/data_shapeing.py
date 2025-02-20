@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 from sklearn.cluster import OPTICS
-from scipy.spatial import ConvexHull
+from Config.load_config import save_fig, selected_manoeuvres, folder_name
 
 
 def detect_outliers(data):
@@ -12,7 +13,7 @@ def detect_outliers(data):
     :param data: A bemeneti adathalmaz (numpy array)
     :param save_to_file: Ha True, az outlierek indexeit fájlba menti
     :return: Az outlierek indexei
-    
+
     OPTICS-alapú outlier detektálás
     """
     print(f"Outlierek detektálása...")
@@ -37,6 +38,12 @@ def detect_outliers(data):
     )
     plt.legend()
     plt.title("OPTICS - Outlier Detekció")
+
+    if save_fig:
+        filename = f"Results/{folder_name}/{selected_manoeuvres[0]}/optics.png"
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        plt.savefig(filename)
+
     plt.show()
 
     return outlier_indices

@@ -1,7 +1,14 @@
 import numpy as np
-from scipy.spatial import distance
+import os
 import matplotlib.pyplot as plt
-from Config.load_config import inconsistent_points_distance, time_difference
+from scipy.spatial import distance
+from Config.load_config import (
+    inconsistent_points_distance,
+    time_difference,
+    save_fig,
+    selected_manoeuvres,
+    folder_name,
+)
 
 
 def filter_inconsistent_points(data, labels):
@@ -70,6 +77,12 @@ def filter_inconsistent_points(data, labels):
 
     plt.legend()
     plt.title("Szűrt adatok - időrendi alapú tisztítás")
+
+    if save_fig:
+        filename = f"Results/{folder_name}/{selected_manoeuvres[0]}/időszerint_1.png"
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        plt.savefig(filename)
+
     plt.show()
 
     return filtered_data, filtered_labels
@@ -155,6 +168,12 @@ def filter_outliers_by_grid(data, labels, grid_size=10, threshold=4000):
 
     plt.legend()
     plt.title("Grid-alapú időrendi outlier szűrés")
+
+    if save_fig:
+        filename = f"Results/{folder_name}/{selected_manoeuvres[0]}/időszerint_2.png"
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        plt.savefig(filename)
+
     plt.show()
 
     return filtered_data, filtered_labels

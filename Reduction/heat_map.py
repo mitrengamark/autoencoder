@@ -1,10 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 from scipy.stats import gaussian_kde
-from Config.load_config import grid_size
+from Config.load_config import grid_size, save_fig, selected_manoeuvres, folder_name
 
 
-def create_comparison_heatmaps(original_data, filtered_data, grid_size=grid_size):
+def create_comparison_heatmaps(
+    original_data, filtered_data, grid_size=grid_size, file_name=None
+):
     """
     Az eredeti és a szűrt látenstér heatmapjének összehasonlítása.
 
@@ -63,6 +66,12 @@ def create_comparison_heatmaps(original_data, filtered_data, grid_size=grid_size
     fig.colorbar(im2, ax=axes[1], label="Intenzitás")
 
     plt.tight_layout()
+
+    if save_fig:
+        filename = f"Results/{folder_name}/{selected_manoeuvres[0]}/{file_name}.png"
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        plt.savefig(filename)
+
     plt.show()
 
 

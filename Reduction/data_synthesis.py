@@ -1,9 +1,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from Config.load_config import grid, max_sample, removing_steps
+import os
+from Config.load_config import (
+    grid,
+    max_sample,
+    removing_steps,
+    save_fig,
+    selected_manoeuvres,
+    folder_name,
+)
 
 
-def remove_redundant_data(latent_data, grid_size=grid, max_sample=max_sample):
+def remove_redundant_data(
+    latent_data, grid_size=grid, max_sample=max_sample, file_name=None
+):
     """
     Eltávolítja a túl sűrűn előforduló adatokat a látenstérben.
 
@@ -43,12 +53,12 @@ def remove_redundant_data(latent_data, grid_size=grid, max_sample=max_sample):
             filtered_latent_data.append(point)
 
     filtered_latent_data = np.array(filtered_latent_data)
-    plot_removed_data(latent_data, filtered_latent_data)
+    plot_removed_data(latent_data, filtered_latent_data, file_name=file_name)
 
     return filtered_latent_data
 
 
-def remove_data_step_by_step(data):
+def remove_data_step_by_step(data, file_name=None):
     """
     Az adathalmazból minden `step`-edik elemet eltávolítja.
 
@@ -56,14 +66,16 @@ def remove_data_step_by_step(data):
     :return: A ritkított adathalmaz (numpy array)
     """
     mask = np.ones(len(data), dtype=bool)  # Kezdetben minden elemet megtartunk
-    mask[::removing_steps] = False  # Minden `step`-edik elemre False-t állítunk (ezeket töröljük)
+    mask[::removing_steps] = (
+        False  # Minden `step`-edik elemre False-t állítunk (ezeket töröljük)
+    )
     filtered_data = data[mask]
-    plot_removed_data(data, filtered_data)
-    
+    plot_removed_data(data, filtered_data, file_name=file_name)
+
     return filtered_data
 
 
-def plot_removed_data(latent_data, filtered_latent_data):
+def plot_removed_data(latent_data, filtered_latent_data, file_name=None):
     # Vizualizáció az eredeti és szűrt adatokkal
     plt.figure(figsize=(10, 5))
 
@@ -80,6 +92,12 @@ def plot_removed_data(latent_data, filtered_latent_data):
     plt.ylabel("T-SNE Komponens 2")
 
     plt.tight_layout()
+
+    if save_fig:
+        filename = f"Results/{folder_name}/{selected_manoeuvres[0]}/{file_name}.png"
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        plt.savefig(filename)
+
     plt.show()
 
     return filtered_latent_data

@@ -404,7 +404,7 @@ class Training:
             sign_change_indices=self.sign_change_indices,
         )
         latent_data = vs.visualize_with_tsne()
-        if save_fig == 0:
+        if save_fig == 1:
             if num_manoeuvres == 1:
                 # vs.kmeans_clustering()
                 outlier_indices = detect_outliers(latent_data[2500:])
@@ -416,15 +416,23 @@ class Training:
                 )
                 print(f"Reduced data shape: {filtered_data.shape}")
                 filtered_data, filtered_labels = filter_outliers_by_grid(
-                    filtered_data, time_labels
+                    filtered_data, filtered_labels
                 )
                 print(f"Reduced data shape: {filtered_data.shape}")
-                filtered_latent_data = remove_data_step_by_step(filtered_data)
+                filtered_latent_data = remove_data_step_by_step(
+                    filtered_data, file_name="rész_szűrés"
+                )
                 print(f"Reduced data shape: {filtered_latent_data.shape}")
                 # filtered_latent_data = remove_redundant_data(filtered_data)
-                create_comparison_heatmaps(filtered_data, filtered_latent_data)
-                plot_removed_data(latent_data, filtered_latent_data)
-                create_comparison_heatmaps(latent_data, filtered_latent_data)
+                create_comparison_heatmaps(
+                    filtered_data, filtered_latent_data, file_name="rész_szűrés_heatmap"
+                )
+                plot_removed_data(
+                    latent_data, filtered_latent_data, file_name="teljes_szűrés"
+                )
+                create_comparison_heatmaps(
+                    latent_data, filtered_latent_data, file_name="teljes_szűrés_heatmap"
+                )
             else:
                 mf = ManoeuvresFiltering(
                     reduced_data=latent_data,
