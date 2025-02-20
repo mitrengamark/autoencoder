@@ -7,14 +7,14 @@ from Factory.masked_autoencoder import MaskedAutoencoder
 from Factory.scheduler import scheduler_maker
 from Analyse.decrase_dim import Visualise
 from Analyse.validation import reconstruction_accuracy
-from Reduction.data_synthesis import (
+from Reduction.data_removing import (
     remove_redundant_data,
     plot_removed_data,
     remove_data_step_by_step,
 )
 from Reduction.heat_map import create_comparison_heatmaps
 from Reduction.manoeuvres_filtering import ManoeuvresFiltering
-from Reduction.data_shapeing import detect_outliers
+from Reduction.optics import detect_outliers
 from Reduction.inconsistent_points import (
     filter_inconsistent_points,
     filter_outliers_by_grid,
@@ -33,7 +33,6 @@ from Config.load_config import (
     parameters,
     validation_method,
     normalization,
-    removing_steps,
 )
 
 
@@ -404,7 +403,7 @@ class Training:
             sign_change_indices=self.sign_change_indices,
         )
         latent_data = vs.visualize_with_tsne()
-        if save_fig == 1:
+        if save_fig == 0:
             if num_manoeuvres == 1:
                 # vs.kmeans_clustering()
                 outlier_indices = detect_outliers(latent_data[2500:])

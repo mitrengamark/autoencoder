@@ -18,7 +18,7 @@ def detect_outliers(data):
     """
     print(f"Outlierek detektálása...")
 
-    optics = OPTICS(min_samples=10, xi=0.05, min_cluster_size=0.1)
+    optics = OPTICS(min_samples=10, xi=0.5, min_cluster_size=0.1)
     labels = optics.fit_predict(data)
 
     optics_outliers = labels == -1  # OPTICS által megjelölt outlierek
