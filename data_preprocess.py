@@ -266,7 +266,34 @@ def aposztrof_nincs(manouver_names):
         file.write("\n".join(modified_list))
     print(modified_list)
 
+def sort_columns_in_files(folder_path, test_mode=True):
+    # Ellenőrizzük, hogy a mappa létezik-e
+    if not os.path.exists(folder_path):
+        print(f"Hiba: A megadott mappa nem létezik: {folder_path}")
+        return
+    
+    # Mappa összes CSV fájljának listázása
+    file_paths = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith('.csv')]
+    
+    if not file_paths:
+        print("Nincsenek CSV fájlok a megadott mappában.")
+        return
+    
+    for file_path in file_paths:
+        df = pd.read_csv(file_path)
+        
+        # Oszlopok ABC sorrendbe rendezése
+        df = df[sorted(df.columns)]
+        
+        # Ha tesztmódban fut, akkor új fájlba menti az eredményt
+        if test_mode:
+            new_file_path = file_path.replace(".csv", "_sorted_abc.csv")
+            df.to_csv(new_file_path, index=False)
+            print(f"Oszlopok ABC sorrendben rendezve és mentve: {new_file_path}")
+        else:
+            df.to_csv(file_path, index=False)
+            print(f"Oszlopok ABC sorrendben rendezve: {file_path}")
 
-# manouver_names = collect_maoeuver_names()
-# combined_vectors = merge_csv_for_manoeuvres(manouver_names, save=False)
-# aposztrof_nincs(manouver_names)
+# Itt kell megadni a mappa elérési útját
+folder_path = "data2"  # Tesztmappa
+sort_columns_in_files(folder_path, test_mode=False)
