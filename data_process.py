@@ -12,7 +12,6 @@ from Config.load_config import (
     training_model,
     coloring_method,
     train_size,
-    val_size,
     batch_size,
     num_workers,
     basic_method,
@@ -28,7 +27,6 @@ class DataProcess:
         self.training_model = training_model
         self.coloring_method = coloring_method
         self.train_size = train_size
-        self.val_size = val_size
         self.batch_size = batch_size
         self.num_workers = num_workers
 
@@ -254,19 +252,16 @@ class DataProcess:
         n = all_data.size(0)
         train_size = int(self.train_size * n)
         if basic_method == 1:
-            val_size = int(self.val_size * n)
-
             indices = torch.randperm(n)
             train_indices = indices[:train_size]
-            val_indices = indices[train_size : train_size + val_size]
-            test_indices = indices[train_size + val_size :]
+            val_indices = indices[train_size :]
 
             train_data = all_data[train_indices]
             train_labels = all_labels[train_indices]
             val_data = all_data[val_indices]
             val_labels = all_labels[val_indices]
-            test_data = all_data[test_indices]
-            test_labels = all_labels[test_indices]
+            test_data = all_data
+            test_labels = all_labels
         else:
             train_indices = torch.arange(train_size)
             val_indices = torch.arange(train_size, n)

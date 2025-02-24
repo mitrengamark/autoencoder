@@ -14,7 +14,7 @@ from Reduction.data_removing import (
 )
 from Reduction.heat_map import create_comparison_heatmaps
 from Reduction.manoeuvres_filtering import ManoeuvresFiltering
-from Reduction.optics import detect_outliers
+from Reduction.outlier_detection import detect_outliers
 from Reduction.inconsistent_points import (
     filter_inconsistent_points,
     filter_outliers_by_grid,
@@ -404,7 +404,7 @@ class Training:
             sign_change_indices=self.sign_change_indices,
         )
         latent_data = vs.visualize_with_tsne()
-        if save_fig == 1:
+        if save_fig == 0:
             if num_manoeuvres == 1:
                 # vs.kmeans_clustering()
                 outlier_indices = detect_outliers(latent_data[2500:])

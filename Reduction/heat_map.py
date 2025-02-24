@@ -11,16 +11,20 @@ def create_comparison_heatmaps(
     """
     Az eredeti és a szűrt látenstér heatmapjének összehasonlítása.
 
-    :param original_data: Eredeti 2D látenstér adatok (numpy array, shape: [n_samples, 2]).
-    :param filtered_data: Szűrt 2D látenstér adatok.
-    :param grid_size: A heatmap felbontása (rács mérete).
+    :param original_data: Eredeti 2D adatok.
+    :param filtered_data: Szűrt 2D adatok.
+    :param grid_size: A heatmap felbontása.
     """
     # Eredeti és szűrt heatmap generálása
     x_grid_orig, y_grid_orig, heatmap_orig = create_heatmap(original_data, grid_size)
     x_grid_filt, y_grid_filt, heatmap_filt = create_heatmap(filtered_data, grid_size)
 
-    vmin = heatmap_orig.min()
-    vmax = heatmap_orig.max()
+    # Skálázás az adatmérethez
+    heatmap_orig *= len(original_data) / len(filtered_data)
+
+    # Skálázás az új minimum és maximum értékekhez
+    vmin = min(heatmap_orig.min(), heatmap_filt.min())
+    vmax = max(heatmap_orig.max(), heatmap_filt.max())
 
     # Subplot létrehozása
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
@@ -77,9 +81,8 @@ def create_comparison_heatmaps(
 
 def create_heatmap(data, grid_size=grid_size):
     """
-    Heatmap generálása a T-SNE eredmények alapján.
-
-    :param tsne_data: T-SNE által generált 2D adatok (numpy array, shape: [n_samples, 2]).
+    Heatmap generálása
+    :param data: 2D adathalmaz (numpy array, shape: [n_samples, 2]).
     :param grid_size: A heatmap felbontása (rács mérete).
     :return: Heatmap (numpy array).
     """
@@ -92,7 +95,7 @@ def create_heatmap(data, grid_size=grid_size):
     x_grid, y_grid = np.meshgrid(x_grid, y_grid)
 
     # Kernel Density Estimation (KDE) az adatokra
-    kde = gaussian_kde(np.vstack([x, y]))
-    z = kde(np.vstack([x_grid.ravel(), y_grid.ravel()]))
+    kde = gaussian_kde(np.vstack([x, y]), weights=np.ones(len(x)) / len(x))
+    z = kde(np.vstack([x_grid.ravel(), y_grid.ravel()])).reshape(grid_size, grid_size)
 
-    return x_grid, y_grid, z.reshape(grid_size, grid_size)
+    return x_grid, y_grid, z
