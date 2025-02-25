@@ -405,7 +405,7 @@ class Training:
             sign_change_indices=self.sign_change_indices,
         )
         latent_data = vs.visualize_with_tsne()
-        if save_fig == 1:
+        if save_fig == 0:
             if num_manoeuvres == 1:
                 # vs.kmeans_clustering()
                 outlier_indices = detect_outliers(latent_data[2500:])
