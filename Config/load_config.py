@@ -20,7 +20,8 @@ batch_size = int(config["Hyperparameters"]["batch_size"])
 mask_ratio = float(config["Hyperparameters"]["mask_ratio"])
 num_heads = int(config["Hyperparameters"]["num_heads"])
 
-beta_min = 1 / float(config["Hyperparameters"]["beta_min"])
+beta_min = float(config["Hyperparameters"]["beta_min"])
+beta_multiplier = float(config["Hyperparameters"]["beta_multiplier"])
 
 initial_lr = float(config["Hyperparameters"]["initial_lr"])
 max_lr = float(config["Hyperparameters"]["max_lr"])

@@ -26,6 +26,7 @@ from Config.load_config import (
     num_epochs,
     scheduler_name,
     beta_min,
+    beta_multiplier,
     hyperopt,
     model_path,
     saved_model,
@@ -109,9 +110,7 @@ class Training:
             train_differences = {param: [] for param in parameters}  # Listát tárolunk
             train_total_differences = []
 
-            self.beta = min(1.0, epoch / beta_min)
-            if epoch == 0:
-                self.beta = 1 / beta_min
+            self.beta = min(3.0, beta_multiplier * epoch + beta_min)
 
             for data in self.trainloader:
                 inputs, _ = data
@@ -227,6 +226,7 @@ class Training:
                 self.run[f"train/loss"].append(average_loss)
                 self.run[f"learning_rate"].append(self.optimizer.param_groups[0]["lr"])
                 self.run[f"validation/loss"].append(val_loss)
+                self.run[f"beta"].append(self.beta)
 
                 for param, avg_value in train_differences.items():
                     self.run[f"train/{param}_average"].append(avg_value)
