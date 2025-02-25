@@ -21,6 +21,8 @@ mask_ratio = float(config["Hyperparameters"]["mask_ratio"])
 num_heads = int(config["Hyperparameters"]["num_heads"])
 
 beta_min = float(config["Hyperparameters"]["beta_min"])
+beta_max = float(config["Hyperparameters"]["beta_max"])
+tau = int(config["Hyperparameters"]["tau"])
 beta_multiplier = float(config["Hyperparameters"]["beta_multiplier"])
 
 initial_lr = float(config["Hyperparameters"]["initial_lr"])

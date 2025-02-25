@@ -15,8 +15,19 @@ def detect_outliers(data):
     """
     print(f"Outlierek detektálása...")
 
+    if "chirp" in selected_manoeuvres:
+        n_neighbors = 416
+        contamination = 0.1
+    elif "savvaaltas" in selected_manoeuvres:
+        n_neighbors = 416
+        contamination = 0.3
+    else:
+        n_neighbors = 416
+        contamination = 0.15
+
+
     optics_outlier_indices = optics_clustering(data)
-    lof_outlier_indices = lof_outlier_detection(data)
+    lof_outlier_indices = lof_outlier_detection(data, n_neighbors, contamination)
 
     # Két módszer kombinálása: Csak azok az outlierek maradnak, amelyeket mindkét módszer annak lát
     final_outlier_indices = np.intersect1d(optics_outlier_indices, lof_outlier_indices)
@@ -60,14 +71,14 @@ def optics_clustering(data):
     return outlier_indices
 
 
-def lof_outlier_detection(data):
+def lof_outlier_detection(data, n_neighbors, contamination):
     """
     LOF (Local Outlier Factor) alapú anomália detekció.
 
     :param data: A bemeneti adathalmaz (numpy array)
     :return: A LOF által detektált outlierek indexei
     """
-    lof = LocalOutlierFactor(n_neighbors=830, contamination=0.25)
+    lof = LocalOutlierFactor(n_neighbors=n_neighbors, contamination=contamination)
     lof_outliers = lof.fit_predict(data) == -1  # LOF által megjelölt outlierek
     outlier_indices = np.where(lof_outliers)[0]
 
