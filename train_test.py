@@ -26,7 +26,8 @@ from Config.load_config import (
     num_epochs,
     scheduler_name,
     beta_min,
-    beta_multiplier,
+    beta_max,
+    tau,
     hyperopt,
     model_path,
     saved_model,
@@ -110,7 +111,7 @@ class Training:
             train_differences = {param: [] for param in parameters}  # Listát tárolunk
             train_total_differences = []
 
-            self.beta = min(3.0, beta_multiplier * epoch + beta_min)
+            self.beta = beta_max * (1 - np.exp(-epoch / tau))
 
             for data in self.trainloader:
                 inputs, _ = data
@@ -404,7 +405,7 @@ class Training:
             sign_change_indices=self.sign_change_indices,
         )
         latent_data = vs.visualize_with_tsne()
-        if save_fig == 0:
+        if save_fig == 1:
             if num_manoeuvres == 1:
                 # vs.kmeans_clustering()
                 outlier_indices = detect_outliers(latent_data[2500:])
