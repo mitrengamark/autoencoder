@@ -433,22 +433,21 @@ class Training:
             create_comparison_heatmaps(
                 latent_data, filtered_latent_data, file_name="teljes_szűrés_heatmap"
             )
-        else:
-            mf = ManoeuvresFiltering(
-                reduced_data=latent_data,
-                bottleneck_data=bottleneck_outputs,
-                labels=labels,
-                label_mapping=self.label_mapping,
-            )
-            filtered_reduced_data, filtered_labels = mf.filter_manoeuvres()
-            if filtered_reduced_data == 2:
-                filtered_latent_data = filtered_reduced_data
-            else:
-                filtered_latent_data = vs.calculate_tsne(filtered_reduced_data)
-            plot_removed_data(latent_data, filtered_reduced_data)
-            create_comparison_heatmaps(latent_data, filtered_reduced_data)
+        # else:
+            # mf = ManoeuvresFiltering(
+            #     reduced_data=latent_data,
+            #     bottleneck_data=bottleneck_outputs,
+            #     labels=labels,
+            #     label_mapping=self.label_mapping,
+            # )
+            # filtered_reduced_data, filtered_labels = mf.filter_manoeuvres()
+            # if filtered_reduced_data == 2:
+            #     filtered_latent_data = filtered_reduced_data
+            # else:
+            #     filtered_latent_data = vs.calculate_tsne(filtered_reduced_data)
+            # plot_removed_data(latent_data, filtered_reduced_data)
+            # create_comparison_heatmaps(latent_data, filtered_reduced_data)
 
-        # Denormalizáció
         removed_data_procentage = (
             (bottleneck_outputs.shape[0] - filtered_latent_data.shape[0]) * 100
         ) / bottleneck_outputs.shape[0]
