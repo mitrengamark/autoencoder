@@ -1,5 +1,4 @@
 import os
-import matplotlib.pyplot as plt
 
 def save_figure(fig, save_path, dpi=300):
     """

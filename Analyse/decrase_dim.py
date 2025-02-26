@@ -7,8 +7,6 @@ import matplotlib.cm as cm
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_distances
-from Picture_saving.name_pictures import fig_names
-from Picture_saving.save_fig import save_figure
 from Config.load_config import (
     tsneplot,
     dimension,
@@ -19,6 +17,8 @@ from Config.load_config import (
     step,
     save_fig,
     latent_dim,
+    folder_name,
+    selected_manoeuvres,
 )
 
 
@@ -39,7 +39,6 @@ class Visualise:
         self.max_iter = 100
         self.tol = 1e-4
         self.tsne_cache_path = "Analyse/tsne_cache.pkl"
-        self.plot = tsneplot
 
     def compute_data_hash(self):
         """Egyedi hash generálása a bemenetek alapján, hogy észleljük a változásokat"""
@@ -78,9 +77,12 @@ class Visualise:
             self.save_tsne_results(reduced_data)  # Mentjük az új eredményt
 
         if removing_steps > 1:
-            indices_to_keep = np.delete(np.arange(len(reduced_data)), np.arange(0, len(reduced_data), removing_steps))
+            indices_to_keep = np.delete(
+                np.arange(len(reduced_data)),
+                np.arange(0, len(reduced_data), removing_steps),
+            )
             reduced_data = reduced_data[indices_to_keep]
-            self.labels = self.labels[indices_to_keep] 
+            self.labels = self.labels[indices_to_keep]
 
         self.reduced_data = reduced_data
 
@@ -212,28 +214,27 @@ class Visualise:
                             else:
                                 raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
                 else:
-                    for j in range(label_data.shape[0]):
-                        if dimension == 3:
-                            ax.scatter(
-                                label_data[j, 0],
-                                label_data[j, 1],
-                                label_data[j, 2],
-                                label=description if j == 0 else "",
-                                color=color_list[i],
-                                alpha=1,
-                                facecolors="none",
-                            )
-                        elif dimension == 2:
-                            ax.scatter(
-                                label_data[j, 0],
-                                label_data[j, 1],
-                                label=description if j == 0 else "",
-                                color=color_list[i],
-                                alpha=1,
-                                facecolors="none",
-                            )
-                        else:
-                            raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
+                    if dimension == 3:
+                        ax.scatter(
+                            label_data[j, 0],
+                            label_data[j, 1],
+                            label_data[j, 2],
+                            label=description if j == 0 else "",
+                            color=color_list[i],
+                            alpha=1,
+                            facecolors="none",
+                        )
+                    elif dimension == 2:
+                        ax.scatter(
+                            label_data[:, 0],
+                            label_data[:, 1],
+                            label=description,
+                            color=color_list[i],
+                            alpha=1,
+                            facecolors="none",
+                        )
+                    else:
+                        raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
 
             # handles, _ = ax.get_legend_handles_labels()
             # for handle in handles:
@@ -256,11 +257,16 @@ class Visualise:
 
             plt.tight_layout()
 
-            if save_fig == 1:
-                save_path = fig_names(description)
-                save_figure(fig, save_path)
-            else:
-                plt.show()
+            if save_fig:
+                if num_manoeuvres == 1:
+                    filename = f"Results/{folder_name}/{selected_manoeuvres[0]}.png"
+                else:
+                    filename = f"Results/more_manoeuvres/{folder_name}.png"
+
+                os.makedirs(os.path.dirname(filename), exist_ok=True)
+                plt.savefig(filename)
+
+            plt.show()
 
         return self.reduced_data
 
