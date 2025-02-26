@@ -420,19 +420,19 @@ class Training:
                     filtered_data, filtered_labels
                 )
                 print(f"Reduced data shape: {filtered_data.shape}")
-                filtered_latent_data = remove_data_step_by_step(
-                    filtered_data, file_name="rész_szűrés"
-                )
-                print(f"Reduced data shape: {filtered_latent_data.shape}")
+                # filtered_latent_data = remove_data_step_by_step(
+                #     filtered_data, file_name="rész_szűrés"
+                # )
+                # print(f"Reduced data shape: {filtered_latent_data.shape}")
                 # filtered_latent_data = remove_redundant_data(filtered_data)
-                create_comparison_heatmaps(
-                    filtered_data, filtered_latent_data, file_name="rész_szűrés_heatmap"
-                )
+                # create_comparison_heatmaps(
+                #     filtered_data, filtered_latent_data, file_name="rész_szűrés_heatmap"
+                # )
                 plot_removed_data(
-                    latent_data, filtered_latent_data, file_name="teljes_szűrés"
+                    latent_data, filtered_data, file_name="teljes_szűrés"
                 )
                 create_comparison_heatmaps(
-                    latent_data, filtered_latent_data, file_name="teljes_szűrés_heatmap"
+                    latent_data, filtered_data, file_name="teljes_szűrés_heatmap"
                 )
             else:
                 mf = ManoeuvresFiltering(
