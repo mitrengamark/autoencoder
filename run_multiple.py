@@ -495,6 +495,9 @@ folder_names = [
     "valtozo_v_sin_fek",
 ]
 
+total_runs = sum(len(maneuvers) // steps[idx] for idx, maneuvers in enumerate(maneuvers_list))
+current_run = 0
+
 # Fő ciklus, ami végigmegy a manővercsoportokon
 for group_idx, maneuvers in enumerate(maneuvers_list):
     batch_size = batch_sizes[group_idx]
@@ -513,23 +516,27 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
         if not selected_maneuvers:
             continue
 
-        print(f"\n  Iteráció: {i//step+1} | Manőverek: {selected_maneuvers}")
+        current_run += 1
+
+        print(f"\n Futtatás [{current_run}/{total_runs}]\n Iteráció: {i//step+1} | Manőverek: {selected_maneuvers}")
 
         # 1️ Betöltjük a jelenlegi konfigurációt
-        config = ConfigObj(CONFIG_PATH)
+        config = ConfigObj(CONFIG_PATH, encoding="utf-8")
 
         # 2️ Frissítjük a kiválasztott manővereket
-        config["Data"]["selected_manoeuvres"] = ", ".join(selected_maneuvers)
+        config["Data"]["selected_manoeuvres"] = selected_maneuvers
         config["Plot"]["folder_name"] = folder_name
 
         # 3️ Visszaírjuk a módosított konfigurációt
         config.write()
 
         # 4️ Elindítjuk a run.py-t
+        print(f"Indítom a run.py-t...")
         process = subprocess.Popen(["python", "run.py"])
 
         # 5️ Megvárjuk a futás végét
         process.wait()
+        print(f"run.py futtatás {current_run}/{total_runs} befejeződött!")
 
         # (Opcionális) Pihenőidő a következő futás előtt
         time.sleep(5)  # 5 másodperc szünet két iteráció között

@@ -116,7 +116,28 @@ class Visualise:
             num_labels = len(unique_labels)
 
             base_colors = cm.get_cmap("tab20", 20)  # 20 alap szín
-            markers = ["o", "s", "^", "D", "P", "*", "X", "v", "<", ">", "p", "h", "H", "8", "|", "_", "+", "x", "d", "1"]  # 20 alakzat
+            markers = [
+                "o",
+                "D",
+                "X",
+                "s",
+                "^",
+                "P",
+                "*",
+                "v",
+                "<",
+                ">",
+                "p",
+                "h",
+                "H",
+                "8",
+                "_",
+                "+",
+                "d",
+                "1",
+                "|",
+                "x",
+            ]  # 20 alakzat
 
             if dimension == 3:
                 ax = fig.add_subplot(111, projection="3d")
