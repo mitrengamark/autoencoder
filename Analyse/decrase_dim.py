@@ -115,16 +115,8 @@ class Visualise:
             unique_labels = np.unique(self.labels)
             num_labels = len(unique_labels)
 
-            if num_labels <= 10:
-                colors = cm.get_cmap("tab10", num_labels)
-                color_list = [colors(i) for i in range(num_labels)]
-            elif num_labels <= 20:
-                colors = cm.get_cmap("tab20", num_labels)
-                color_list = [colors(i) for i in range(num_labels)]
-            else:
-                color_list = cm.get_cmap("nipy_spectral", num_labels)(
-                    np.linspace(0, 1, num_labels)
-                )
+            base_colors = cm.get_cmap("tab20", 20)  # 20 alap szín
+            markers = ["o", "s", "^", "D", "P", "*", "X", "v", "<", ">", "p", "h", "H", "8", "|", "_", "+", "x", "d", "1"]  # 20 alakzat
 
             if dimension == 3:
                 ax = fig.add_subplot(111, projection="3d")
@@ -147,6 +139,13 @@ class Visualise:
                     f"Manoeuvre {label}",
                 )
                 description = description.replace("_combined", "")
+
+                color_index = i % 20
+                marker_index = i // 20
+
+                color = base_colors(color_index)
+                marker = markers[marker_index % len(markers)]
+
                 if num_manoeuvres == 1:
                     if coloring == 1:
                         indices = (
@@ -220,25 +219,23 @@ class Visualise:
                             label_data[j, 1],
                             label_data[j, 2],
                             label=description if j == 0 else "",
-                            color=color_list[i],
+                            color=color,
                             alpha=1,
                             facecolors="none",
+                            marker=marker,
                         )
                     elif dimension == 2:
                         ax.scatter(
                             label_data[:, 0],
                             label_data[:, 1],
                             label=description,
-                            color=color_list[i],
+                            color=color,
                             alpha=1,
                             facecolors="none",
+                            marker=marker,
                         )
                     else:
                         raise ValueError("A dimenziószám csak 2 vagy 3 lehet!")
-
-            # handles, _ = ax.get_legend_handles_labels()
-            # for handle in handles:
-            #     handle.set_alpha(1.0)  # Legendben alpha érték kikapcsolása
 
             if sc is not None:
                 cbar = plt.colorbar(sc, ax=ax)  # Színskála hozzáadása

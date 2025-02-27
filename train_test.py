@@ -448,12 +448,12 @@ class Training:
             # plot_removed_data(latent_data, filtered_reduced_data)
             # create_comparison_heatmaps(latent_data, filtered_reduced_data)
 
-        removed_data_procentage = (
-            (bottleneck_outputs.shape[0] - filtered_latent_data.shape[0]) * 100
-        ) / bottleneck_outputs.shape[0]
-        print(
-            f"Final reduced bottleneck shape: {filtered_latent_data.shape}, Removed data: {removed_data_procentage:.2f}%"
-        )
+        # removed_data_procentage = (
+        #     (bottleneck_outputs.shape[0] - filtered_latent_data.shape[0]) * 100
+        # ) / bottleneck_outputs.shape[0]
+        # print(
+        #     f"Final reduced bottleneck shape: {filtered_latent_data.shape}, Removed data: {removed_data_procentage:.2f}%"
+        # )
 
         if validation_method == "denormalized":
             if normalization == "min_max":
