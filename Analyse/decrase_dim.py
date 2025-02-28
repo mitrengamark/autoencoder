@@ -19,6 +19,7 @@ from Config.load_config import (
     latent_dim,
     folder_name,
     selected_manoeuvres,
+    tsne_dir,
 )
 
 
@@ -47,6 +48,20 @@ class Visualise:
         hasher.update(self.labels.tobytes())
         return hasher.hexdigest()
 
+    def find_existing_tsne(self, data_hash):
+        """Megkeresi, hogy van-e már elmentett T-SNE fájl az adott hash alapján"""
+        for filename in os.listdir(tsne_dir):
+            file_path = os.path.join(tsne_dir, filename)
+            try:
+                with open(file_path, "rb") as f:
+                    cache = pickle.load(f)
+                if cache["hash"] == data_hash:
+                    print(f"Megtalált korábban elmentett T-SNE fájl: {file_path}")
+                    return cache["tsne_data"]
+            except Exception as e:
+                print(f"Hiba történt a(z) {file_path} fájl olvasásakor: {e}")
+        return None
+
     def load_cached_tsne(self):
         """Betölti a korábban kiszámított T-SNE eredményeket, ha a bemenet változatlan"""
         if os.path.exists(self.tsne_cache_path):
@@ -58,14 +73,16 @@ class Visualise:
         return None
 
     def calculate_tsne(self, data, removing_steps=1):
-        perplexity = min(50, max(5, data.shape[0] // 10))
+        """T-SNE számítása és mentése, ha szükséges"""
+        data_hash = self.compute_data_hash()
 
         # Ellenőrizzük, van-e cache-elt eredmény
-        cached_tsne = self.load_cached_tsne()
+        cached_tsne = self.find_existing_tsne(data_hash)
         if cached_tsne is not None:
             reduced_data = cached_tsne
         else:
             print("Új T-SNE számítás indítása...")
+            perplexity = min(50, max(5, data.shape[0] // 10))
             tsne = TSNE(
                 n_components=dimension,
                 perplexity=perplexity,
@@ -74,7 +91,7 @@ class Visualise:
                 random_state=42,
             )
             reduced_data = tsne.fit_transform(data)
-            self.save_tsne_results(reduced_data)  # Mentjük az új eredményt
+            self.save_tsne_results(reduced_data, data_hash)  # Mentjük az új eredményt
 
         if removing_steps > 1:
             indices_to_keep = np.delete(
@@ -288,11 +305,16 @@ class Visualise:
 
         return self.reduced_data
 
-    def save_tsne_results(self, tsne_data):
-        """Elmenti a kiszámított T-SNE eredményeket fájlba"""
-        cache = {"hash": self.compute_data_hash(), "tsne_data": tsne_data}
-        with open(self.tsne_cache_path, "wb") as f:
+    def save_tsne_results(self, tsne_data, data_hash):
+        """Elmenti a kiszámított T-SNE eredményeket egy egyedi nevű fájlba"""
+        filename = f"tsne_{data_hash}.pkl"
+        file_path = os.path.join(tsne_dir, filename)
+
+        cache = {"hash": data_hash, "tsne_data": tsne_data}
+        with open(file_path, "wb") as f:
             pickle.dump(cache, f)
+
+        print(f"T-SNE adatok mentve: {file_path}")
 
     def kmeans_clustering(self):
         unique_labels = np.unique(self.labels)
