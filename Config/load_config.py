@@ -56,6 +56,7 @@ normalization = config.get("Data", "normalization")
 num_workers = int(config["Data"]["num_workers"])
 data_dir = config.get("Data", "data_dir")
 tsne_dir = config.get("Data", "tsne_dir")
+manoeuvers_tsne_dir = config.get("Data", "manoeuvers_tsne_dir")
 num_manoeuvres = int(config["Data"]["num_manoeuvres"])
 train_size = float(config["Data"]["train_size"])
 val_size = float(config["Data"]["val_size"])
@@ -81,6 +82,7 @@ inconsistent_points_distance = float(
     config["Filtering"]["inconsistent_points_distance"]
 )
 time_difference = int(config["Filtering"]["time_difference"])
+remove_start = int(config["Filtering"]["remove_start"])
 
 # Callbacks
 plot = int(config["Callbacks"]["plot"])

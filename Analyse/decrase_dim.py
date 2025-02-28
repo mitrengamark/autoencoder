@@ -5,14 +5,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from sklearn.manifold import TSNE
-from sklearn.cluster import KMeans
-from sklearn.metrics.pairwise import cosine_distances
 from Config.load_config import (
     tsneplot,
     dimension,
     num_manoeuvres,
-    n_clusters,
-    use_cosine_similarity,
     coloring,
     step,
     save_fig,
@@ -20,6 +16,8 @@ from Config.load_config import (
     folder_name,
     selected_manoeuvres,
     tsne_dir,
+    remove_start,
+    manoeuvers_tsne_dir,
 )
 
 
@@ -39,7 +37,6 @@ class Visualise:
         self.sign_change_indices = sign_change_indices
         self.max_iter = 100
         self.tol = 1e-4
-        self.tsne_cache_path = "Analyse/tsne_cache.pkl"
 
     def compute_data_hash(self):
         """Egyedi hash generálása a bemenetek alapján, hogy észleljük a változásokat"""
@@ -50,8 +47,9 @@ class Visualise:
 
     def find_existing_tsne(self, data_hash):
         """Megkeresi, hogy van-e már elmentett T-SNE fájl az adott hash alapján"""
-        for filename in os.listdir(tsne_dir):
-            file_path = os.path.join(tsne_dir, filename)
+        search_dir = manoeuvers_tsne_dir if num_manoeuvres == 1 else tsne_dir
+        for filename in os.listdir(search_dir):
+            file_path = os.path.join(search_dir, filename)
             try:
                 with open(file_path, "rb") as f:
                     cache = pickle.load(f)
@@ -61,18 +59,20 @@ class Visualise:
             except Exception as e:
                 print(f"Hiba történt a(z) {file_path} fájl olvasásakor: {e}")
         return None
+    
+    def save_tsne_results(self, tsne_data, data_hash):
+        """Elmenti a kiszámított T-SNE eredményeket egy egyedi nevű fájlba"""
+        save_dir = manoeuvers_tsne_dir if num_manoeuvres == 1 else tsne_dir
+        label = selected_manoeuvres[0] if num_manoeuvres == 1 else "multiple"
+        filename = f"{save_dir}/tsne_{label}_{data_hash}.pkl"
 
-    def load_cached_tsne(self):
-        """Betölti a korábban kiszámított T-SNE eredményeket, ha a bemenet változatlan"""
-        if os.path.exists(self.tsne_cache_path):
-            with open(self.tsne_cache_path, "rb") as f:
-                cache = pickle.load(f)
-            if cache["hash"] == self.compute_data_hash():
-                print("Korábban kiszámított T-SNE eredmények betöltése...")
-                return cache["tsne_data"]
-        return None
+        cache = {"hash": data_hash, "tsne_data": tsne_data}
+        with open(filename, "wb") as f:
+            pickle.dump(cache, f)
 
-    def calculate_tsne(self, data, removing_steps=1):
+        print(f"T-SNE adatok mentve: {filename}")
+
+    def calculate_tsne(self, data):
         """T-SNE számítása és mentése, ha szükséges"""
         data_hash = self.compute_data_hash()
 
@@ -93,17 +93,26 @@ class Visualise:
             reduced_data = tsne.fit_transform(data)
             self.save_tsne_results(reduced_data, data_hash)  # Mentjük az új eredményt
 
-        if removing_steps > 1:
-            indices_to_keep = np.delete(
-                np.arange(len(reduced_data)),
-                np.arange(0, len(reduced_data), removing_steps),
-            )
-            reduced_data = reduced_data[indices_to_keep]
-            self.labels = self.labels[indices_to_keep]
-
         self.reduced_data = reduced_data
 
-    def visualize_with_tsne(self, removing_steps=1, plot=tsneplot):
+        # **ELSŐ 2500 ADAT ELTÁVOLÍTÁSA MINDEN MANŐVERBŐL**
+        if remove_start == 1 and num_manoeuvres > 1:
+            new_data = []
+            new_labels = []
+            unique_labels = np.unique(self.labels)
+
+            for label in unique_labels:
+                mask = self.labels == label
+                label_data = self.reduced_data[mask]
+
+                if len(label_data) > 2500:
+                    new_data.append(label_data[2500:])  # Első X törlése
+                    new_labels.append(self.labels[mask][2500:])
+
+            self.reduced_data = np.vstack(new_data)
+            self.labels = np.concatenate(new_labels)
+
+    def visualize_with_tsne(self, plot=tsneplot):
         """
         Adatok vizualizálása T-SNE használatával.
 
@@ -123,7 +132,7 @@ class Visualise:
         if latent_dim == 2:
             self.reduced_data = self.bottleneck_outputs
         else:
-            self.calculate_tsne(self.bottleneck_outputs, removing_steps=removing_steps)
+            self.calculate_tsne(self.bottleneck_outputs)
 
         print(f"Reduced data shape: {self.reduced_data.shape}")
 
@@ -287,7 +296,15 @@ class Visualise:
             if dimension == 3:
                 ax.set_zlabel("T-SNE Komponens 3")
 
-            ax.legend(title="Manőverek", loc="best", fontsize="small", markerscale=0.8)
+            if num_labels < 30:
+                ax.legend(
+                    title="Manőverek", loc="best", fontsize="small", markerscale=0.8
+                )
+            else:
+                ax.legend(
+                    title=folder_name, loc="best", fontsize="small", markerscale=0.8
+                )
+
             ax.grid(True)
 
             plt.tight_layout()
@@ -304,98 +321,3 @@ class Visualise:
             plt.show()
 
         return self.reduced_data
-
-    def save_tsne_results(self, tsne_data, data_hash):
-        """Elmenti a kiszámított T-SNE eredményeket egy egyedi nevű fájlba"""
-        filename = f"tsne_{data_hash}.pkl"
-        file_path = os.path.join(tsne_dir, filename)
-
-        cache = {"hash": data_hash, "tsne_data": tsne_data}
-        with open(file_path, "wb") as f:
-            pickle.dump(cache, f)
-
-        print(f"T-SNE adatok mentve: {file_path}")
-
-    def kmeans_clustering(self):
-        unique_labels = np.unique(self.labels)
-        for label in unique_labels:
-            # Az adott osztályhoz tartozó adatok kiszűrése
-            mask = self.labels == label
-            class_data = self.bottleneck_outputs[mask]
-            reduced_class_data = self.reduced_data[mask]
-
-            if use_cosine_similarity:
-                class_clusters, _ = self.cosine_kmeans(class_data)
-                technique = "Cosine Similarity"
-            else:
-                kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-                class_clusters = kmeans.fit_predict(class_data)
-                technique = "Euclidean Distance"
-
-            description = next(
-                (
-                    key.replace("_combined", "")
-                    for key, value in self.label_mapping.items()
-                    if value == label
-                ),
-                f"Manoeuvre {label}",
-            )
-
-            # Vizualizáció az osztályon belüli klaszterekkel
-            plt.figure(figsize=(8, 6))
-            colors = plt.cm.tab20(np.linspace(0, 1, n_clusters))
-            for cluster_idx in range(n_clusters):
-                cluster_mask = class_clusters == cluster_idx
-                plt.scatter(
-                    reduced_class_data[cluster_mask, 0],
-                    reduced_class_data[cluster_mask, 1],
-                    label=f"Klaszter {cluster_idx + 1}",
-                    color=colors[cluster_idx],
-                )
-
-            plt.title(f"{description} klaszterezése (K-Means - {technique})")
-            plt.xlabel("Főkomponens 1")
-            plt.ylabel("Főkomponens 2")
-            plt.legend(title="Klaszterek", loc="best")
-            plt.grid(True)
-            plt.tight_layout()
-            plt.show()
-
-    def cosine_kmeans(self, data):
-        # data = normalize(data, norm='l2')
-
-        # Véletlenszerű centroid inicializálás
-        n_samples = data.shape[0]
-        random_indices = np.random.choice(n_samples, n_clusters, replace=False)
-        centroids = data[random_indices]
-
-        print(f"max_iter értéke: {self.max_iter}, típusa: {type(self.max_iter)}")
-        for _ in range(self.max_iter):
-            # Cosine distance számítása
-            distances = cosine_distances(data, centroids)
-
-            # Hozzárendelés a legközelebbi centroidhoz
-            labels = np.argmin(distances, axis=1)
-
-            # Új centroidok számítása
-            new_centroids = []
-            for i in range(n_clusters):
-                cluster_points = data[labels == i]
-                if len(cluster_points) > 0:
-                    centroid = np.mean(cluster_points, axis=0)
-                    centroid = centroid / np.linalg.norm(
-                        centroid
-                    )  # Unit norm normalizáció
-                    new_centroids.append(centroid)
-                else:
-                    # Üres klaszter esetén random újra inicializálás
-                    new_centroids.append(data[np.random.choice(n_samples)])
-
-            new_centroids = np.array(new_centroids)
-
-            # Konvergencia ellenőrzése
-            if np.allclose(centroids, new_centroids, atol=self.tol):
-                break
-            centroids = new_centroids
-
-        return labels, centroids

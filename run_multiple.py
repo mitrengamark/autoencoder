@@ -1,6 +1,7 @@
 import subprocess
 import time
 from configobj import ConfigObj
+from Config.load_config import num_manoeuvres
 
 
 # A config.ini fájl elérési útja
@@ -482,12 +483,19 @@ maneuvers_list = [
     ],
 ]
 
-# Manővercsoportonként beállítható paraméterek
-batch_sizes = [84, 224, 84, 9, 9, 24, 24]  # Hány manővert dolgozzunk fel egyszerre?
-steps = batch_sizes  # Hány lépésenként lépjünk tovább az adott típusban?
+if num_manoeuvres > 1:
+    # Manővercsoportonként beállítható paraméterek
+    batch_sizes = [84, 224, 84, 9, 9, 24, 24]  # Hány manővert dolgozzunk fel egyszerre?
+    steps = batch_sizes  # Hány lépésenként lépjünk tovább az adott típusban?
+    total_runs = sum(
+        len(maneuvers) // steps[idx] for idx, maneuvers in enumerate(maneuvers_list)
+    )
+else:
+    total_runs = sum(len(maneuvers) for maneuvers in maneuvers_list)
+
 folder_names = [
     "allando_v_savvaltas",
-    "allando_v_sin_egész",
+    "allando_v_sin",
     "allando_v_chirp",
     "valtozo_v_savvaltas_gas",
     "valtozo_v_savvaltas_fek",
@@ -495,52 +503,78 @@ folder_names = [
     "valtozo_v_sin_fek",
 ]
 
-total_runs = sum(
-    len(maneuvers) // steps[idx] for idx, maneuvers in enumerate(maneuvers_list)
-)
 current_run = 0
 
 # Fő ciklus, ami végigmegy a manővercsoportokon
 for group_idx, maneuvers in enumerate(maneuvers_list):
-    batch_size = batch_sizes[group_idx]
-    step = steps[group_idx]
-
-    print(
-        f"\n=== {group_idx+1}. Manővercsoport ({batch_size} db / lépésköz: {step}) ==="
-    )
-
-    # Iterálás a manővereken adott batch_size és lépésköz szerint
-    for i in range(0, len(maneuvers), step):
-        selected_maneuvers = maneuvers[i : i + batch_size]
-        folder_name = f"{folder_names[group_idx]}_all"
-
-        # Ha a kiválasztott csoport kisebb, mint batch_size, akkor nem futtatjuk
-        if not selected_maneuvers:
-            continue
-
-        current_run += 1
+    if num_manoeuvres > 1:
+        batch_size = batch_sizes[group_idx]
+        step = steps[group_idx]
 
         print(
-            f"\n Futtatás [{current_run}/{total_runs}]\n Iteráció: {i//step+1} | Manőverek: {selected_maneuvers}"
+            f"\n=== {group_idx+1}. Manővercsoport ({batch_size} db / lépésköz: {step}) ==="
         )
 
-        # 1️ Betöltjük a jelenlegi konfigurációt
-        config = ConfigObj(CONFIG_PATH, encoding="utf-8")
+        # Iterálás a manővereken adott batch_size és lépésköz szerint
+        for i in range(0, len(maneuvers), step):
+            selected_maneuvers = maneuvers[i : i + batch_size]
+            folder_name = f"{folder_names[group_idx]}_all_reduced"
 
-        # 2️ Frissítjük a kiválasztott manővereket
-        config["Data"]["selected_manoeuvres"] = selected_maneuvers
-        config["Plot"]["folder_name"] = folder_name
+            # Ha a kiválasztott csoport kisebb, mint batch_size, akkor nem futtatjuk
+            if not selected_maneuvers:
+                continue
 
-        # 3️ Visszaírjuk a módosított konfigurációt
-        config.write()
+            current_run += 1
 
-        # 4️ Elindítjuk a run.py-t
-        print(f"Indítom a run.py-t...")
-        process = subprocess.Popen(["python", "run.py"])
+            print(
+                f"\n Futtatás [{current_run}/{total_runs}]\n Iteráció: {i//step+1} | Manőverek: {selected_maneuvers}"
+            )
 
-        # 5️ Megvárjuk a futás végét
-        process.wait()
-        print(f"run.py futtatás {current_run}/{total_runs} befejeződött!")
+            # 1️ Betöltjük a jelenlegi konfigurációt
+            config = ConfigObj(CONFIG_PATH, encoding="utf-8")
 
-        # (Opcionális) Pihenőidő a következő futás előtt
-        time.sleep(5)  # 5 másodperc szünet két iteráció között
+            # 2️ Frissítjük a kiválasztott manővereket
+            config["Data"]["selected_manoeuvres"] = selected_maneuvers
+            config["Plot"]["folder_name"] = folder_name
+
+            # 3️ Visszaírjuk a módosított konfigurációt
+            config.write()
+
+            # 4️ Elindítjuk a run.py-t
+            print(f"Indítom a run.py-t...")
+            process = subprocess.Popen(["python", "run.py"])
+
+            # 5️ Megvárjuk a futás végét
+            process.wait()
+            print(f"run.py futtatás {current_run}/{total_runs} befejeződött!")
+
+            # (Opcionális) Pihenőidő a következő futás előtt
+            time.sleep(5)  # 5 másodperc szünet két iteráció között
+    else:
+        print(f"\n=== {group_idx+1}. Manővercsoport ===")
+
+        # Iterálás minden egyes manőveren külön
+        for i, maneuver in enumerate(maneuvers):
+            folder_name = f"{maneuver}"
+
+            current_run += 1
+            print(f"\n Futtatás [{current_run}/{total_runs}]\n Manőver: {maneuver}")
+
+            # 1️ Betöltjük a jelenlegi konfigurációt
+            config = ConfigObj(CONFIG_PATH, encoding="utf-8")
+
+            # 2️ Frissítjük a kiválasztott manővert
+            config["Data"]["selected_manoeuvres"] = [maneuver]  # Egyetlen manőver listában
+            config["Plot"]["folder_name"] = folder_name
+
+            # 3️ Visszaírjuk a módosított konfigurációt
+            config.write()
+
+            # 4️ Elindítjuk a run.py-t
+            print(f"Indítom a run.py-t a(z) {maneuver} manőverrel...")
+            process = subprocess.Popen(["python", "run.py"])
+
+            # 5️ Megvárjuk a futás végét
+            process.wait()
+            print(f"run.py futtatás {current_run}/{total_runs} befejeződött!")
+            
