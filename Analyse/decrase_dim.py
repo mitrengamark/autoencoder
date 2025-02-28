@@ -120,6 +120,7 @@ class Visualise:
                 "o",
                 "D",
                 "X",
+                "+",
                 "s",
                 "^",
                 "P",
@@ -130,13 +131,12 @@ class Visualise:
                 "p",
                 "h",
                 "H",
-                "8",
-                "_",
-                "+",
                 "d",
                 "1",
                 "|",
                 "x",
+                "8",
+                "_",
             ]  # 20 alakzat
 
             if dimension == 3:

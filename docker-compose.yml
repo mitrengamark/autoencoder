@@ -9,6 +9,7 @@ services:
       - HOST_USER=${USER}
       - NVIDIA_VISIBLE_DEVICES=all
     container_name: autoencoder_container
+    # network_mode: "host"
     deploy:
       resources:
         limits:
@@ -19,10 +20,4 @@ services:
               count: all
               capabilities: [ gpu ]
     ports:
-      - "2222:22"
-    networks:
-      - autoencoder_network
-
-networks:
-  autoencoder_network:
-    driver: bridge
+      - "2224:22"
