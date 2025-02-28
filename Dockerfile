@@ -21,6 +21,7 @@ RUN apt-get update -qq && \
         curl \
         wget \
         tmux \
+        screen \
         openssh-server && \
     rm -rf /var/lib/apt/lists/*
 
@@ -51,11 +52,11 @@ COPY . /home/miti/autoencoder
 
 RUN chown -R miti:miti /home/miti/autoencoder
 
-# USER root
-USER miti
+USER root
+# USER miti
 
 WORKDIR /home/miti/autoencoder
 
 
-# CMD ["/usr/sbin/sshd", "-D"]
-CMD ["/bin/bash"]
+CMD ["/usr/sbin/sshd", "-D"]
+# CMD ["/bin/bash"]

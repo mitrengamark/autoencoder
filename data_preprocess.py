@@ -294,6 +294,5 @@ def sort_columns_in_files(folder_path, test_mode=True):
             df.to_csv(file_path, index=False)
             print(f"Oszlopok ABC sorrendben rendezve: {file_path}")
 
-# Itt kell megadni a mappa elérési útját
-folder_path = "data2"  # Tesztmappa
-sort_columns_in_files(folder_path, test_mode=False)
+manoeuvre_names = collect_maoeuver_names()
+print(manoeuvre_names)

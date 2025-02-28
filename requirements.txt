@@ -2,6 +2,7 @@ matplotlib
 neptune
 torch
 pandas
+configobj
 scikit_learn
 scipy
 optuna
