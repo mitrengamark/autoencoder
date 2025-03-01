@@ -76,7 +76,7 @@ def create_comparison_heatmaps(
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         plt.savefig(filename)
 
-    plt.show()
+    # plt.show()
 
 
 def create_heatmap(data, grid_size=grid_size):

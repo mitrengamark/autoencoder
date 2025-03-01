@@ -51,7 +51,7 @@ def detect_outliers(data):
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         plt.savefig(filename)
 
-    plt.show()
+    # plt.show()
 
     return final_outlier_indices
 

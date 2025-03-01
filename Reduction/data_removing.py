@@ -98,6 +98,6 @@ def plot_removed_data(latent_data, filtered_latent_data, file_name=None):
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         plt.savefig(filename)
 
-    plt.show()
+    # plt.show()
 
     return filtered_latent_data

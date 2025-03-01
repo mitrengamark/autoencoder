@@ -83,7 +83,7 @@ def filter_inconsistent_points(data, labels):
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         plt.savefig(filename)
 
-    plt.show()
+    # plt.show()
 
     return filtered_data, filtered_labels
 
@@ -174,6 +174,6 @@ def filter_outliers_by_grid(data, labels, grid_size=10, threshold=4000):
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         plt.savefig(filename)
 
-    plt.show()
+    # plt.show()
 
     return filtered_data, filtered_labels

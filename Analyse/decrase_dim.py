@@ -318,6 +318,6 @@ class Visualise:
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
                 plt.savefig(filename)
 
-            plt.show()
+            # plt.show()
 
         return self.reduced_data
