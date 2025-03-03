@@ -8,7 +8,7 @@ def load_pkl(file_path):
         return pickle.load(f)
 
 # A két fájl elérési útja
-file1 = "TSNE_data/single_manoeuvers/tsne_allando_v_chirp_a1_v5_ceef3b266632e4e42dc518d812a9dc90dc08cd36d669f062daff3fccf54199d0.pkl"
+file1 = "TSNE_data/single_manoeuvers/tsne__e045071a1a7fede46ea6e164fd44af48b98458eb05a01145dee84262b8b7901d.pkl"
 file2 = "TSNE_data/single_manoeuvers/tsne_allando_v_chirp_a1_v5_decd4371fb6a503ce8996de493fbc30cf61463ac96755e5b1eb9ced073a1fcdb.pkl"
 
 # Betöltjük az adatokat
@@ -36,7 +36,7 @@ tsne_data2 = np.array(data2["tsne_data"])
 # TSNE adatok betöltése és plotolása
 plt.figure(figsize=(10, 5))
 plt.scatter(tsne_data1[:, 0], tsne_data1[:, 1], label="TSNE 1", alpha=0.5, marker="o")
-plt.scatter(tsne_data2[:, 0], tsne_data2[:, 1], label="TSNE 2", alpha=0.5, marker="x")
+# plt.scatter(tsne_data2[:, 0], tsne_data2[:, 1], label="TSNE 2", alpha=0.5, marker="x")
 
 plt.title("TSNE Adatok Összehasonlítása")
 plt.xlabel("T-SNE Komponens 1")

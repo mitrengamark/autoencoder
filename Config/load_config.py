@@ -75,6 +75,7 @@ tsneplot = int(config["Plot"]["tsneplot"])
 step = int(config["Plot"]["step"])
 save_fig = int(config["Plot"]["save_fig"])
 folder_name = config.get("Plot", "folder_name")
+overlay_multiple_manoeuvres = int(config["Plot"]["overlay_multiple_manoeuvres"])
 
 # Filtering
 removing_steps = int(config["Filtering"]["removing_steps"])

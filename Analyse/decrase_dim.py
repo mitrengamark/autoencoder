@@ -320,4 +320,4 @@ class Visualise:
 
             # plt.show()
 
-        return self.reduced_data
+        return self.reduced_data, description

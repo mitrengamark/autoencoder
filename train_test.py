@@ -404,7 +404,7 @@ class Training:
             label_mapping=self.label_mapping,
             sign_change_indices=self.sign_change_indices,
         )
-        latent_data = vs.visualize_with_tsne()
+        latent_data, label = vs.visualize_with_tsne()
         if num_manoeuvres == 1:
             # vs.kmeans_clustering()
             outlier_indices = detect_outliers(latent_data[2500:])
@@ -486,6 +486,7 @@ class Training:
                 )
 
         reconstruction_accuracy(whole_input, whole_output, self.selected_columns)
+        return latent_data, label
 
     def save_model(self):
         torch.save(self.model.state_dict(), model_path)

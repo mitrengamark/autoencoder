@@ -2,6 +2,8 @@ import torch
 import torch.utils.data
 import numpy as np
 import random
+import json
+import sys
 from data_process import DataProcess
 from train_test import Training
 from Factory.variational_autoencoder import VariationalAutoencoder
@@ -81,4 +83,19 @@ if test_mode == 0:
     if save_model == 1:
         training.save_model()
 elif test_mode == 1:
-    training.test()
+    latent_data, label = training.test()
+
+# Ellenőrzés
+print("latent_data type:", type(latent_data))
+print("label type:", type(label))
+
+# Konvertálás megfelelő formátumba
+latent_list = latent_data.tolist()
+label_list = label.tolist() if isinstance(label, np.ndarray) else label
+
+# JSON mentése fájlba
+output_file = "tsne_output.json"
+with open(output_file, "w") as f:
+    json.dump({"latent_data": latent_list, "labels": label_list}, f)
+
+print(f"TSNE adatok elmentve: {output_file}")
