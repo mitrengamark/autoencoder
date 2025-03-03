@@ -5,3 +5,4 @@ __pycache__/
 /data2/**
 /.neptune
 /data3/**
+/Results/**
