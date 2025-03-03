@@ -562,7 +562,10 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
 
         # Iterálás minden egyes manőveren külön
         for i, maneuver in enumerate(maneuvers):
-            folder_name = f"{maneuver}"
+            if overlay_multiple_manoeuvres == 1:
+                folder_name = f"{folder_names[group_idx]}_all_reduced"
+            else:
+                folder_name = f"{maneuver}"
 
             current_run += 1
             print(f"\n Futtatás [{current_run}/{total_runs}]\n Manőver: {maneuver}")
@@ -579,7 +582,7 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
 
             # 4️ Elindítjuk a run.py-t és várunk az eredményre
             print(f"Indítom a run.py-t a(z) {maneuver} manőverrel...")
-            process = subprocess.Popen(["python", "run.py"], stdout=subprocess.PIPE, text=True)
+            process = subprocess.Popen(["python", "run.py"]) # , stdout=subprocess.PIPE, text=True)
 
             # 5️ Megvárjuk a futás végét
             process.wait()

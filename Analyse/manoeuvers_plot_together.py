@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.cm as cm
+import os
+from Config.load_config import folder_name
 
 
 def plot_all_tsne_data(all_tsne_data, all_labels):
@@ -16,53 +18,36 @@ def plot_all_tsne_data(all_tsne_data, all_labels):
 
     fig, ax = plt.subplots(figsize=(12, 8))
 
-    unique_labels = list(set(np.concatenate(all_labels)))  # Összes egyedi címke
-    num_labels = len(unique_labels)
+    # Az all_labels lista átalakítása számlistává, ha stringeket tartalmaz
+    unique_labels = sorted(set(label for label in all_labels))
+    label_to_number = {label: idx for idx, label in enumerate(unique_labels)}
+
+    # Ellenőrizzük, hogy megfelelő méretű-e a címkék és az adatok halmaza
+    all_tsne_data = np.vstack(all_tsne_data)  # Az összes TSNE adat egyesítése
+    numeric_labels = np.concatenate([[label_to_number[label]] * tsne.shape[0] for tsne, label in zip(all_tsne_data, all_labels)])
+
+    unique_numeric_labels = np.unique(numeric_labels)
 
     # Színek és alakzatok beállítása
-    colors = cm.get_cmap("tab20", num_labels)  # Maximum 20 szín
-    markers = [
-        "o",
-        "s",
-        "D",
-        "X",
-        "P",
-        "^",
-        "v",
-        "<",
-        ">",
-        "*",
-        "h",
-        "H",
-        "p",
-        "1",
-        "+",
-        "x",
-        "|",
-        "_",
-        "d",
-        "4",
-    ]
+    colors = cm.get_cmap("tab10", len(unique_numeric_labels))  # Színek száma a címkékhez igazítva
+    markers = ["o", "s", "D", "X", "P", "^", "v", "<", ">", "*"]
 
-    for i, (tsne_data, labels) in enumerate(zip(all_tsne_data, all_labels)):
-        for label in np.unique(labels):
-            mask = labels == label
-            label_data = tsne_data[mask]
+    for i, label in enumerate(unique_numeric_labels):
+        mask = numeric_labels == label
+        label_data = all_tsne_data[mask]
 
-            color_idx = unique_labels.index(label) % 20  # Körbeforgatjuk a 20 színt
-            marker_idx = (
-                unique_labels.index(label) // 20
-            )  # Ha több mint 20 címke van, új marker
+        color_idx = i % len(colors.colors)  # Körbeforgatjuk a színeket
+        marker_idx = i % len(markers)  # Körbeforgatjuk az alakzatokat
 
-            ax.scatter(
-                label_data[:, 0],
-                label_data[:, 1],
-                label=label,
-                color=colors(color_idx),
-                marker=markers[marker_idx % len(markers)],
-                alpha=0.7,
-                edgecolors="black",
-            )
+        ax.scatter(
+            label_data[:, 0],
+            label_data[:, 1],
+            label=unique_labels[label],  # Eredeti szöveges címke megjelenítése
+            color=colors(color_idx),
+            marker=markers[marker_idx],
+            alpha=0.7,
+            edgecolors="black",
+        )
 
     ax.set_title("T-SNE Vizualizáció - Több manőver", fontsize=14)
     ax.set_xlabel("T-SNE Komponens 1")
@@ -71,4 +56,10 @@ def plot_all_tsne_data(all_tsne_data, all_labels):
     ax.grid(True)
 
     plt.tight_layout()
+
+    save_path = f"Results/more_manoeuvres/{folder_name}.png"
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    plt.savefig(save_path, dpi=300)
+    print(f"A plot elmentve: {save_path}")
+
     plt.show()
