@@ -18,26 +18,70 @@ def plot_all_tsne_data(all_tsne_data, all_labels):
 
     fig, ax = plt.subplots(figsize=(12, 8))
 
-    # Az all_labels lista átalakítása számlistává, ha stringeket tartalmaz
-    unique_labels = sorted(set(label for label in all_labels))
-    label_to_number = {label: idx for idx, label in enumerate(unique_labels)}
+    print("all_labels tartalma:", all_labels)
+    print("Típusok:", [type(label) for label in all_labels])
 
-    # Ellenőrizzük, hogy megfelelő méretű-e a címkék és az adatok halmaza
-    all_tsne_data = np.vstack(all_tsne_data)  # Az összes TSNE adat egyesítése
-    numeric_labels = np.concatenate([[label_to_number[label]] * tsne.shape[0] for tsne, label in zip(all_tsne_data, all_labels)])
+    # Konvertáljuk az all_labels elemeit stringgé, ha ndarray típusúak
+    all_labels = [l.item() if isinstance(l, np.ndarray) else l for l in all_labels]
+
+    # Egyedi címkék és a számokhoz való hozzárendelés
+    unique_labels = list(set(all_labels))
+    label_to_number = {label: i for i, label in enumerate(unique_labels)}
+
+    # Ellenőrizzük a TSNE adatok struktúráját
+    print("TSNE adatok méretei:", [tsne.shape for tsne in all_tsne_data])
+
+    # Még az összefűzés előtt generáljuk a numeric_labels tömböt!
+    numeric_labels_list = [
+        np.full((tsne.shape[0],), label_to_number[label])
+        for tsne, label in zip(all_tsne_data, all_labels)
+    ]
+
+    # Most fűzzük össze a numeric_labels tömböt
+    numeric_labels = np.concatenate(numeric_labels_list)
+
+    # Most fűzzük össze a TSNE adatokat
+    all_tsne_data = np.vstack(all_tsne_data)
+
+    print("Összefűzött adatok alakja:", all_tsne_data.shape)
+    print("Címkék alakja:", numeric_labels.shape)
+    print("Címkék:", numeric_labels)
 
     unique_numeric_labels = np.unique(numeric_labels)
 
     # Színek és alakzatok beállítása
-    colors = cm.get_cmap("tab10", len(unique_numeric_labels))  # Színek száma a címkékhez igazítva
-    markers = ["o", "s", "D", "X", "P", "^", "v", "<", ">", "*"]
+    colors = cm.get_cmap(
+        "tab20", len(unique_numeric_labels)
+    )  # Színek száma a címkékhez igazítva
+    markers = [
+        "o",
+        "D",
+        "X",
+        "+",
+        "s",
+        "^",
+        "P",
+        "*",
+        "v",
+        "<",
+        ">",
+        "p",
+        "h",
+        "H",
+        "d",
+        "1",
+        "|",
+        "x",
+        "8",
+        "_",
+    ]  # 20 alakzat
 
     for i, label in enumerate(unique_numeric_labels):
         mask = numeric_labels == label
         label_data = all_tsne_data[mask]
 
         color_idx = i % len(colors.colors)  # Körbeforgatjuk a színeket
-        marker_idx = i % len(markers)  # Körbeforgatjuk az alakzatokat
+        marker_idx = (i // 20) % len(markers)  # Minden 20. label után változik a marker
 
         ax.scatter(
             label_data[:, 0],
@@ -46,7 +90,7 @@ def plot_all_tsne_data(all_tsne_data, all_labels):
             color=colors(color_idx),
             marker=markers[marker_idx],
             alpha=0.7,
-            edgecolors="black",
+            facecolors="none",
         )
 
     ax.set_title("T-SNE Vizualizáció - Több manőver", fontsize=14)
