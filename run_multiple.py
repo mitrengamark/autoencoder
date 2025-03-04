@@ -562,7 +562,7 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
 
         # Iterálás minden egyes manőveren külön
         for i, maneuver in enumerate(maneuvers):
-            folder_name = f"{maneuver}"
+            folder_name = f"{folder_names[group_idx]}_allinone"
             current_run += 1
             print(f"\n Futtatás [{current_run}/{total_runs}]\n Manőver: {maneuver}")
 
@@ -571,7 +571,7 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
 
             # 2️ Frissítjük a kiválasztott manővert
             config["Data"]["selected_manoeuvres"] = [maneuver]  # Egyetlen manőver listában
-            config["Plot"]["folder_name"] = folder_name
+            config["Plot"]["folder_name"] = f"{maneuver}"
 
             # 3️ Visszaírjuk a módosított konfigurációt
             config.write()
@@ -604,4 +604,4 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
 
     if overlay_multiple_manoeuvres == 1:
         print(f"\nPlotolás indul a(z) {folder_names[group_idx]} manővercsoportra...")
-        plot_all_tsne_data(all_tsne_data, all_labels)
+        plot_all_tsne_data(all_tsne_data, all_labels, folder_name)

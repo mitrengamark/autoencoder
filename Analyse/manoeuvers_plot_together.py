@@ -2,10 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.cm as cm
 import os
-from Config.load_config import folder_name
 
 
-def plot_all_tsne_data(all_tsne_data, all_labels):
+def plot_all_tsne_data(all_tsne_data, all_labels, folder_name):
     """
     Kiplotolja az összegyűjtött T-SNE adatokat, minden egyes manővert külön színnel.
 
@@ -81,7 +80,9 @@ def plot_all_tsne_data(all_tsne_data, all_labels):
         label_data = all_tsne_data[mask]
 
         color_idx = i % len(colors.colors)  # 20 színen ciklikusan végigmegy
-        marker_idx = (i // len(colors.colors)) % len(markers)  # 20 címke után vált markert
+        marker_idx = (i // len(colors.colors)) % len(
+            markers
+        )  # 20 címke után vált markert
 
         ax.scatter(
             label_data[:, 0],
@@ -103,7 +104,7 @@ def plot_all_tsne_data(all_tsne_data, all_labels):
 
     save_path = f"Results/more_manoeuvres/{folder_name}.png"
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    # plt.savefig(save_path, dpi=300)
-    # print(f"A plot elmentve: {save_path}")
+    plt.savefig(save_path, dpi=300)
+    print(f"A plot elmentve: {save_path}")
 
     plt.show()
