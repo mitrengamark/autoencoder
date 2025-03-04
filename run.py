@@ -85,6 +85,7 @@ if test_mode == 0:
 elif test_mode == 1:
     latent_data, label = training.test()
 
+latent_data = latent_data[2500:]
 # Ellenőrzés
 print("latent_data type:", type(latent_data))
 print("label type:", type(label))

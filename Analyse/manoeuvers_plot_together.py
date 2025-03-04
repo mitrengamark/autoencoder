@@ -25,7 +25,7 @@ def plot_all_tsne_data(all_tsne_data, all_labels):
     all_labels = [l.item() if isinstance(l, np.ndarray) else l for l in all_labels]
 
     # Egyedi címkék és a számokhoz való hozzárendelés
-    unique_labels = list(set(all_labels))
+    unique_labels = list(dict.fromkeys(all_labels))
     label_to_number = {label: i for i, label in enumerate(unique_labels)}
 
     # Ellenőrizzük a TSNE adatok struktúráját
@@ -80,8 +80,8 @@ def plot_all_tsne_data(all_tsne_data, all_labels):
         mask = numeric_labels == label
         label_data = all_tsne_data[mask]
 
-        color_idx = i % len(colors.colors)  # Körbeforgatjuk a színeket
-        marker_idx = (i // 20) % len(markers)  # Minden 20. label után változik a marker
+        color_idx = i % len(colors.colors)  # 20 színen ciklikusan végigmegy
+        marker_idx = (i // len(colors.colors)) % len(markers)  # 20 címke után vált markert
 
         ax.scatter(
             label_data[:, 0],
@@ -103,7 +103,7 @@ def plot_all_tsne_data(all_tsne_data, all_labels):
 
     save_path = f"Results/more_manoeuvres/{folder_name}.png"
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    plt.savefig(save_path, dpi=300)
-    print(f"A plot elmentve: {save_path}")
+    # plt.savefig(save_path, dpi=300)
+    # print(f"A plot elmentve: {save_path}")
 
     plt.show()
