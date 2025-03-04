@@ -1,4 +1,5 @@
 import json
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.cluster import DBSCAN
@@ -6,16 +7,27 @@ from scipy.stats import gaussian_kde
 
 
 class DetectOverlap:
-    def __init__(self):
-        # JSON fájl betöltése
-        json_path = "valtozo_v_savvaltas_fek_tsne_data.json"
+    def __init__(self, tsne_data_list=None, labels_list=None, folder_name=None):
+        """
+        Konstruktor, amely közvetlenül listákból kapja az adatokat.
 
-        with open(json_path, "r") as file:
-            tsne_data_json = json.load(file)
+        :param tsne_data_list: A TSNE adatok listája (N x D formátumban)
+        :param labels_list: A hozzájuk tartozó címkék listája
+        """
+        # JSON fájl betöltése
+        # json_path = "valtozo_v_savvaltas_fek_tsne_data.json"
+
+        # with open(json_path, "r") as file:
+        #     tsne_data_json = json.load(file)
+
+        # # TSNE adatok betöltése numpy tömbbé alakítva
+        # self.tsne_data = np.array(tsne_data_json["tsne_data"])
+        # self.labels = np.array(tsne_data_json["labels"])
 
         # TSNE adatok betöltése numpy tömbbé alakítva
-        self.tsne_data = np.array(tsne_data_json["tsne_data"])
-        self.labels = np.array(tsne_data_json["labels"])
+        self.tsne_data = np.array(tsne_data_list)
+        self.labels = np.array(labels_list)
+        self.folder_name = folder_name
 
         # TSNE adatok átalakítása síkba
         self.flattened_tsne_data = self.tsne_data.reshape(-1, 2)
@@ -32,8 +44,14 @@ class DetectOverlap:
         """
         grid_size = 1100
         grid_counts = {}
-        x_min, x_max = self.flattened_tsne_data[:, 0].min(), self.flattened_tsne_data[:, 0].max()
-        y_min, y_max = self.flattened_tsne_data[:, 1].min(), self.flattened_tsne_data[:, 1].max()
+        x_min, x_max = (
+            self.flattened_tsne_data[:, 0].min(),
+            self.flattened_tsne_data[:, 0].max(),
+        )
+        y_min, y_max = (
+            self.flattened_tsne_data[:, 1].min(),
+            self.flattened_tsne_data[:, 1].max(),
+        )
 
         x_step = (x_max - x_min) / grid_size
         y_step = (y_max - y_min) / grid_size
@@ -42,34 +60,64 @@ class DetectOverlap:
             x_idx = int((x - x_min) / x_step)
             y_idx = int((y - y_min) / y_step)
             cell = (x_idx, y_idx)
-            
+
             if cell not in grid_counts:
                 grid_counts[cell] = set()
             grid_counts[cell].add(self.expanded_labels[i])
 
         # Átfedések meghatározása
-        overlap_points = np.array([
-            (x, y) for (x, y), cell in zip(self.flattened_tsne_data, [(int((x - x_min) / x_step), int((y - y_min) / y_step)) for x, y in self.flattened_tsne_data])
-            if len(grid_counts[cell]) > 1  # Több különböző címke egy cellában
-        ])
+        overlap_points = np.array(
+            [
+                (x, y)
+                for (x, y), cell in zip(
+                    self.flattened_tsne_data,
+                    [
+                        (int((x - x_min) / x_step), int((y - y_min) / y_step))
+                        for x, y in self.flattened_tsne_data
+                    ],
+                )
+                if len(grid_counts[cell]) > 1  # Több különböző címke egy cellában
+            ]
+        )
 
         # Vizualizáció az átfedésekkel
         plt.figure(figsize=(12, 8))
-        plt.scatter(self.flattened_tsne_data[:, 0], self.flattened_tsne_data[:, 1], color="lightgray", s=5, alpha=0.5, label="Adatok")
+        plt.scatter(
+            self.flattened_tsne_data[:, 0],
+            self.flattened_tsne_data[:, 1],
+            color="lightgray",
+            s=5,
+            alpha=0.5,
+            label="Adatok",
+        )
 
         print(f"Összes pont száma: {len(self.flattened_tsne_data)}")
         print(f"Átfedések száma: {len(overlap_points)}")
-        print(f"Átfedések aránya: {len(overlap_points) / len(self.flattened_tsne_data) * 100:.2f}%")
+        print(
+            f"Átfedések aránya: {len(overlap_points) / len(self.flattened_tsne_data) * 100:.2f}%"
+        )
 
         # Átfedések kiemelése
         if len(overlap_points) > 0:
-            plt.scatter(overlap_points[:, 0], overlap_points[:, 1], color="red", label="Átfedés", s=30)
+            plt.scatter(
+                overlap_points[:, 0],
+                overlap_points[:, 1],
+                color="red",
+                label="Átfedés",
+                s=30,
+            )
 
         plt.legend()
         plt.title("T-SNE Vizualizáció Átfedések Megjelölésével")
         plt.xlabel("T-SNE Komponens 1")
         plt.ylabel("T-SNE Komponens 2")
         plt.grid(True)
+
+        save_path = f"Results/more_manoeuvres/{self.folder_name}_overlapping.png"
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path, dpi=300)
+        print(f"A plot elmentve: {save_path}")
+
         plt.show()
 
     def detect_overlap_by_dbscan(self):
@@ -90,11 +138,24 @@ class DetectOverlap:
         plt.figure(figsize=(12, 8))
 
         # Alap pontok
-        plt.scatter(self.flattened_tsne_data[:, 0], self.flattened_tsne_data[:, 1], color="lightgray", s=5, alpha=0.5, label="Adatok")
+        plt.scatter(
+            self.flattened_tsne_data[:, 0],
+            self.flattened_tsne_data[:, 1],
+            color="lightgray",
+            s=5,
+            alpha=0.5,
+            label="Adatok",
+        )
 
         # DBSCAN által detektált outlierek
         if len(outlier_points_dbscan) > 0:
-            plt.scatter(outlier_points_dbscan[:, 0], outlier_points_dbscan[:, 1], color="blue", s=20, label="DBSCAN átfedések")
+            plt.scatter(
+                outlier_points_dbscan[:, 0],
+                outlier_points_dbscan[:, 1],
+                color="blue",
+                s=20,
+                label="DBSCAN átfedések",
+            )
 
         plt.legend()
         plt.title("T-SNE Vizualizáció DBSCAN és KDE Átfedésekkel")
@@ -118,11 +179,24 @@ class DetectOverlap:
         plt.figure(figsize=(12, 8))
 
         # Alap pontok
-        plt.scatter(self.flattened_tsne_data[:, 0], self.flattened_tsne_data[:, 1], color="lightgray", s=5, alpha=0.5, label="Adatok")
+        plt.scatter(
+            self.flattened_tsne_data[:, 0],
+            self.flattened_tsne_data[:, 1],
+            color="lightgray",
+            s=5,
+            alpha=0.5,
+            label="Adatok",
+        )
 
         # KDE által talált sűrű helyek
         if len(overlap_points_kde) > 0:
-            plt.scatter(overlap_points_kde[:, 0], overlap_points_kde[:, 1], color="red", s=20, label="KDE átfedések")
+            plt.scatter(
+                overlap_points_kde[:, 0],
+                overlap_points_kde[:, 1],
+                color="red",
+                s=20,
+                label="KDE átfedések",
+            )
 
         plt.legend()
         plt.title("T-SNE Vizualizáció DBSCAN és KDE Átfedésekkel")
@@ -131,6 +205,7 @@ class DetectOverlap:
         plt.grid(True)
         plt.show()
 
-DetectOverlap().detect_overlap_by_grid()
+
+# DetectOverlap().detect_overlap_by_grid()
 # DetectOverlap().detect_overlap_by_dbscan()
 # DetectOverlap().detect_overlap_by_kde()
