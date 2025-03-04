@@ -602,14 +602,17 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
             except Exception as e:
                 print(f"Hiba történt a TSNE adatok beolvasásakor: {e}")
 
-        output_tsne_file = f"{folder_names[group_idx]}_tsne_data.npy"
-        output_labels_file = f"{folder_names[group_idx]}_labels.npy"
+        # Konvertálás listává, mert NumPy tömb nem menthető közvetlenül JSON-ben
+        tsne_data_list = [latent.tolist() for latent in all_tsne_data]
+        labels_list = [label.tolist() for label in all_labels]
 
-        np.save(output_tsne_file, np.array(all_tsne_data, dtype=object))  # dtype=object fontos változó méretek miatt
-        np.save(output_labels_file, np.array(all_labels, dtype=object))
+        # Mentés JSON fájlba
+        output_file = f"{folder_names[group_idx]}_tsne_data.json"
+        with open(output_file, "w") as f:
+            json.dump({"tsne_data": tsne_data_list, "labels": labels_list}, f)
 
-        print(f"TSNE adatok elmentve: {output_tsne_file} és {output_labels_file}")
-
+        print(f"TSNE adatok elmentve: {output_file}")
+        
     if overlay_multiple_manoeuvres == 1:
         print(f"\nPlotolás indul a(z) {folder_names[group_idx]} manővercsoportra...")
         plot_all_tsne_data(all_tsne_data, all_labels, folder_name)
