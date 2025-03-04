@@ -30,7 +30,7 @@ class DetectOverlap:
         """
         Átfedések detektálása egy egyszerű grid alapú módszerrel
         """
-        grid_size = 10
+        grid_size = 1100
         grid_counts = {}
         x_min, x_max = self.flattened_tsne_data[:, 0].min(), self.flattened_tsne_data[:, 0].max()
         y_min, y_max = self.flattened_tsne_data[:, 1].min(), self.flattened_tsne_data[:, 1].max()
@@ -55,13 +55,15 @@ class DetectOverlap:
 
         # Vizualizáció az átfedésekkel
         plt.figure(figsize=(12, 8))
-        for label in self.unique_labels:
-            mask = self.expanded_labels == label
-            plt.scatter(self.flattened_tsne_data[mask, 0], self.flattened_tsne_data[mask, 1], label=label, alpha=0.5, s=10)
+        plt.scatter(self.flattened_tsne_data[:, 0], self.flattened_tsne_data[:, 1], color="lightgray", s=5, alpha=0.5, label="Adatok")
+
+        print(f"Összes pont száma: {len(self.flattened_tsne_data)}")
+        print(f"Átfedések száma: {len(overlap_points)}")
+        print(f"Átfedések aránya: {len(overlap_points) / len(self.flattened_tsne_data) * 100:.2f}%")
 
         # Átfedések kiemelése
         if len(overlap_points) > 0:
-            plt.scatter(overlap_points[:, 0], overlap_points[:, 1], color="red", label="Átfedés", s=30, edgecolors="black")
+            plt.scatter(overlap_points[:, 0], overlap_points[:, 1], color="red", label="Átfedés", s=30)
 
         plt.legend()
         plt.title("T-SNE Vizualizáció Átfedések Megjelölésével")
@@ -75,7 +77,7 @@ class DetectOverlap:
         DBSCAN-alapú átfedés detektálás
         """
         eps = 2.0  # Maximális távolság két pont között (finomhangolható)
-        min_samples = 5  # Minimális pontszám egy klaszterben
+        min_samples = 2  # Minimális pontszám egy klaszterben
 
         # DBSCAN futtatása
         dbscan = DBSCAN(eps=eps, min_samples=min_samples)
@@ -109,7 +111,7 @@ class DetectOverlap:
         density = kde(self.flattened_tsne_data.T)  # Sűrűség számítása minden pontnál
 
         # Egy küszöbérték meghatározása az átfedések jelölésére (pl. felső 10%)
-        density_threshold = np.percentile(density, 90)
+        density_threshold = np.percentile(density, 20)
         overlap_mask_kde = density > density_threshold
         overlap_points_kde = self.flattened_tsne_data[overlap_mask_kde]
 
@@ -130,5 +132,5 @@ class DetectOverlap:
         plt.show()
 
 DetectOverlap().detect_overlap_by_grid()
-DetectOverlap().detect_overlap_by_dbscan()
-DetectOverlap().detect_overlap_by_kde()
+# DetectOverlap().detect_overlap_by_dbscan()
+# DetectOverlap().detect_overlap_by_kde()
