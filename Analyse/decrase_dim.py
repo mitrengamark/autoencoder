@@ -59,7 +59,7 @@ class Visualise:
             except Exception as e:
                 print(f"Hiba történt a(z) {file_path} fájl olvasásakor: {e}")
         return None
-    
+
     def save_tsne_results(self, tsne_data, data_hash):
         """Elmenti a kiszámított T-SNE eredményeket egy egyedi nevű fájlba"""
         save_dir = manoeuvers_tsne_dir if num_manoeuvres == 1 else tsne_dir
@@ -319,7 +319,16 @@ class Visualise:
                 plt.savefig(filename)
 
             # plt.show()
+
+        unique_labels = np.unique(self.labels)
+
+        labels = [
+            key.replace("_combined", "")
+            for key, value in self.label_mapping.items()
+            if value in unique_labels
+        ]
+
         if num_manoeuvres > 1:
-            return self.reduced_data, self.labels
+            return self.reduced_data, labels
         else:
             return self.reduced_data, folder_name

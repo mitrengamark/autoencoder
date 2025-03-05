@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.cluster import DBSCAN
 from scipy.stats import gaussian_kde
+from Config.load_config import num_manoeuvres
 
 
 class DetectOverlap:
@@ -26,7 +27,14 @@ class DetectOverlap:
 
         # TSNE adatok betöltése numpy tömbbé alakítva
         self.tsne_data = np.array(tsne_data_list)
-        self.labels = np.array(labels_list)
+
+
+        # Ha több manőver van, akkor a labels egy lista stringekkel
+        if isinstance(labels_list, list) and all(isinstance(lbl, str) for lbl in labels_list):
+            self.labels = np.array(labels_list * self.tsne_data.shape[0])  # Az összes pont címkézéséhez
+        else:
+            self.labels = np.array(labels_list)
+            
         self.folder_name = folder_name
 
         # TSNE adatok átalakítása síkba

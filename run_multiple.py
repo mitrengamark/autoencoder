@@ -642,5 +642,6 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
             folder_name=folder_name,
         )
         detect.detect_overlap_by_grid()
-        print(f"\nPlotolás indul a(z) {folder_names[group_idx]} manővercsoportra...")
-        plot_all_tsne_data(all_tsne_data, all_labels, folder_name)
+        if num_manoeuvres == 1:
+            print(f"\nPlotolás indul a(z) {folder_names[group_idx]} manővercsoportra...")
+            plot_all_tsne_data(all_tsne_data, all_labels, folder_name)
