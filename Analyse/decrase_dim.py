@@ -262,10 +262,10 @@ class Visualise:
                 else:
                     if dimension == 3:
                         ax.scatter(
-                            label_data[j, 0],
-                            label_data[j, 1],
-                            label_data[j, 2],
-                            label=description if j == 0 else "",
+                            label_data[:, 0],
+                            label_data[:, 1],
+                            label_data[:, 2],
+                            label=description,
                             color=color,
                             alpha=1,
                             facecolors="none",
@@ -318,7 +318,7 @@ class Visualise:
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
                 plt.savefig(filename)
 
-            # plt.show()
+            plt.show()
 
         unique_labels = np.unique(self.labels)
 
