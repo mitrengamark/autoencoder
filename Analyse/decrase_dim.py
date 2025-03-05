@@ -319,5 +319,7 @@ class Visualise:
                 plt.savefig(filename)
 
             # plt.show()
-
-        return self.reduced_data, folder_name
+        if num_manoeuvres > 1:
+            return self.reduced_data, self.labels
+        else:
+            return self.reduced_data, folder_name
