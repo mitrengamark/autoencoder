@@ -485,7 +485,7 @@ class Training:
                 )
 
         reconstruction_accuracy(whole_input, whole_output, self.selected_columns)
-        return latent_data, label
+        return latent_data, label, bottleneck_outputs, labels
 
     def save_model(self):
         torch.save(self.model.state_dict(), model_path)

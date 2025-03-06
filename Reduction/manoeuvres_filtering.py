@@ -6,6 +6,7 @@ from sklearn.cluster import DBSCAN, KMeans
 from sklearn.preprocessing import normalize
 from sklearn.metrics.pairwise import cosine_similarity
 from collections import defaultdict, Counter
+from concurrent.futures import ProcessPoolExecutor
 
 # from random_data import (
 #     generate_clustered_data,
@@ -17,7 +18,7 @@ from collections import defaultdict, Counter
 # # Hozzáadjuk a projekt gyökérkönyvtárát a Python elérési útvonalához
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from Config.load_config import eps, min_samples, n_clusters, seed
+from Config.load_config import eps, min_samples, n_clusters, seed, num_workers
 
 
 class ManoeuvresFiltering:
@@ -365,27 +366,61 @@ class ManoeuvresFiltering:
 
         return uniformly_distributed_manoeuvres
 
-    def filter_by_distance(self, threshold=0.1, batch_size=5000):
+    def compute_similarities(self, batch_indices, full_data, threshold, labels):
         """
-        Cosine Similarity alapján kiszűri a redundáns manővereket.
+        Egy batch cosine similarity mátrixát számolja ki és visszaadja a redundáns párokat.
+        """
+        batch_data = full_data[batch_indices]  # Kiválasztjuk a megfelelő adatokat
+        similarities = cosine_similarity(batch_data, full_data)
+        redundant_pairs = set()
+
+        for row_idx, row in enumerate(similarities):
+            for j in range(full_data.shape[0]):
+                if row[j] > threshold and labels[batch_indices[row_idx]] != labels[j]:
+                    redundant_pairs.add(
+                        tuple(sorted((labels[batch_indices[row_idx]], labels[j])))
+                    )
+
+        return redundant_pairs
+
+    def filter_by_distance(self, threshold=0.1, batch_size=1000):
+        """
+        Cosine Similarity alapján kiszűri a redundáns manővereket, párhuzamosítva.
         Ha két manőver közötti Cosine Similarity nagyon nagy (pl. 0.9+), az egyik elhagyható.
 
         threshold: Az a hasonlósági küszöb, amely felett két manőver redundánsnak számít.
         """
         print("Távolsági redundancia szűrés Cosine Similarity használatával...")
 
+        if isinstance(self.bottleneck_data, list):
+            self.bottleneck_data = np.vstack(self.bottleneck_data)
+
+        if isinstance(self.labels, list):
+            self.labels = np.concatenate(self.labels)
+
         n = self.bottleneck_data.shape[0]
         redundant_pairs = set()
 
-        for i in range(0, n, batch_size):
-            batch_data = self.bottleneck_data[i : i + batch_size]
-            similarities = cosine_similarity(batch_data, self.bottleneck_data)
+        # Párhuzamos számítás elindítása
+        with ProcessPoolExecutor(max_workers=num_workers) as executor:
+            futures = []
+            for i in range(0, n, batch_size):
+                batch_indices = list(range(i, min(i + batch_size, n)))
+                futures.append(
+                    executor.submit(
+                        self.compute_similarities,
+                        batch_indices,
+                        self.bottleneck_data,
+                        threshold,
+                        self.labels,
+                    )
+                )
 
-            for row_idx, row in enumerate(similarities):
-                for j in range(n):
-                    if row[j] > threshold and self.labels[i + row_idx] != self.labels[j]:
-                        redundant_pairs.add(tuple(sorted((self.labels[i + row_idx], self.labels[j]))))
+            # Eredmények összegyűjtése
+            for future in futures:
+                redundant_pairs.update(future.result())
 
+        # Redundáns manőverek kiírása
         redundant_manoeuvre_names = {
             (
                 self.reverse_label_mapping.get(pair[0], f"Unknown_{pair[0]}"),

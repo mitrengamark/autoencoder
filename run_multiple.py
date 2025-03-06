@@ -5,7 +5,8 @@ import numpy as np
 from configobj import ConfigObj
 from Analyse.manoeuvers_plot_together import plot_all_tsne_data
 from Reduction.detect_overlap import DetectOverlap
-from Config.load_config import num_manoeuvres, overlay_multiple_manoeuvres
+from Reduction.manoeuvres_filtering import ManoeuvresFiltering
+from Config.load_config import num_manoeuvres, overlay_multiple_manoeuvres, filtering
 
 
 # A config.ini fájl elérési útja
@@ -489,7 +490,9 @@ maneuvers_list = [
 
 if num_manoeuvres > 1:
     # Manővercsoportonként beállítható paraméterek
-    batch_sizes = [9] # [84, 224, 84, 9, 9, 24, 24]  # Hány manővert dolgozzunk fel egyszerre?
+    batch_sizes = [
+        9
+    ]  # [84, 224, 84, 9, 9, 24, 24]  # Hány manővert dolgozzunk fel egyszerre?
     steps = batch_sizes  # Hány lépésenként lépjünk tovább az adott típusban?
     total_runs = sum(
         len(maneuvers) // steps[idx] for idx, maneuvers in enumerate(maneuvers_list)
@@ -513,7 +516,9 @@ current_run = 0
 for group_idx, maneuvers in enumerate(maneuvers_list):
     # Tároló az összegyűjtött TSNE adatokhoz
     all_tsne_data = []
-    all_labels = []
+    all_tsne_label = []
+    all_bottleneck_outputs = []
+    all_bottleneck_labels = []
 
     if num_manoeuvres > 1:
         batch_size = batch_sizes[group_idx]
@@ -559,23 +564,31 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
             # 6️ JSON fájl beolvasása
             try:
                 output_file = "tsne_output.json"
+                output_file_2 = "bottleneck_output.json"
                 with open(output_file, "r") as f:
-                    data = json.load(f)
+                    tsne_data = json.load(f)
 
-                latent_data = np.array(data["latent_data"])
-                labels = np.array(data["labels"])
+                latent_data = np.array(tsne_data["latent_data"])
+                latent_label = np.array(tsne_data["labels"])
 
                 all_tsne_data.append(latent_data)
-                all_labels.append(labels)
+                all_tsne_label.append(latent_label)
+
+                with open(output_file_2, "r") as f:
+                    bottleneck_output_data = json.load(f)
+
+                bottleneck_data = np.array(bottleneck_output_data["bottleneck_outputs"])
+                bottleneck_label = np.array(bottleneck_output_data["labels"])
+                label_mapping = bottleneck_output_data["label_mapping"]
+
+                all_bottleneck_outputs.append(bottleneck_data)
+                all_bottleneck_labels.append(bottleneck_label)
 
                 print(f"TSNE adatok sikeresen beolvasva: {output_file}")
+                print(f"Bottleneck adatok sikeresen beolvasva: {output_file_2}")
 
             except Exception as e:
                 print(f"Hiba történt a TSNE adatok beolvasásakor: {e}")
-
-            # # TSNE adatok és címkék előkészítése
-            # all_tsne_data = np.vstack(all_tsne_data)  # Az összes TSNE adat egymásra rakása
-            # all_labels = np.concatenate(all_labels)  # Az összes címke összefűzése
     else:
         print(f"\n=== {group_idx+1}. Manővercsoport ===")
 
@@ -610,38 +623,65 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
             # 6️ JSON fájl beolvasása
             try:
                 output_file = "tsne_output.json"
+                output_file_2 = "bottleneck_output.json"
                 with open(output_file, "r") as f:
-                    data = json.load(f)
+                    tsne_data = json.load(f)
 
-                latent_data = np.array(data["latent_data"])
-                labels = np.array(data["labels"])
+                latent_data = np.array(tsne_data["latent_data"])
+                latent_label = np.array(tsne_data["labels"])
 
                 all_tsne_data.append(latent_data)
-                all_labels.append(labels)
+                all_tsne_label.append(latent_label)
+
+                with open(output_file_2, "r") as f:
+                    bottleneck_output_data = json.load(f)
+
+                bottleneck_data = np.array(bottleneck_output_data["bottleneck_outputs"])
+                bottleneck_label = np.array(bottleneck_output_data["labels"])
+                label_mapping = bottleneck_output_data["label_mapping"]
+
+                all_bottleneck_outputs.append(bottleneck_data)
+                all_bottleneck_labels.append(bottleneck_label)
 
                 print(f"TSNE adatok sikeresen beolvasva: {output_file}")
+                print(f"Bottleneck adatok sikeresen beolvasva: {output_file_2}")
 
             except Exception as e:
                 print(f"Hiba történt a TSNE adatok beolvasásakor: {e}")
 
         # # Konvertálás listává, mert NumPy tömb nem menthető közvetlenül JSON-ben
         # tsne_data_list = [latent.tolist() for latent in all_tsne_data]
-        # labels_list = [label.tolist() for label in all_labels]
+        # tsne_label_list = [label.tolist() for label in all_tsne_label]
 
         # # Mentés JSON fájlba
         # output_file = f"{folder_names[group_idx]}_tsne_data.json"
         # with open(output_file, "w") as f:
-        #     json.dump({"tsne_data": tsne_data_list, "labels": labels_list}, f)
+        #     json.dump({"tsne_data": tsne_data_list, "labels": tsne_label_list}, f)
 
         # print(f"TSNE adatok elmentve: {output_file}")
+
+    print(f"Bottleneck_data mérete: {len(all_bottleneck_outputs)}")
+    print(f"Bottleneck_data típusa: {type(all_bottleneck_outputs)}")
+    print(f"Labels mérete: {len(all_bottleneck_labels)}")
+    print(f"Labels típusa: {type(all_bottleneck_labels)}")
 
     if overlay_multiple_manoeuvres == 1:
         detect = DetectOverlap(
             tsne_data_list=all_tsne_data,
-            labels_list=all_labels,
+            labels_list=all_tsne_label,
             folder_name=folder_name,
         )
         detect.detect_overlap_by_grid()
         if num_manoeuvres == 1:
-            print(f"\nPlotolás indul a(z) {folder_names[group_idx]} manővercsoportra...")
-            plot_all_tsne_data(all_tsne_data, all_labels, folder_name)
+            print(
+                f"\nPlotolás indul a(z) {folder_names[group_idx]} manővercsoportra..."
+            )
+            plot_all_tsne_data(all_tsne_data, all_tsne_label, folder_name)
+
+    if filtering == 1:
+        mf = ManoeuvresFiltering(
+            bottleneck_data=all_bottleneck_outputs,
+            labels=all_bottleneck_labels,
+            label_mapping=label_mapping,
+        )
+        mf.filter_by_distance()

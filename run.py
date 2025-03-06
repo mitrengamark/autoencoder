@@ -83,20 +83,36 @@ if test_mode == 0:
     if save_model == 1:
         training.save_model()
 elif test_mode == 1:
-    latent_data, label = training.test()
+    latent_data, label, bottleneck_outputs, labels = training.test()
 
-latent_data = latent_data[2500:]
-# Ellenőrzés
-print("latent_data type:", type(latent_data))
-print("label type:", type(label))
+    latent_data = latent_data[2500:]
+    # Ellenőrzés
+    print("latent_data type:", type(latent_data))
+    print("label type:", type(label))
+    print("bottleneck_outputs type:", type(bottleneck_outputs))
+    print("labels type:", type(labels))
 
-# Konvertálás megfelelő formátumba
-latent_list = latent_data.tolist()
-label_list = label.tolist() if isinstance(label, np.ndarray) else label
+    # Konvertálás megfelelő formátumba
+    latent_list = latent_data.tolist()
+    label_list = label.tolist() if isinstance(label, np.ndarray) else label
+    bottleneck_outputs_list = bottleneck_outputs.tolist()
+    labels_list = labels.tolist() if isinstance(labels, np.ndarray) else labels
 
-# JSON mentése fájlba
-output_file = "tsne_output.json"
-with open(output_file, "w") as f:
-    json.dump({"latent_data": latent_list, "labels": label_list}, f)
+    # JSON mentése fájlba
+    output_file = "tsne_output.json"
+    output_file_2 = "bottleneck_output.json"
+    with open(output_file, "w") as f:
+        json.dump({"latent_data": latent_list, "labels": label_list}, f)
 
-print(f"TSNE adatok elmentve: {output_file}")
+    with open(output_file_2, "w") as f:
+        json.dump(
+            {
+                "bottleneck_outputs": bottleneck_outputs_list,
+                "labels": labels_list,
+                "label_mapping": label_mapping,
+            },
+            f,
+        )
+
+    print(f"TSNE adatok elmentve: {output_file}")
+    print(f"Bottleneck adatok elmentve: {output_file_2}")
