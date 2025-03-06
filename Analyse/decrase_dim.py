@@ -311,9 +311,16 @@ class Visualise:
 
             if save_fig:
                 if num_manoeuvres == 1:
-                    filename = f"Results/{folder_name}/{selected_manoeuvres[0]}.png"
+                    if dimension == 3:
+                        filename = f"Results/{folder_name}/{selected_manoeuvres[0]}_3D.png"
+                    elif dimension == 2:
+                        filename = f"Results/{folder_name}/{selected_manoeuvres[0]}.png"
+
                 else:
-                    filename = f"Results/more_manoeuvres/{folder_name}.png"
+                    if dimension == 3:
+                        filename = f"Results/more_manoeuvres/{folder_name}_3D.png"
+                    elif dimension == 2:
+                        filename = f"Results/more_manoeuvres/{folder_name}.png"
 
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
                 plt.savefig(filename)
