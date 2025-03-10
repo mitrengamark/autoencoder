@@ -8,16 +8,16 @@ from sklearn.metrics.pairwise import cosine_similarity
 from collections import defaultdict, Counter
 from concurrent.futures import ProcessPoolExecutor
 
-from random_data import (
-    generate_clustered_data,
-    generate_advanced_sinusoidal_spiral_data,
-    plot_clusters,
-)
-import sys
-import os
+# from random_data import (
+#     generate_clustered_data,
+#     generate_advanced_sinusoidal_spiral_data,
+#     plot_clusters,
+# )
+# import sys
+# import os
 
-# Hozzáadjuk a projekt gyökérkönyvtárát a Python elérési útvonalához
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# # Hozzáadjuk a projekt gyökérkönyvtárát a Python elérési útvonalához
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from Config.load_config import eps, min_samples, n_clusters, seed, num_workers
 
@@ -367,7 +367,8 @@ class ManoeuvresFiltering:
 
         return uniformly_distributed_manoeuvres
 
-    def compute_similarities(self, batch_indices, full_data, threshold, labels):
+    @staticmethod
+    def compute_similarities(batch_indices, full_data, threshold, labels):
         """
         Egy batch cosine similarity mátrixát számolja ki és visszaadja a redundáns párokat.
         """
@@ -509,17 +510,17 @@ class ManoeuvresFiltering:
         return filtered_reduced_data, filtered_labels  # A címkéket is visszaadjuk
 
 
-bottleneck_data, labels, label_mapping = generate_clustered_data(
-    n_samples=9000, n_clusters=9, n_features=2
-)
+# bottleneck_data, labels, label_mapping = generate_clustered_data(
+#     n_samples=9000, n_clusters=9, n_features=2
+# )
 
-mf = ManoeuvresFiltering(
-    bottleneck_data=bottleneck_data,
-    labels=labels,
-    label_mapping=label_mapping,
-)
-# Plotoljuk a generált adatokat
-plot_clusters(bottleneck_data, labels)
-redundant_pairs = mf.filter_by_distance()
+# mf = ManoeuvresFiltering(
+#     bottleneck_data=bottleneck_data,
+#     labels=labels,
+#     label_mapping=label_mapping,
+# )
+# # Plotoljuk a generált adatokat
+# plot_clusters(bottleneck_data, labels)
+# redundant_pairs = mf.filter_by_distance()
 
-print("Redundáns párok:", redundant_pairs)
+# print("Redundáns párok:", redundant_pairs)
