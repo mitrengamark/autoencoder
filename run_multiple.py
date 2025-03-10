@@ -426,13 +426,13 @@ maneuvers_list = [
     [
         "valtozo_v_savvaltas_fek_alacsony_pedal0_2",
         "valtozo_v_savvaltas_fek_kozepes_pedal0_2",
-        "valtozo_v_savvaltas_fek_magas_pedal0_2",
-        "valtozo_v_savvaltas_fek_alacsony_pedal0_5",
-        "valtozo_v_savvaltas_fek_kozepes_pedal0_5",
-        "valtozo_v_savvaltas_fek_magas_pedal0_5",
-        "valtozo_v_savvaltas_fek_alacsony_pedal1_0",
-        "valtozo_v_savvaltas_fek_kozepes_pedal1_0",
-        "valtozo_v_savvaltas_fek_magas_pedal1_0",
+        # "valtozo_v_savvaltas_fek_magas_pedal0_2",
+        # "valtozo_v_savvaltas_fek_alacsony_pedal0_5",
+        # "valtozo_v_savvaltas_fek_kozepes_pedal0_5",
+        # "valtozo_v_savvaltas_fek_magas_pedal0_5",
+        # "valtozo_v_savvaltas_fek_alacsony_pedal1_0",
+        # "valtozo_v_savvaltas_fek_kozepes_pedal1_0",
+        # "valtozo_v_savvaltas_fek_magas_pedal1_0",
     ],
     # [
     #     "valtozo_v_sin_gas_a2_f1_pedal0_2",
@@ -488,6 +488,8 @@ maneuvers_list = [
     # ],
 ]
 
+redundantpairs_list = []
+
 if num_manoeuvres > 1:
     # Manővercsoportonként beállítható paraméterek
     batch_sizes = [
@@ -506,8 +508,8 @@ folder_names = [
     # "allando_v_chirp",
     # "valtozo_v_savvaltas_gas",
     "valtozo_v_savvaltas_fek",
-    # "valtozo_v_sin_gas",
-    # "valtozo_v_sin_fek",
+    "valtozo_v_sin_gas",
+    "valtozo_v_sin_fek",
 ]
 
 current_run = 0
@@ -543,25 +545,25 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
                 f"\n Futtatás [{current_run}/{total_runs}]\n Iteráció: {i//step+1} | Manőverek: {selected_maneuvers}"
             )
 
-            # 1️ Betöltjük a jelenlegi konfigurációt
+            # 1 Betöltjük a jelenlegi konfigurációt
             config = ConfigObj(CONFIG_PATH, encoding="utf-8")
 
-            # 2️ Frissítjük a kiválasztott manővereket
+            # 2 Frissítjük a kiválasztott manővereket
             config["Data"]["selected_manoeuvres"] = selected_maneuvers
             config["Plot"]["folder_name"] = folder_name
 
-            # 3️ Visszaírjuk a módosított konfigurációt
+            # 3 Visszaírjuk a módosított konfigurációt
             config.write()
 
-            # 4️ Elindítjuk a run.py-t
+            # 4 Elindítjuk a run.py-t
             print(f"Indítom a run.py-t...")
             process = subprocess.Popen(["python", "run.py"])
 
-            # 5️ Megvárjuk a futás végét
+            # 5 Megvárjuk a futás végét
             process.wait()
             print(f"run.py futtatás {current_run}/{total_runs} befejeződött!")
 
-            # 6️ JSON fájl beolvasása
+            # 6 JSON fájl beolvasása
             try:
                 output_file = "tsne_output.json"
                 output_file_2 = "bottleneck_output.json"
@@ -598,29 +600,29 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
             current_run += 1
             print(f"\n Futtatás [{current_run}/{total_runs}]\n Manőver: {maneuver}")
 
-            # 1️ Betöltjük a jelenlegi konfigurációt
+            # 1 Betöltjük a jelenlegi konfigurációt
             config = ConfigObj(CONFIG_PATH, encoding="utf-8")
 
-            # 2️ Frissítjük a kiválasztott manővert
+            # 2 Frissítjük a kiválasztott manővert
             config["Data"]["selected_manoeuvres"] = [
                 maneuver
             ]  # Egyetlen manőver listában
             config["Plot"]["folder_name"] = f"{maneuver}"
 
-            # 3️ Visszaírjuk a módosított konfigurációt
+            # 3 Visszaírjuk a módosított konfigurációt
             config.write()
 
-            # 4️ Elindítjuk a run.py-t és várunk az eredményre
+            # 4 Elindítjuk a run.py-t és várunk az eredményre
             print(f"Indítom a run.py-t a(z) {maneuver} manőverrel...")
             process = subprocess.Popen(
                 ["python", "run.py"]
             )  # , stdout=subprocess.PIPE, text=True)
 
-            # 5️ Megvárjuk a futás végét
+            # 5 Megvárjuk a futás végét
             process.wait()
             print(f"run.py futtatás {current_run}/{total_runs} befejeződött!")
 
-            # 6️ JSON fájl beolvasása
+            # 6 JSON fájl beolvasása
             try:
                 output_file = "tsne_output.json"
                 output_file_2 = "bottleneck_output.json"
@@ -660,11 +662,6 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
 
         # print(f"TSNE adatok elmentve: {output_file}")
 
-    print(f"Bottleneck_data mérete: {len(all_bottleneck_outputs)}")
-    print(f"Bottleneck_data típusa: {type(all_bottleneck_outputs)}")
-    print(f"Labels mérete: {len(all_bottleneck_labels)}")
-    print(f"Labels típusa: {type(all_bottleneck_labels)}")
-
     if overlay_multiple_manoeuvres == 1:
         detect = DetectOverlap(
             tsne_data_list=all_tsne_data,
@@ -684,4 +681,5 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
             labels=all_bottleneck_labels,
             label_mapping=label_mapping,
         )
-        mf.filter_by_distance()
+        redundant_pairs = mf.filter_by_distance()
+        redundantpairs_list.append(redundant_pairs)

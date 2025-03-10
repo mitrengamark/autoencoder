@@ -8,15 +8,16 @@ from sklearn.metrics.pairwise import cosine_similarity
 from collections import defaultdict, Counter
 from concurrent.futures import ProcessPoolExecutor
 
-# from random_data import (
-#     generate_clustered_data,
-#     generate_advanced_sinusoidal_spiral_data,
-# )
-# import sys
-# import os
+from random_data import (
+    generate_clustered_data,
+    generate_advanced_sinusoidal_spiral_data,
+    plot_clusters,
+)
+import sys
+import os
 
-# # Hozzáadjuk a projekt gyökérkönyvtárát a Python elérési útvonalához
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# Hozzáadjuk a projekt gyökérkönyvtárát a Python elérési útvonalához
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from Config.load_config import eps, min_samples, n_clusters, seed, num_workers
 
@@ -383,7 +384,7 @@ class ManoeuvresFiltering:
 
         return redundant_pairs
 
-    def filter_by_distance(self, threshold=0.1, batch_size=1000):
+    def filter_by_distance(self, threshold=1, batch_size=1000):
         """
         Cosine Similarity alapján kiszűri a redundáns manővereket, párhuzamosítva.
         Ha két manőver közötti Cosine Similarity nagyon nagy (pl. 0.9+), az egyik elhagyható.
@@ -508,14 +509,17 @@ class ManoeuvresFiltering:
         return filtered_reduced_data, filtered_labels  # A címkéket is visszaadjuk
 
 
-# np.random.seed(42)
-# num_samples = 50000
-# num_clusters = 20
-# reduced_data, labels, label_mapping = generate_clustered_data(
-#     n_samples=num_samples, n_clusters=num_clusters
-# )
-# # reduced_data, labels = generate_advanced_sinusoidal_spiral_data(n_samples=num_samples, n_clusters=num_clusters)
+bottleneck_data, labels, label_mapping = generate_clustered_data(
+    n_samples=9000, n_clusters=9, n_features=2
+)
 
-# # ManoeuvresFiltering osztály inicializálása és filter_manoeuvres meghívása
-# filtering = ManoeuvresFiltering(bottleneck_data=reduced_data, labels=labels, label_mapping=label_mapping)
-# filtering.filter_manoeuvres()
+mf = ManoeuvresFiltering(
+    bottleneck_data=bottleneck_data,
+    labels=labels,
+    label_mapping=label_mapping,
+)
+# Plotoljuk a generált adatokat
+plot_clusters(bottleneck_data, labels)
+redundant_pairs = mf.filter_by_distance()
+
+print("Redundáns párok:", redundant_pairs)
