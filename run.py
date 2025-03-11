@@ -83,7 +83,8 @@ if test_mode == 0:
     if save_model == 1:
         training.save_model()
 elif test_mode == 1:
-    latent_data, label, bottleneck_outputs, labels = training.test()
+    # latent_data, label, bottleneck_outputs, labels = training.test()
+    training.test()
 
     # latent_data = latent_data[2500:]
     # # Ellenőrzés

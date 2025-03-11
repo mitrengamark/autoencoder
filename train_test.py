@@ -2,6 +2,7 @@ import torch
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+import os
 from Factory.variational_autoencoder import VariationalAutoencoder
 from Factory.masked_autoencoder import MaskedAutoencoder
 from Factory.scheduler import scheduler_maker
@@ -36,6 +37,7 @@ from Config.load_config import (
     validation_method,
     normalization,
     removing_steps,
+    folder_name,
 )
 
 
@@ -396,15 +398,19 @@ class Training:
             bottleneck_outputs = bottleneck_outputs.mean(dim=1).numpy()
             # bottleneck_outputs_flattened = bottleneck_outputs.view(-1, bottleneck_outputs.size(-1)).numpy()  # [batch_size * seq_len, feature_dim]
 
+        save_path = f"Bottleneck_data/single_manoeuvres/{folder_name}.npy"
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        np.save(save_path, bottleneck_outputs)  # Mentés NumPy formátumban
+
         # Vizualizáció
-        vs = Visualise(
-            bottleneck_outputs=bottleneck_outputs,
-            labels=labels,
-            model_name=self.model_name,
-            label_mapping=self.label_mapping,
-            sign_change_indices=self.sign_change_indices,
-        )
-        latent_data, label = vs.visualize_with_tsne()
+        # vs = Visualise(
+        #     bottleneck_outputs=bottleneck_outputs,
+        #     labels=labels,
+        #     model_name=self.model_name,
+        #     label_mapping=self.label_mapping,
+        #     sign_change_indices=self.sign_change_indices,
+        # )
+        # latent_data, label = vs.visualize_with_tsne()
         # if num_manoeuvres == 1:
         #     outlier_indices = detect_outliers(latent_data[2500:])
         #     filtered_data = np.delete(latent_data[2500:], outlier_indices, axis=0)
@@ -485,7 +491,7 @@ class Training:
                 )
 
         reconstruction_accuracy(whole_input, whole_output, self.selected_columns)
-        return latent_data, label, bottleneck_outputs, labels
+        # return latent_data, label, bottleneck_outputs, labels
 
     def save_model(self):
         torch.save(self.model.state_dict(), model_path)
