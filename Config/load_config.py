@@ -53,6 +53,7 @@ saved_model = config.get("Model", "model_path")
 
 # Data
 normalization = config.get("Data", "normalization")
+parallel = int(config["Data"]["parallel"])
 num_workers = int(config["Data"]["num_workers"])
 data_dir = config.get("Data", "data_dir")
 tsne_dir = config.get("Data", "tsne_dir")
