@@ -86,6 +86,7 @@ inconsistent_points_distance = float(
 )
 time_difference = int(config["Filtering"]["time_difference"])
 remove_start = int(config["Filtering"]["remove_start"])
+distance_metric = config.get("Filtering", "distance_metric")
 
 # Callbacks
 plot = int(config["Callbacks"]["plot"])

@@ -96,7 +96,7 @@ class Visualise:
         self.reduced_data = reduced_data
 
         # **ELSŐ 2500 ADAT ELTÁVOLÍTÁSA MINDEN MANŐVERBŐL**
-        if remove_start == 1 and num_manoeuvres > 1:
+        if remove_start == 1: # and num_manoeuvres > 1:
             new_data = []
             new_labels = []
             unique_labels = np.unique(self.labels)
@@ -111,6 +111,10 @@ class Visualise:
 
             self.reduced_data = np.vstack(new_data)
             self.labels = np.concatenate(new_labels)
+
+            save_path = f"Bottleneck_data/single_manoeuvres/{folder_name}.npy"
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            np.save(save_path, self.reduced_data)  # Mentés NumPy formátumban
 
     def visualize_with_tsne(self, plot=tsneplot):
         """

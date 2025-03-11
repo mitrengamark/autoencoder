@@ -3,10 +3,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import pearsonr, spearmanr, kendalltau
 from sklearn.cluster import DBSCAN, KMeans
-from sklearn.preprocessing import normalize
+from sklearn.preprocessing import normalize, StandardScaler
 from sklearn.metrics.pairwise import cosine_similarity
 from collections import defaultdict, Counter
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from scipy.spatial.distance import cdist
 
 # from random_data import (
 #     generate_clustered_data,
@@ -19,7 +20,15 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 # # Hozzáadjuk a projekt gyökérkönyvtárát a Python elérési útvonalához
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from Config.load_config import eps, min_samples, n_clusters, seed, num_workers, parallel
+from Config.load_config import (
+    eps,
+    min_samples,
+    n_clusters,
+    seed,
+    num_workers,
+    parallel,
+    distance_metric,
+)
 
 
 class ManoeuvresFiltering:
@@ -369,12 +378,15 @@ class ManoeuvresFiltering:
 
     def filter_by_distance(self, threshold=0.5, batch_size=100):
         """
-        Cosine Similarity alapján kiszűri a redundáns manővereket, párhuzamos vagy soros módban.
+        Cosine Similarity vagy Euklideszi távolság alapján kiszűri a redundáns manővereket.
 
         threshold: A hasonlósági küszöb, amely felett két manőver redundánsnak számít.
         batch_size: A párhuzamos számításokhoz a batch méret.
         """
         print("Távolsági redundancia szűrés Cosine Similarity használatával...")
+        print(
+            f"Adatok statisztikája normalizálás előtt: min={np.min(self.bottleneck_data)}, max={np.max(self.bottleneck_data)}, mean={np.mean(self.bottleneck_data)}, std={np.std(self.bottleneck_data)}"
+        )
 
         if isinstance(self.bottleneck_data, list):
             self.bottleneck_data = np.vstack(self.bottleneck_data)
@@ -382,10 +394,26 @@ class ManoeuvresFiltering:
         if isinstance(self.labels, list):
             self.labels = np.concatenate(self.labels)
 
+        # Normalizálás csak akkor, ha az adott metrikához szükséges
+        if distance_metric == "cosine":
+            print("Cosine Similarity: L2 normalizálás aktiválva.")
+            self.bottleneck_data = normalize(self.bottleneck_data, axis=1)
+
+        elif distance_metric == "euclidean":
+            print("Euklideszi távolság: StandardScaler aktiválva.")
+            scaler = StandardScaler()
+            self.bottleneck_data = scaler.fit_transform(self.bottleneck_data)
+
+        print(
+            f"Adatok statisztikája skálázás után: min={np.min(self.bottleneck_data)}, max={np.max(self.bottleneck_data)}, mean={np.mean(self.bottleneck_data)}, std={np.std(self.bottleneck_data)}"
+        )
+        print(f"Első 5 minta adata normalizálás után:\n{self.bottleneck_data[:5]}")
+
         n = self.bottleneck_data.shape[0]
         redundant_pairs = set()
         total_batches = (n + batch_size - 1) // batch_size  # Összes batch száma
 
+        similarity_function = compute_similarities if distance_metric == "cosine" else compute_euclidean_similarities
 
         if parallel:
             # Párhuzamos számítás elindítása
@@ -395,7 +423,7 @@ class ManoeuvresFiltering:
                     batch_indices = list(range(i, min(i + batch_size, n)))
                     futures.append(
                         executor.submit(
-                            compute_similarities,
+                            similarity_function,
                             batch_indices,
                             self.bottleneck_data,
                             threshold,
@@ -415,7 +443,7 @@ class ManoeuvresFiltering:
                 print(f"Feldolgozás: {batch_idx}/{total_batches} batch...")
                 batch_indices = list(range(i, min(i + batch_size, n)))
                 redundant_pairs.update(
-                    compute_similarities(
+                    similarity_function(
                         batch_indices, self.bottleneck_data, threshold, self.labels
                     )
                 )
@@ -429,9 +457,7 @@ class ManoeuvresFiltering:
             for pair in redundant_pairs
         }
 
-        print(
-            f"Redundáns manőver párok (Cosine Similarity): {redundant_manoeuvre_names}"
-        )
+        print(f"Redundáns manőver párok ({distance_metric}): {redundant_manoeuvre_names}")
 
         return redundant_pairs
 
@@ -516,9 +542,33 @@ def compute_similarities(batch_indices, full_data, threshold, labels):
     similarities = cosine_similarity(batch_data, full_data)
     redundant_pairs = set()
 
+    # print(f"Cosine Similarity első 5 sor első 5 oszlopa:\n{similarities[:5, :5]}")
+
     for row_idx, row in enumerate(similarities):
         for j in range(full_data.shape[0]):
+            if batch_indices[row_idx] == j:  # Önmaga ellenőrzésének kizárása
+                continue
             if row[j] > threshold and labels[batch_indices[row_idx]] != labels[j]:
+                redundant_pairs.add(
+                    tuple(sorted((labels[batch_indices[row_idx]], labels[j])))
+                )
+
+    return redundant_pairs
+
+def compute_euclidean_similarities(batch_indices, full_data, threshold, labels):
+    """
+    Egy batch euklideszi távolságát számolja ki és visszaadja a redundáns párokat.
+    """
+    batch_data = full_data[batch_indices]
+    distances = cdist(batch_data, full_data, metric='euclidean')
+    
+    redundant_pairs = set()
+
+    for row_idx, row in enumerate(distances):
+        for j in range(full_data.shape[0]):
+            if batch_indices[row_idx] == j:  # Önmaga ellenőrzésének kizárása
+                continue
+            if row[j] < threshold and labels[batch_indices[row_idx]] != labels[j]:
                 redundant_pairs.add(
                     tuple(sorted((labels[batch_indices[row_idx]], labels[j])))
                 )
@@ -527,7 +577,7 @@ def compute_similarities(batch_indices, full_data, threshold, labels):
 
 
 # bottleneck_data, labels, label_mapping = generate_clustered_data(
-#     n_samples=2420320, n_clusters=224, n_features=8
+#     n_samples=151270, n_clusters=14, n_features=8
 # )
 
 # mf = ManoeuvresFiltering(
