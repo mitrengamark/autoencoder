@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 from concurrent.futures import ProcessPoolExecutor
 
@@ -41,7 +42,7 @@ class RedundancyFilter:
 
         return redundant_pairs
 
-    def filter_by_distance(self, threshold=0.9, batch_size=1000, metric="cosine", num_workers=4):
+    def filter_by_distance(self, threshold=0.9, batch_size=1000, metric="cosine", num_workers=8):
         """
         Cosine Similarity vagy euklideszi távolság alapján kiszűri a redundáns manővereket.
         
@@ -92,17 +93,13 @@ class RedundancyFilter:
 data_dir = "Reduced_bottleneck_data/single_manoeuvres/"
 
 # Adatok beolvasása
-file_paths = [
-    data_dir + "valtozo_v_savvaltas_gas_alacsony_pedal0_2.npy",
-    data_dir + "valtozo_v_savvaltas_gas_alacsony_pedal0_5.npy",
-    data_dir + "valtozo_v_savvaltas_gas_alacsony_pedal1_0.npy",
-    data_dir + "valtozo_v_savvaltas_gas_kozepes_pedal0_2.npy",
-    data_dir + "valtozo_v_savvaltas_gas_kozepes_pedal0_5.npy",
-    data_dir + "valtozo_v_savvaltas_gas_kozepes_pedal1_0.npy",
-    data_dir + "valtozo_v_savvaltas_gas_magas_pedal0_2.npy",
-    data_dir + "valtozo_v_savvaltas_gas_magas_pedal0_5.npy",
-    data_dir + "valtozo_v_savvaltas_gas_magas_pedal1_0.npy"
+file_basenames = [
+    "allando_v_savvaltas_alacsony_v5",
+    "allando_v_savvaltas_kozepes_v5",
+    "allando_v_savvaltas_magas_v5",
 ]
+
+file_paths = [os.path.join(data_dir, f"{basename}.npy") for basename in file_basenames]
 
 data_dict = {path: np.load(path) for path in file_paths}
 all_data = np.vstack(list(data_dict.values()))

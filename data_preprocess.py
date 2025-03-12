@@ -294,5 +294,37 @@ def sort_columns_in_files(folder_path, test_mode=True):
             df.to_csv(file_path, index=False)
             print(f"Oszlopok ABC sorrendben rendezve: {file_path}")
 
-manoeuvre_names = collect_maoeuver_names()
-print(manoeuvre_names)
+def load_and_average_manoeuvres(directory, save_directory):
+    if not os.path.exists(save_directory):
+        os.makedirs(save_directory)
+    
+    averaged_manoeuvres = {}
+    
+    for file in os.listdir(directory):
+        if file.endswith(".npy"):  # Csak .npy fájlokat dolgozunk fel
+            file_path = os.path.join(directory, file)
+            data = np.load(file_path)  # Betöltés
+            
+            if data.shape[1] != 8:
+                print(f"Figyelmeztetés: {file} nem megfelelő alakú ({data.shape}), kihagyva.")
+                continue
+            
+            average_vector = np.mean(data, axis=0)  # Átlagolás soronként
+            averaged_manoeuvres[file] = average_vector
+            
+            # Mentés az új mappába
+            save_path = os.path.join(save_directory, file)
+            np.save(save_path, average_vector)
+    
+    return averaged_manoeuvres
+
+# Mappa elérési útvonala
+directory = "Bottleneck_data/single_manoeuvres"
+save_directory = "Bottleneck_data/averaged_manoeuvres"
+averaged_results = load_and_average_manoeuvres(directory, save_directory)
+
+# Példa egy fájl eredményének kiírására
+for filename, avg_vector in averaged_results.items():
+    print(f"{filename}: {avg_vector}")
+
+print(f"Összesen {len(averaged_results)} fájl átlagolt eredménye lett kiszámolva és mentve.")

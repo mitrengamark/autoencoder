@@ -5,22 +5,19 @@ import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from pathlib import Path
 
 # Mappa, ahol az adatok találhatók
 data_dir = "Reduced_bottleneck_data/single_manoeuvres/"
 
 # Adatok beolvasása
-file_paths = [
-    data_dir + "valtozo_v_savvaltas_gas_alacsony_pedal0_2.npy",
-    data_dir + "valtozo_v_savvaltas_gas_alacsony_pedal0_5.npy",
-    data_dir + "valtozo_v_savvaltas_gas_alacsony_pedal1_0.npy",
-    data_dir + "valtozo_v_savvaltas_gas_kozepes_pedal0_2.npy",
-    data_dir + "valtozo_v_savvaltas_gas_kozepes_pedal0_5.npy",
-    data_dir + "valtozo_v_savvaltas_gas_kozepes_pedal1_0.npy",
-    data_dir + "valtozo_v_savvaltas_gas_magas_pedal0_2.npy",
-    data_dir + "valtozo_v_savvaltas_gas_magas_pedal0_5.npy",
-    data_dir + "valtozo_v_savvaltas_gas_magas_pedal1_0.npy"
+file_basenames = [
+    "allando_v_chirp_a1_v5",
+    "allando_v_chirp_a3_v5",
+    "allando_v_chirp_a5_v5",
 ]
+
+file_paths = [os.path.join(data_dir, f"{basename}.npy") for basename in file_basenames]
 
 # Fájlok beolvasása
 data_dict = {os.path.basename(path): np.load(path) for path in file_paths}
@@ -56,8 +53,17 @@ clusters = kmeans.fit_predict(reduced_data)
 
 # Klaszterek vizualizálása
 plt.figure(figsize=(10, 6))
-plt.scatter(reduced_data[:, 0], reduced_data[:, 1], c=clusters, cmap='viridis', alpha=0.5, s=1)
-plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], c='red', marker='x', s=100, label="Klaszterközéppontok")
+plt.scatter(
+    reduced_data[:, 0], reduced_data[:, 1], c=clusters, cmap="viridis", alpha=0.5, s=1
+)
+plt.scatter(
+    kmeans.cluster_centers_[:, 0],
+    kmeans.cluster_centers_[:, 1],
+    c="red",
+    marker="x",
+    s=100,
+    label="Klaszterközéppontok",
+)
 plt.xlabel("t-SNE dimenzió 1")
 plt.ylabel("t-SNE dimenzió 2")
 plt.title("K-Means klaszterezés eredménye t-SNE után")

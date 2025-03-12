@@ -309,30 +309,6 @@ class ManoeuvresFiltering:
 
         return redundant_pairs
 
-    def check_cluster_dominance(self):
-        """
-        Klaszteren belüli dominancia ellenőrzése. Ha egy manőver túlságosan dominál egy klaszterben,
-        akkor lehet, hogy redundáns vagy rosszul definiált.
-        """
-        print("Klaszter dominancia vizsgálata...")
-
-        cluster_counts = defaultdict(lambda: defaultdict(int))
-
-        for idx, cluster in enumerate(self.kmeans_labels):
-            manoeuvre_idx = self.labels[idx]
-            cluster_counts[cluster][manoeuvre_idx] += 1
-
-        for cluster, manoeuvres in cluster_counts.items():
-            total = sum(manoeuvres.values())
-            for manoeuvre, count in manoeuvres.items():
-                ratio = count / total
-                if ratio > 0.8:  # Ha egy manőver >80%-ot fed le egy klaszteren belül
-                    print(
-                        f"Klaszter {cluster}: A(z) {manoeuvre} túlságosan dominál ({ratio:.2%})"
-                    )
-
-        return cluster_counts
-
     def find_uniformly_distributed_manoeuvres(self, threshold=0.05):
         """
         Megvizsgálja, hogy van-e olyan manőver, amely minden klaszterben nagyjából egyforma arányban oszlik meg.
