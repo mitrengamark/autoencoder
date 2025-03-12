@@ -1,35 +1,80 @@
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from sklearn.metrics.pairwise import cosine_similarity
 import seaborn as sns
+from sklearn.metrics.pairwise import cosine_similarity
 
 
-def compute_cosine_similarity_within_groups(grouped_manoeuvres, directory):
-    for idx, group in enumerate(grouped_manoeuvres):
-        valid_manoeuvres = [m for m in group if os.path.exists(os.path.join(directory, m + ".npy"))]
-        
-        if len(valid_manoeuvres) < 2:
-            print(f"Figyelmeztetés: Group {idx+1} csoportban nincs elég adat az összehasonlításhoz.")
-            continue
-        
-        group_vectors = [np.load(os.path.join(directory, m + ".npy")) for m in valid_manoeuvres]
-        similarity_matrix = cosine_similarity(group_vectors)
-        
-        plot_confusion_matrix(valid_manoeuvres, similarity_matrix, f"Group {idx+1}")
+class CosineSimilarity:
+    def __init__(self, directory):
+        self.directory = directory
+        self.similarity_matrices = {}
 
-def plot_confusion_matrix(labels, similarity_matrix, title):
-    plt.figure(figsize=(12, 10))
-    sns.heatmap(similarity_matrix, annot=True, xticklabels=labels, yticklabels=labels, cmap="coolwarm", fmt=".2f")
-    plt.title(f"Cosine Similarity Matrix - {title}")
-    plt.xlabel("Manoeuvres")
-    plt.ylabel("Manoeuvres")
-    plt.xticks(rotation=90)
-    plt.yticks(rotation=0)
-    plt.show()
+    def compute_cosine_similarity_within_groups(self, grouped_manoeuvres):
+        for idx, group in enumerate(grouped_manoeuvres):
+            valid_manoeuvres = [
+                m
+                for m in group
+                if os.path.exists(os.path.join(self.directory, m + ".npy"))
+            ]
+
+            if len(valid_manoeuvres) < 2:
+                print(
+                    f"Figyelmeztetés: Group {idx+1} csoportban nincs elég adat az összehasonlításhoz."
+                )
+                continue
+
+            group_vectors = [
+                np.load(os.path.join(directory, m + ".npy")) for m in valid_manoeuvres
+            ]
+            similarity_matrix = cosine_similarity(group_vectors)
+
+            self.similarity_matrices[idx + 1] = (valid_manoeuvres, similarity_matrix)
+
+            self.plot_confusion_matrix(
+                valid_manoeuvres, similarity_matrix, f"Group {idx+1}"
+            )
+
+    def plot_confusion_matrix(self, labels, similarity_matrix, title):
+        plt.figure(figsize=(12, 10))
+        sns.heatmap(
+            similarity_matrix,
+            annot=True,
+            xticklabels=labels,
+            yticklabels=labels,
+            cmap="coolwarm",
+            fmt=".2f",
+        )
+        plt.title(f"Cosine Similarity Matrix - {title}")
+        plt.xlabel("Manoeuvres")
+        plt.ylabel("Manoeuvres")
+        plt.xticks(rotation=90)
+        plt.yticks(rotation=0)
+        plt.show()
+
+    def detect_redundancy(self, threshold=0.9):
+        redundant_pairs = {}
+
+        for group_idx, (labels, similarity_matrix) in self.similarity_matrices.items():
+            similar_pairs = []
+            for i in range(len(labels)):
+                for j in range(i + 1, len(labels)):  # Csak a felső háromszöget nézzük
+                    if similarity_matrix[i, j] >= threshold:
+                        similar_pairs.append(
+                            [labels[i], labels[j], similarity_matrix[i, j]]
+                        )
+
+            if similar_pairs:
+                redundant_pairs[group_idx] = (
+                    similar_pairs  # Csak a nem üres listákat tároljuk
+                )
+
+        return redundant_pairs  # Egy dictionary, ahol a kulcs a csoport, az érték a hasonló párok listája
+
 
 # Mappa elérési útvonala
 directory = "Bottleneck_data/averaged_manoeuvres"
+cos_sim = CosineSimilarity(directory)
 
 # Felhasználó által meghatározott csoportok
 basic_maneuvers_list = [
@@ -958,4 +1003,13 @@ velocity_maneuvers_list = [
     ],
 ]
 
-compute_cosine_similarity_within_groups(basic_maneuvers_list, directory)
+cos_sim.compute_cosine_similarity_within_groups(basic_maneuvers_list)
+
+# Redundáns párok keresése
+redundant_pairs = cos_sim.detect_redundancy()
+
+# Eredmények kiírása
+for group, pairs in redundant_pairs.items():
+    print(f"\nRedundáns párok Group {group}:")
+    for pair in pairs:
+        print(pair)

@@ -304,6 +304,7 @@ def load_and_average_manoeuvres(directory, save_directory):
         if file.endswith(".npy"):  # Csak .npy fájlokat dolgozunk fel
             file_path = os.path.join(directory, file)
             data = np.load(file_path)  # Betöltés
+            data = data[2500:]
             
             if data.shape[1] != 8:
                 print(f"Figyelmeztetés: {file} nem megfelelő alakú ({data.shape}), kihagyva.")
