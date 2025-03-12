@@ -112,9 +112,9 @@ class Visualise:
             self.reduced_data = np.vstack(new_data)
             self.labels = np.concatenate(new_labels)
 
-            # save_path = f"Bottleneck_data/single_manoeuvres/{folder_name}.npy"
-            # os.makedirs(os.path.dirname(save_path), exist_ok=True)
-            # np.save(save_path, self.reduced_data)  # Mentés NumPy formátumban
+            save_path = f"Reduced_bottleneck_data/single_manoeuvres/{folder_name}.npy"
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            np.save(save_path, self.reduced_data)  # Mentés NumPy formátumban
 
     def visualize_with_tsne(self, plot=tsneplot):
         """

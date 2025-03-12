@@ -403,14 +403,14 @@ class Training:
         np.save(save_path, bottleneck_outputs)  # Mentés NumPy formátumban
 
         # Vizualizáció
-        # vs = Visualise(
-        #     bottleneck_outputs=bottleneck_outputs,
-        #     labels=labels,
-        #     model_name=self.model_name,
-        #     label_mapping=self.label_mapping,
-        #     sign_change_indices=self.sign_change_indices,
-        # )
-        # latent_data, label = vs.visualize_with_tsne()
+        vs = Visualise(
+            bottleneck_outputs=bottleneck_outputs,
+            labels=labels,
+            model_name=self.model_name,
+            label_mapping=self.label_mapping,
+            sign_change_indices=self.sign_change_indices,
+        )
+        latent_data, label = vs.visualize_with_tsne()
         # if num_manoeuvres == 1:
         #     outlier_indices = detect_outliers(latent_data[2500:])
         #     filtered_data = np.delete(latent_data[2500:], outlier_indices, axis=0)
