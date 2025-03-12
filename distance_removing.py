@@ -89,7 +89,7 @@ class RedundancyFilter:
         return redundant_pairs
 
 # Mappa, ahol az adatok találhatók
-data_dir = "Bottleneck_data/single_manoeuvres/"
+data_dir = "Reduced_bottleneck_data/single_manoeuvres/"
 
 # Adatok beolvasása
 file_paths = [

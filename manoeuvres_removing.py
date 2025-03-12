@@ -4,9 +4,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
 
 # Mappa, ahol az adatok találhatók
-data_dir = "Bottleneck_data/single_manoeuvres/"
+data_dir = "Reduced_bottleneck_data/single_manoeuvres/"
 
 # Adatok beolvasása
 file_paths = [
@@ -27,9 +28,18 @@ data_dict = {os.path.basename(path): np.load(path) for path in file_paths}
 # Összes adat összefűzése
 all_data = np.vstack(list(data_dict.values()))
 
-# t-SNE alkalmazása 2D-re csökkentéshez
-tsne = TSNE(n_components=2, perplexity=30, random_state=42, n_iter=1000)
-reduced_data = tsne.fit_transform(all_data)
+reduced_data = all_data
+
+# # t-SNE alkalmazása 2D-re csökkentéshez
+# tsne = TSNE(n_components=2, perplexity=30, random_state=42, n_iter=1000)
+# reduced_data = tsne.fit_transform(all_data)
+
+# # PCA alkalmazása 2D-re csökkentéshez
+# pca = PCA(n_components=2)
+# reduced_data = pca.fit_transform(all_data)
+
+# # PCA variancia arányok kiírása
+# print("PCA magyarázott variancia arányok:", pca.explained_variance_ratio_)
 
 # t-SNE eredmény vizualizálása
 plt.figure(figsize=(10, 6))
