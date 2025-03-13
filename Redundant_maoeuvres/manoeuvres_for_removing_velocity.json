@@ -1,0 +1,93 @@
+{
+    "1": [
+        "allando_v_sin_a2_f1_v5",
+        "allando_v_sin_a8_f1_v5",
+        "allando_v_sin_a8_f5_v5"
+    ],
+    "2": [
+        "allando_v_sin_a2_f1_v10"
+    ],
+    "3": [
+        "allando_v_sin_a8_f5_v15"
+    ],
+    "4": [
+        "allando_v_savvaltas_alacsony_v20",
+        "allando_v_savvaltas_kozepes_v20"
+    ],
+    "5": [
+        "allando_v_savvaltas_alacsony_v25"
+    ],
+    "6": [
+        "allando_v_sin_a8_f1_v30"
+    ],
+    "8": [
+        "allando_v_sin_a2_f5_v40",
+        "allando_v_chirp_a1_v40",
+        "allando_v_sin_a8_f1_v40"
+    ],
+    "9": [
+        "allando_v_sin_a2_f1_v45",
+        "allando_v_sin_a8_f3_v45",
+        "allando_v_sin_a2_f7_v45"
+    ],
+    "10": [
+        "allando_v_sin_a8_f5_v50"
+    ],
+    "12": [
+        "allando_v_savvaltas_kozepes_v60",
+        "allando_v_sin_a8_f5_v60"
+    ],
+    "13": [
+        "allando_v_sin_a2_f1_v65"
+    ],
+    "14": [
+        "allando_v_savvaltas_kozepes_v70",
+        "allando_v_sin_a2_f3_v70",
+        "allando_v_sin_a8_f3_v70"
+    ],
+    "15": [
+        "allando_v_savvaltas_alacsony_v75",
+        "allando_v_sin_a2_f3_v75",
+        "allando_v_savvaltas_kozepes_v75"
+    ],
+    "16": [
+        "allando_v_savvaltas_kozepes_v80",
+        "allando_v_sin_a2_f1_v80",
+        "allando_v_sin_a2_f3_v80",
+        "allando_v_sin_a8_f5_v80"
+    ],
+    "17": [
+        "allando_v_chirp_a3_v85"
+    ],
+    "18": [
+        "allando_v_sin_a8_f1_v90",
+        "allando_v_chirp_a3_v90"
+    ],
+    "20": [
+        "allando_v_savvaltas_kozepes_v100"
+    ],
+    "21": [
+        "allando_v_sin_a2_f5_v105"
+    ],
+    "23": [
+        "allando_v_savvaltas_alacsony_v115"
+    ],
+    "24": [
+        "allando_v_sin_a2_f1_v120",
+        "allando_v_sin_a8_f7_v120"
+    ],
+    "25": [
+        "allando_v_savvaltas_magas_v125",
+        "allando_v_sin_a2_f1_v125"
+    ],
+    "26": [
+        "allando_v_sin_a2_f5_v130"
+    ],
+    "27": [
+        "allando_v_savvaltas_alacsony_v135",
+        "allando_v_savvaltas_kozepes_v135",
+        "allando_v_sin_a2_f3_v135",
+        "allando_v_sin_a8_f3_v135",
+        "allando_v_chirp_a1_v135"
+    ]
+}
