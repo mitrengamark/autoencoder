@@ -319,13 +319,33 @@ def load_and_average_manoeuvres(directory, save_directory):
     
     return averaged_manoeuvres
 
-# Mappa elérési útvonala
-directory = "Bottleneck_data/single_manoeuvres"
-save_directory = "Bottleneck_data/averaged_manoeuvres"
-averaged_results = load_and_average_manoeuvres(directory, save_directory)
+def differences_data(in_dir, out_dir):
+    # Ha a kimeneti mappa nem létezik, létrehozzuk
+    os.makedirs(out_dir, exist_ok=True)
 
-# Példa egy fájl eredményének kiírására
-for filename, avg_vector in averaged_results.items():
-    print(f"{filename}: {avg_vector}")
+    # Bemeneti mappa összes CSV fájljának feldolgozása
+    for filename in os.listdir(in_dir):
+        if filename.endswith(".csv"):  # Csak CSV fájlokat dolgoz fel
+            input_path = os.path.join(in_dir, filename)
+            
+            # Új fájlnév előállítása (pl. "maneuver1.csv" -> "maneuver1_difference.csv")
+            new_filename = filename.replace(".csv", "_difference.csv")
+            output_path = os.path.join(out_dir, new_filename)
 
-print(f"Összesen {len(averaged_results)} fájl átlagolt eredménye lett kiszámolva és mentve.")
+            # Fájl beolvasása
+            df = pd.read_csv(input_path)
+
+            # Sorok különbségének kiszámítása
+            df_diff = df.diff().dropna()
+
+            # Eredmény mentése új fájlként
+            df_diff.to_csv(output_path, index=False)
+
+            print(f"Feldolgozva: {filename} -> Mentve: {new_filename}")
+
+    print("Minden fájl feldolgozása kész!")
+
+# Mappák megadása
+input_folder = "data3"
+output_folder = "data_difference"
+differences_data(input_folder, output_folder)

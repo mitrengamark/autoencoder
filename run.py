@@ -10,6 +10,7 @@ from Factory.variational_autoencoder import VariationalAutoencoder
 from Factory.masked_autoencoder import MaskedAutoencoder
 from Factory.optimizer import optimizer_maker
 from Analyse.neptune_utils import init_neptune
+from Analyse.process_figure import process_figures
 from Config.load_config import seed, training_model, save_model, test_mode, plot
 
 torch.cuda.empty_cache()
@@ -85,6 +86,8 @@ if test_mode == 0:
 elif test_mode == 1:
     # latent_data, label, bottleneck_outputs, labels = training.test()
     training.test()
+else:
+    process_figures()
 
     # latent_data = latent_data[2500:]
     # # Ellenőrzés

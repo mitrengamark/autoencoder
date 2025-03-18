@@ -7,3 +7,5 @@ __pycache__/
 /.neptune
 /data3/**
 /Results/**
+/data_difference/**
+/Process_figures/**
