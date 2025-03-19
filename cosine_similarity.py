@@ -54,11 +54,11 @@ class CosineSimilarity:
         plt.xticks(rotation=90)
         plt.yticks(rotation=0)
 
-        plt.savefig(f"cosine_similarity_matrix_{title}.png")
+        # plt.savefig(f"cosine_similarity_matrix_{title}.png")
 
         # plt.show()
 
-    def detect_redundancy(self, threshold=0.95):
+    def detect_redundancy(self, threshold=0.99):
         redundant_pairs = {}
 
         for group_idx, (labels, similarity_matrix) in self.similarity_matrices.items():
@@ -100,16 +100,16 @@ class CosineSimilarity:
 
             removed_manoeuvres_by_group[group_idx] = removed_manoeuvres
 
-        #  # Az eltávolított manőverek mentése JSON fájlba
-        # with open("manoeuvres_for_removing_95.json", "w") as file:
-        #     json.dump(removed_manoeuvres_by_group, file, indent=4)
+         # Az eltávolított manőverek mentése JSON fájlba
+        with open("manoeuvres_for_removing_99.json", "w") as file:
+            json.dump(removed_manoeuvres_by_group, file, indent=4)
 
         return removed_manoeuvres_by_group
 
 
 
 # Mappa elérési útvonala
-directory = "Bottleneck_data/averaged_manoeuvres"
+directory = "data_bottleneck/averaged_manoeuvres"
 cos_sim = CosineSimilarity(directory)
 
 # Felhasználó által meghatározott csoportok
@@ -1039,7 +1039,7 @@ velocity_maneuvers_list = [
     ],
 ]
 
-cos_sim.compute_cosine_similarity_within_groups(velocity_maneuvers_list)
+cos_sim.compute_cosine_similarity_within_groups(basic_maneuvers_list)
 
 # Redundáns párok keresése
 redundant_pairs = cos_sim.detect_redundancy()
