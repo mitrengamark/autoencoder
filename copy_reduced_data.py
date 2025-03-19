@@ -2,7 +2,7 @@ import os
 import shutil
 import json
 
-def copy_filtered_manoeuvres(source_dir, destination_dir, removed_manoeuvres_file="Redundant_manoeuvres/manoeuvres_for_removing_velocity_95.json"):
+def copy_filtered_manoeuvres(source_dir, destination_dir, removed_manoeuvres_file="Redundant_manoeuvres/manoeuvres_for_removing_velocity.json"):
     """
     Átmásolja a manővereket a source_dir-ből a destination_dir-be, 
     kivéve azokat, amelyek szerepelnek a removed_manoeuvres.json fájlban.
@@ -34,6 +34,10 @@ def copy_filtered_manoeuvres(source_dir, destination_dir, removed_manoeuvres_fil
     for filename in os.listdir(source_dir):
         manoeuvre_name, ext = os.path.splitext(filename)  # Fájlnév és kiterjesztés szétválasztása
 
+        # Ha a fájlnév "_mat" végződésű, akkor eltávolítjuk
+        if manoeuvre_name.endswith("_mat") or manoeuvre_name.endswith("_csv"):
+            manoeuvre_name = manoeuvre_name[:-4]  # Levágjuk a "_mat" részt
+
         if manoeuvre_name in removed_manoeuvres:
             print(f"Kihagyva: {filename}")
             continue  # Ne másoljuk ezt a fájlt
@@ -47,6 +51,6 @@ def copy_filtered_manoeuvres(source_dir, destination_dir, removed_manoeuvres_fil
     print("\nManőverek sikeresen átmásolva a szűrés után!")
 
 source_directory = "data/mat_files"
-destination_directory = "filtered_data/velocity95/whole_mat_files"
+destination_directory = "data_filtered_mat/velocity90/whole_mat_files"
 
 copy_filtered_manoeuvres(source_directory, destination_directory)
