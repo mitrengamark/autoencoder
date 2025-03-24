@@ -345,7 +345,5 @@ def differences_data(in_dir, out_dir):
 
     print("Minden fájl feldolgozása kész!")
 
-# Mappák megadása
-input_folder = "data3"
-output_folder = "data_difference"
-differences_data(input_folder, output_folder)
+manoeuvres_name = collect_maoeuver_names()
+print(manoeuvres_name)

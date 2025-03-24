@@ -34,29 +34,50 @@ class CosineSimilarity:
             self.similarity_matrices[idx + 1] = (valid_manoeuvres, similarity_matrix)
 
             self.plot_confusion_matrix(
-                valid_manoeuvres, similarity_matrix, f"Group {idx+1}"
+                valid_manoeuvres, similarity_matrix
             )
 
-    def plot_confusion_matrix(self, labels, similarity_matrix, title):
+    def plot_confusion_matrix(self, manoeuvres, similarity_matrix):
+        # Csoportnév kinyerése (prefix alapján)
+        first = manoeuvres[0]
+        if first.startswith("allando_v_chirp"):
+            group_name = "allando_v_chirp"
+        elif first.startswith("allando_v_sin"):
+            group_name = "allando_v_sin"
+        elif first.startswith("allando_v_savvaltas"):
+            group_name = "allando_v_savvaltas"
+        elif first.startswith("valtozo_v_savvaltas_fek"):
+            group_name = "valtozo_v_savvaltas_fek"
+        elif first.startswith("valtozo_v_savvaltas_gas"):
+            group_name = "valtozo_v_savvaltas_gas"
+        elif first.startswith("valtozo_v_sin_fek"):
+            group_name = "valtozo_v_sin_fek"
+        elif first.startswith("valtozo_v_sin_gas"):
+            group_name = "valtozo_v_sin_gas"
+        else:
+            group_name = "ismeretlen_csoport"
+
+        # Label-ek: a group_name utáni rész
+        labels = [m.replace(group_name + "_", "") for m in manoeuvres]
+
         plt.figure(figsize=(12, 10))
         annot_flag = True if len(labels) <= 24 else False
         sns.heatmap(
             similarity_matrix,
             annot=annot_flag,
-            xticklabels=labels,
-            yticklabels=labels,
+            # xticklabels=labels,
+            # yticklabels=labels,
             cmap="coolwarm",
             fmt=".2f",
         )
-        plt.title(f"Cosine Similarity Matrix - {title}")
+        plt.title(f"Cosine Similarity Matrix - {group_name}")
         plt.xlabel("Manoeuvres")
         plt.ylabel("Manoeuvres")
         plt.xticks(rotation=90)
         plt.yticks(rotation=0)
 
-        # plt.savefig(f"cosine_similarity_matrix_{title}.png")
-
-        # plt.show()
+        plt.savefig(f"cosine_similarity_matrix_{group_name}.png")
+        plt.show()
 
     def detect_redundancy(self, threshold=0.99):
         redundant_pairs = {}
