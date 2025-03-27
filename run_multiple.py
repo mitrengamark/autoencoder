@@ -4,6 +4,7 @@ import numpy as np
 import csv
 from configobj import ConfigObj
 from Analyse.manoeuvers_plot_together import plot_all_tsne_data
+from Analyse.saliency_map import plot_saliency_map
 from Reduction.detect_overlap import DetectOverlap
 from Reduction.manoeuvres_filtering import ManoeuvresFiltering
 from Config.load_config import num_manoeuvres, overlay_multiple_manoeuvres, filtering
@@ -1106,6 +1107,17 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
             process.wait()
             print(f"run.py futtatás {current_run}/{total_runs} befejeződött!")
 
+            try:
+                with open("saliency_output.json", "r") as f:
+                    saliency_data = json.load(f)
+                    saliency = np.array(saliency_data["saliency"])
+                    features = saliency_data["features"]
+                    if "all_saliency_values" not in globals():
+                        all_saliency_values = []
+                    all_saliency_values.append(saliency)
+            except Exception as e:
+                print(f"❌ Hiba a saliency beolvasásakor: {e}")
+
             # # 6 JSON fájl beolvasása
             # try:
             #     output_file = "tsne_output.json"
@@ -1179,3 +1191,7 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
 #         writer.writerow([idx, pairs])
 
 # print(f"Redundáns párok CSV fájlba mentve: {csv_output}")
+
+if "all_saliency_values" in globals():
+    avg_saliency = np.mean(all_saliency_values, axis=0)
+    plot_saliency_map(avg_saliency, features)

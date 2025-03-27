@@ -47,6 +47,7 @@ dp = DataProcess()
     label_mapping,
     sign_change_indices,
     selected_columns,
+    all_columns,
 ) = dp.train_test_split()
 
 train_input_dim = trainloader.dataset[0][0].shape[0]
@@ -77,6 +78,7 @@ training = Training(
     sign_change_indices=sign_change_indices,
     label_mapping=label_mapping,
     selected_columns=selected_columns,
+    all_columns=all_columns,
 )
 
 if test_mode == 0:
@@ -84,11 +86,8 @@ if test_mode == 0:
     if save_model == 1:
         training.save_model()
 elif test_mode == 1:
-    # latent_data, label, bottleneck_outputs, labels = training.test()
-    training.test()
-else:
-    process_figures()
-
+    latent_data, label, bottleneck_outputs, labels, avg_saliency = training.test()
+    
     # latent_data = latent_data[2500:]
     # # Ellenőrzés
     # print("latent_data type:", type(latent_data))
@@ -120,3 +119,14 @@ else:
 
     # print(f"TSNE adatok elmentve: {output_file}")
     # print(f"Bottleneck adatok elmentve: {output_file_2}")
+
+    # Mentés JSON fájlba
+    with open("saliency_output.json", "w") as f:
+        json.dump({
+            "saliency": avg_saliency.tolist(),
+            "features": all_columns
+        }, f)
+
+    print("Saliency elmentve: saliency_output.json")
+else:
+    process_figures()

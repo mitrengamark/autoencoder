@@ -152,6 +152,7 @@ class DataProcess:
         for file_path, label in zip(self.file_paths, self.labels):
             df = pd.read_csv(file_path)
 
+            self.all_columns = list(df.columns)
             self.selected_columns = [
                 df.columns.get_loc(param) for param in parameters if param in df.columns
             ]
@@ -309,4 +310,5 @@ class DataProcess:
             label_mapping,
             self.sign_change_indices,
             self.selected_columns,
+            self.all_columns,
         )

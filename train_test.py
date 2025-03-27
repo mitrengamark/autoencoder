@@ -8,6 +8,7 @@ from Factory.masked_autoencoder import MaskedAutoencoder
 from Factory.scheduler import scheduler_maker
 from Analyse.decrase_dim import Visualise
 from Analyse.validation import reconstruction_accuracy
+from Analyse.saliency_map import compute_saliency_map, plot_saliency_map
 from Reduction.data_removing import (
     remove_redundant_data,
     plot_removed_data,
@@ -60,6 +61,7 @@ class Training:
         sign_change_indices=None,
         label_mapping=None,
         selected_columns=None,
+        all_columns=None,
     ):
 
         # Adatbetöltők
@@ -80,6 +82,7 @@ class Training:
         self.labels = labels
         self.label_mapping = label_mapping
         self.selected_columns = selected_columns
+        self.all_columns = all_columns
 
         # Egyéb
         self.run = run
@@ -490,8 +493,19 @@ class Training:
                     "Unsupported normalization method. Expected 'min_max', 'z_score', 'robust_scaler' or 'log_transform'!"
                 )
 
+        # Saliency map
+        print("\n--- Saliency map számítása ---")
+        saliencies = []
+        for i in range(whole_input.shape[0]):
+            saliency = compute_saliency_map(whole_input[i], whole_output[i], self.device)
+            saliencies.append(saliency)
+
+        avg_saliency = torch.stack(saliencies).mean(dim=0)
+        # plot_saliency_map(self.all_columns, avg_saliency)
+
+        # Accuracy
         reconstruction_accuracy(whole_input, whole_output, self.selected_columns)
-        # return latent_data, label, bottleneck_outputs, labels
+        return latent_data, label, bottleneck_outputs, labels, avg_saliency
 
     def save_model(self):
         torch.save(self.model.state_dict(), model_path)
