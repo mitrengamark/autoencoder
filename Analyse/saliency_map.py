@@ -17,7 +17,7 @@ def compute_saliency_map(input, output, device):
 
 def plot_saliency_map(all_columns, avg_saliency):
     plt.figure(figsize=(10, 5))
-    plt.bar(all_columns, avg_saliency.numpy())
+    plt.bar(all_columns, avg_saliency)
     plt.title("Saliency map - átlagolt (rekonstrukciós gradiens alapján)")
     plt.ylabel("Absz. gradiens (fontosság)")
     plt.xticks(rotation=45)
