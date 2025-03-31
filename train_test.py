@@ -497,11 +497,13 @@ class Training:
         print("\n--- Saliency map számítása ---")
         saliencies = []
         for i in range(whole_input.shape[0]):
-            saliency = compute_saliency_map(whole_input[i], whole_output[i], self.device)
+            saliency = compute_saliency_map(
+                whole_input[i], whole_output[i], self.device
+            )
             saliencies.append(saliency)
 
         avg_saliency = torch.stack(saliencies).mean(dim=0)
-        # plot_saliency_map(self.all_columns, avg_saliency)
+        # plot_saliency_map(self.all_columns, avg_saliency.numpy())
 
         # Accuracy
         reconstruction_accuracy(whole_input, whole_output, self.selected_columns)

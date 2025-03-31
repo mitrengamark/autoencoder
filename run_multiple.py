@@ -4,10 +4,10 @@ import numpy as np
 import csv
 from configobj import ConfigObj
 from Analyse.manoeuvers_plot_together import plot_all_tsne_data
-from Analyse.saliency_map import plot_saliency_map
+from Analyse.saliency_map import plot_saliency_map, saved_saliency_map_data
 from Reduction.detect_overlap import DetectOverlap
 from Reduction.manoeuvres_filtering import ManoeuvresFiltering
-from Config.load_config import num_manoeuvres, overlay_multiple_manoeuvres, filtering
+from Config.load_config import num_manoeuvres, overlay_multiple_manoeuvres, filtering, load_saliency
 
 
 # A config.ini fájl elérési útja
@@ -1193,5 +1193,9 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
 # print(f"Redundáns párok CSV fájlba mentve: {csv_output}")
 
 if "all_saliency_values" in globals():
-    avg_saliency = np.mean(all_saliency_values, axis=0)
-    plot_saliency_map(avg_saliency, features)
+    if load_saliency == 0:
+        avg_saliency = np.mean(all_saliency_values, axis=0)
+    else:
+        features, avg_saliency = saved_saliency_map_data()
+        
+    plot_saliency_map(features, avg_saliency)

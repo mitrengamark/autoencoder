@@ -77,6 +77,8 @@ step = int(config["Plot"]["step"])
 save_fig = int(config["Plot"]["save_fig"])
 folder_name = config.get("Plot", "folder_name")
 overlay_multiple_manoeuvres = int(config["Plot"]["overlay_multiple_manoeuvres"])
+save_saliency = int(config["Plot"]["save_saliency"])
+load_saliency = int(config["Plot"]["load_saliency"])
 
 # Filtering
 filtering = int(config["Filtering"]["filtering"])
