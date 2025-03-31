@@ -2,12 +2,19 @@ import subprocess
 import json
 import numpy as np
 import csv
+import sys
+import os
 from configobj import ConfigObj
 from Analyse.manoeuvers_plot_together import plot_all_tsne_data
 from Analyse.saliency_map import plot_saliency_map, saved_saliency_map_data
 from Reduction.detect_overlap import DetectOverlap
 from Reduction.manoeuvres_filtering import ManoeuvresFiltering
-from Config.load_config import num_manoeuvres, overlay_multiple_manoeuvres, filtering, load_saliency
+from Config.load_config import (
+    num_manoeuvres,
+    overlay_multiple_manoeuvres,
+    filtering,
+    load_saliency,
+)
 
 
 # A config.ini fájl elérési útja
@@ -1099,9 +1106,7 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
 
             # 4 Elindítjuk a run.py-t és várunk az eredményre
             print(f"Indítom a run.py-t a(z) {maneuver} manőverrel...")
-            process = subprocess.Popen(
-                ["python", "run.py"]
-            )  # , stdout=subprocess.PIPE, text=True)
+            process = subprocess.Popen(["python", "run.py"], stdout=subprocess.DEVNULL)
 
             # 5 Megvárjuk a futás végét
             process.wait()
@@ -1116,7 +1121,7 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
                         all_saliency_values = []
                     all_saliency_values.append(saliency)
             except Exception as e:
-                print(f"❌ Hiba a saliency beolvasásakor: {e}")
+                print(f"Hiba a saliency beolvasásakor: {e}")
 
             # # 6 JSON fájl beolvasása
             # try:
@@ -1197,5 +1202,5 @@ if "all_saliency_values" in globals():
         avg_saliency = np.mean(all_saliency_values, axis=0)
     else:
         features, avg_saliency = saved_saliency_map_data()
-        
+
     plot_saliency_map(features, avg_saliency)
