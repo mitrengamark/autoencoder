@@ -31,6 +31,9 @@ else:
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if torch.cuda.is_available():
     torch.cuda.manual_seed(seed)
+    print(f"CUDA elérhető: {torch.cuda.get_device_name(0)}")
+else:
+    print("CUDA nem elérhető, CPU használatban.")
 
 dp = DataProcess()
 
