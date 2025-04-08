@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import os
 import csv
 import pandas as pd
-from Config.load_config import save_saliency
+from Config.load_config import save_saliency, folder_name
 
 def compute_saliency_map(input, output, device):
     input_tensor = torch.tensor(input, dtype=torch.float32).unsqueeze(0).to(device)
@@ -39,12 +39,12 @@ def plot_saliency_map(all_columns, avg_saliency, save_dir="Saliency_Results"):
     if save_saliency == 1:
         # Kép mentése
         os.makedirs(save_dir, exist_ok=True)
-        image_path = os.path.join(save_dir, "saliency_map.png")
+        image_path = os.path.join(save_dir, f"{folder_name}_saliency_map.png")
         plt.savefig(image_path)
         print(f"Saliency map ábra elmentve ide: {image_path}")
 
         # CSV mentés
-        csv_path = os.path.join(save_dir, "saliency_values.csv")
+        csv_path = os.path.join(save_dir, f"{folder_name}_saliency_values.csv")
         with open(csv_path, mode="w", newline="") as csv_file:
             writer = csv.writer(csv_file)
             writer.writerow(["Feature", "Saliency"])

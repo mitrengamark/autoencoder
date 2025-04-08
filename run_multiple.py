@@ -996,9 +996,7 @@ current_run = 0
 
 if num_manoeuvres > 1:
     # Manővercsoportonként beállítható paraméterek
-    batch_sizes = [
-        9
-    ]  # [84, 224, 84, 9, 9, 24, 24]  # Hány manővert dolgozzunk fel egyszerre?
+    batch_sizes = [2, 2] # [84, 224, 84, 9, 9, 24, 24]  # Hány manővert dolgozzunk fel egyszerre?
     steps = batch_sizes  # Hány lépésenként lépjünk tovább az adott típusban?
     total_runs = sum(
         len(maneuvers) // steps[idx] for idx, maneuvers in enumerate(maneuvers_list)
@@ -1055,36 +1053,50 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
             process.wait()
             print(f"run.py futtatás {current_run}/{total_runs} befejeződött!")
 
-            # 6 JSON fájl beolvasása
             try:
-                output_file = "tsne_output.json"
-                output_file_2 = "bottleneck_output.json"
-                with open(output_file, "r") as f:
-                    tsne_data = json.load(f)
+                with open("saliency_output.json", "r") as f:
+                    saliency_data = json.load(f)
+                    saliency = np.array(saliency_data["saliency"])
+                    features = saliency_data["features"]
+                    if "all_saliency_values" not in globals():
+                        all_saliency_values = []
+                    all_saliency_values.append(saliency)
+            except Exception as e:
+                print(f"Hiba a saliency beolvasásakor: {e}")
 
-                latent_data = np.array(tsne_data["latent_data"])
-                latent_label = np.array(tsne_data["labels"])
+            # 6 JSON fájl beolvasása
+            # try:
+            #     output_file = "tsne_output.json"
+            #     output_file_2 = "bottleneck_output.json"
+            #     with open(output_file, "r") as f:
+            #         tsne_data = json.load(f)
 
-                all_tsne_data.append(latent_data)
-                all_tsne_label.append(latent_label)
+            #     latent_data = np.array(tsne_data["latent_data"])
+            #     latent_label = np.array(tsne_data["labels"])
 
-                with open(output_file_2, "r") as f:
-                    bottleneck_output_data = json.load(f)
+            #     all_tsne_data.append(latent_data)
+            #     all_tsne_label.append(latent_label)
 
-                bottleneck_data = np.array(bottleneck_output_data["bottleneck_outputs"])
-                bottleneck_label = np.array(bottleneck_output_data["labels"])
-                label_mapping = bottleneck_output_data["label_mapping"]
+            #     with open(output_file_2, "r") as f:
+            #         bottleneck_output_data = json.load(f)
 
-                all_bottleneck_outputs.append(bottleneck_data)
-                all_bottleneck_labels.append(bottleneck_label)
+            #     bottleneck_data = np.array(bottleneck_output_data["bottleneck_outputs"])
+            #     bottleneck_label = np.array(bottleneck_output_data["labels"])
+            #     label_mapping = bottleneck_output_data["label_mapping"]
 
-                print(f"TSNE adatok sikeresen beolvasva: {output_file}")
-                print(f"Bottleneck adatok sikeresen beolvasva: {output_file_2}")
+            #     all_bottleneck_outputs.append(bottleneck_data)
+            #     all_bottleneck_labels.append(bottleneck_label)
+
+            #     print(f"TSNE adatok sikeresen beolvasva: {output_file}")
+            #     print(f"Bottleneck adatok sikeresen beolvasva: {output_file_2}")
 
             except Exception as e:
                 print(f"Hiba történt a TSNE adatok beolvasásakor: {e}")
     else:
         print(f"\n=== {group_idx+1}. Manővercsoport ===")
+
+        if "group_saliency_values" not in globals():
+            group_saliency_values = []
 
         # Iterálás minden egyes manőveren külön
         for i, maneuver in enumerate(maneuvers):
@@ -1120,8 +1132,19 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
                     if "all_saliency_values" not in globals():
                         all_saliency_values = []
                     all_saliency_values.append(saliency)
+                    group_saliency_values.append(saliency)
             except Exception as e:
                 print(f"Hiba a saliency beolvasásakor: {e}")
+
+        # Manővercsoport végén: kiátlagolás és mentés
+        if group_saliency_values:
+            avg_saliency = np.mean(group_saliency_values, axis=0)
+            config = ConfigObj(CONFIG_PATH, encoding="utf-8")
+            folder_name = folder_names[group_idx]  # pl. "allando_v_savvaltas"
+            config["Plot"]["folder_name"] = folder_name
+            config.write()
+            plot_saliency_map(features, avg_saliency)
+            group_saliency_values.clear()
 
             # # 6 JSON fájl beolvasása
             # try:
