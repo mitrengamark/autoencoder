@@ -20,7 +20,7 @@ def compute_saliency_map(input, output, device):
 
 
 def plot_saliency_map(
-    all_columns, avg_saliency, maneouvre_group_name, save_dir="Saliency_Results"
+    all_columns, avg_saliency, maneouvre_group_name, save_dir_png="Saliency_Results/PNG", save_dir_csv="Saliency_Results/csv"
 ):
     if isinstance(avg_saliency, torch.Tensor):
         avg_saliency = avg_saliency.numpy()
@@ -41,16 +41,17 @@ def plot_saliency_map(
     if save_saliency == 1:
         # Kép mentése
         model_name = os.path.splitext(os.path.basename(saved_model))[0]
-        os.makedirs(save_dir, exist_ok=True)
+        os.makedirs(save_dir_png, exist_ok=True)
         image_path = os.path.join(
-            save_dir, f"{maneouvre_group_name}_{model_name}_saliency_map.png"
+            save_dir_png, f"{maneouvre_group_name}_{model_name}_saliency_map.png"
         )
         plt.savefig(image_path)
         print(f"Saliency map ábra elmentve ide: {image_path}")
 
         # CSV mentés
+        os.makedirs(save_dir_csv, exist_ok=True)
         csv_path = os.path.join(
-            save_dir, f"{maneouvre_group_name}_{model_name}_saliency_values.csv"
+            save_dir_csv, f"{maneouvre_group_name}_{model_name}_saliency_values.csv"
         )
         with open(csv_path, mode="w", newline="") as csv_file:
             writer = csv.writer(csv_file)
