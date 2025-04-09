@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import os
 import csv
 import pandas as pd
-from Config.load_config import save_saliency
+from Config.load_config import save_saliency, saved_model
 
 
 def compute_saliency_map(input, output, device):
@@ -40,13 +40,18 @@ def plot_saliency_map(
 
     if save_saliency == 1:
         # Kép mentése
+        model_name = os.path.splitext(os.path.basename(saved_model))[0]
         os.makedirs(save_dir, exist_ok=True)
-        image_path = os.path.join(save_dir, f"{maneouvre_group_name}_saliency_map.png")
+        image_path = os.path.join(
+            save_dir, f"{maneouvre_group_name}_{model_name}_saliency_map.png"
+        )
         plt.savefig(image_path)
         print(f"Saliency map ábra elmentve ide: {image_path}")
 
         # CSV mentés
-        csv_path = os.path.join(save_dir, f"{maneouvre_group_name}_saliency_values.csv")
+        csv_path = os.path.join(
+            save_dir, f"{maneouvre_group_name}_{model_name}_saliency_values.csv"
+        )
         with open(csv_path, mode="w", newline="") as csv_file:
             writer = csv.writer(csv_file)
             writer.writerow(["Feature", "Saliency"])

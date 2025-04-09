@@ -1220,10 +1220,10 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
 
 # print(f"Redundáns párok CSV fájlba mentve: {csv_output}")
 
-if "all_saliency_values" in globals():
-    if load_saliency == 0:
-        avg_saliency = np.mean(all_saliency_values, axis=0)
-    else:
-        features, avg_saliency = saved_saliency_map_data()
+# if "all_saliency_values" in globals():
+#     if load_saliency == 0:
+#         avg_saliency = np.mean(all_saliency_values, axis=0)
+#     else:
+#         features, avg_saliency = saved_saliency_map_data()
 
-    plot_saliency_map(features, avg_saliency)
+#     plot_saliency_map(features, avg_saliency)
