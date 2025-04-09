@@ -996,7 +996,10 @@ current_run = 0
 
 if num_manoeuvres > 1:
     # Manővercsoportonként beállítható paraméterek
-    batch_sizes = [2, 2] # [84, 224, 84, 9, 9, 24, 24]  # Hány manővert dolgozzunk fel egyszerre?
+    batch_sizes = [
+        2,
+        2,
+    ]  # [84, 224, 84, 9, 9, 24, 24]  # Hány manővert dolgozzunk fel egyszerre?
     steps = batch_sizes  # Hány lépésenként lépjünk tovább az adott típusban?
     total_runs = sum(
         len(maneuvers) // steps[idx] for idx, maneuvers in enumerate(maneuvers_list)
@@ -1139,11 +1142,8 @@ for group_idx, maneuvers in enumerate(maneuvers_list):
         # Manővercsoport végén: kiátlagolás és mentés
         if group_saliency_values:
             avg_saliency = np.mean(group_saliency_values, axis=0)
-            config = ConfigObj(CONFIG_PATH, encoding="utf-8")
-            folder_name = folder_names[group_idx]  # pl. "allando_v_savvaltas"
-            config["Plot"]["folder_name"] = folder_name
-            config.write()
-            plot_saliency_map(features, avg_saliency)
+            maneouvre_group_name = folder_names[group_idx]  # pl. "allando_v_savvaltas"
+            plot_saliency_map(features, avg_saliency, maneouvre_group_name)
             group_saliency_values.clear()
 
             # # 6 JSON fájl beolvasása

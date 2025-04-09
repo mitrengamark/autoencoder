@@ -10,3 +10,5 @@ __pycache__/
 /data_difference/**
 /Process_figures/**
 /data_filtered_mat/**
+/Bottleneck_data/**
+/Reduced_bottleneck_data/**
