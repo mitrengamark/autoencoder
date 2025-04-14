@@ -299,7 +299,8 @@ def load_and_average_manoeuvres(directory, save_directory):
         os.makedirs(save_directory)
     
     averaged_manoeuvres = {}
-    
+    i = 0
+
     for file in os.listdir(directory):
         if file.endswith(".npy"):  # Csak .npy fájlokat dolgozunk fel
             file_path = os.path.join(directory, file)
@@ -308,6 +309,7 @@ def load_and_average_manoeuvres(directory, save_directory):
             
             if data.shape[1] != 8:
                 print(f"Figyelmeztetés: {file} nem megfelelő alakú ({data.shape}), kihagyva.")
+                i += 1
                 continue
             
             average_vector = np.mean(data, axis=0)  # Átlagolás soronként
@@ -317,6 +319,8 @@ def load_and_average_manoeuvres(directory, save_directory):
             save_path = os.path.join(save_directory, file)
             np.save(save_path, average_vector)
     
+    print(f"Nem megfelelő fájlok száma: {i}")
+
     return averaged_manoeuvres
 
 def differences_data(in_dir, out_dir):
@@ -345,5 +349,6 @@ def differences_data(in_dir, out_dir):
 
     print("Minden fájl feldolgozása kész!")
 
-manoeuvres_name = collect_maoeuver_names()
-print(manoeuvres_name)
+directory = "data_bottleneck/single_manoeuvres/all_maneuvers_model"
+save_directory = "data_bottleneck/averaged_manoeuvres/VAE_1_model"
+load_and_average_manoeuvres(directory, save_directory)

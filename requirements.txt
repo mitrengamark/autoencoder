@@ -1,4 +1,5 @@
 matplotlib
+seaborn
 neptune
 torch
 pandas
