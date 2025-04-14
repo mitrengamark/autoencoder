@@ -77,9 +77,9 @@ class CosineSimilarity:
         plt.yticks(rotation=0)
 
         plt.savefig(f"cosine_similarity_matrix_{group_name}.png")
-        plt.show()
+        # plt.show()
 
-    def detect_redundancy(self, threshold=0.99):
+    def detect_redundancy(self, threshold=0.94):
         redundant_pairs = {}
 
         for group_idx, (labels, similarity_matrix) in self.similarity_matrices.items():
@@ -122,7 +122,7 @@ class CosineSimilarity:
             removed_manoeuvres_by_group[group_idx] = removed_manoeuvres
 
          # Az eltávolított manőverek mentése JSON fájlba
-        with open("manoeuvres_for_removing_99.json", "w") as file:
+        with open("manoeuvres_for_removing_94.json", "w") as file:
             json.dump(removed_manoeuvres_by_group, file, indent=4)
 
         return removed_manoeuvres_by_group

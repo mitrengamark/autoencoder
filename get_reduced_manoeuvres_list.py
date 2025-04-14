@@ -463,7 +463,7 @@ all_manoeuvres = [
 ]
 
 # JSON betöltése
-with open("Redundant_manoeuvres/manoeuvres_for_removing.json", "r") as f:
+with open("Redundant_manoeuvres/manoeuvres_for_removing_95.json", "r") as f:
     data = json.load(f)
 
 # Az eltávolítandó manőverek összegyűjtése (összes kulcs alá tartozóból)
@@ -478,4 +478,4 @@ config_line = "selected_manoeuvres = " + ", ".join(filtered_manoeuvres)
 
 print(f"Eredeti manőverszám: {len(all_manoeuvres)}")
 print(f"Szűrt manőverszám: {len(filtered_manoeuvres)}")
-print(config_line)
+# print(config_line)
