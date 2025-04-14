@@ -77,7 +77,7 @@ class CosineSimilarity:
         plt.yticks(rotation=0)
 
         plt.savefig(f"cosine_similarity_matrix_{group_name}.png")
-        # plt.show()
+        plt.show()
 
     def detect_redundancy(self, threshold=0.94):
         redundant_pairs = {}
