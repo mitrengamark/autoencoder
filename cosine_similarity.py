@@ -29,11 +29,6 @@ class CosineSimilarity:
             group_vectors = [
                 np.load(os.path.join(directory, m + ".npy")) for m in valid_manoeuvres
             ]
-
-            for vec in group_vectors:
-                print(vec.shape)
-
-
             similarity_matrix = cosine_similarity(group_vectors)
 
             self.similarity_matrices[idx + 1] = (valid_manoeuvres, similarity_matrix)
@@ -79,7 +74,7 @@ class CosineSimilarity:
         plt.xticks(rotation=90)
         plt.yticks(rotation=0)
 
-        # plt.savefig(f"cosine_similarity_matrix_{group_name}.png")
+        plt.savefig(f"cosine_similarity_matrix_{group_name}_z_score.png")
         plt.show()
 
     def detect_redundancy(self, threshold=0.9):
@@ -136,7 +131,7 @@ class CosineSimilarity:
 
 
 # Mappa elérési útvonala
-directory = "data_bottleneck/VAE_1/averaged_manoeuvres"
+directory = "data_bottleneck/VAE_1/averaged_manoeuvres_z_score"
 cos_sim = CosineSimilarity(directory)
 
 # Felhasználó által meghatározott csoportok
