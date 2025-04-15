@@ -39,6 +39,7 @@ from Config.load_config import (
     normalization,
     removing_steps,
     folder_name,
+    beta_multiplier,
 )
 
 
@@ -116,7 +117,9 @@ class Training:
             train_differences = {param: [] for param in parameters}  # Listát tárolunk
             train_total_differences = []
 
-            self.beta = beta_max * (1 - np.exp(-epoch / tau))
+            # self.beta = beta_max * (1 - np.exp(-epoch / tau))
+            # self.beta = min(beta_max, beta_min + epoch * beta_multiplier)
+            self.beta = beta_min
 
             for data in self.trainloader:
                 inputs, _ = data
@@ -213,7 +216,9 @@ class Training:
                 )
                 self.kl_losses.append(kl_loss_per_epoch / len(self.trainloader))
 
-            val_loss, val_differences = self.validate()
+            val_loss, val_differences, val_reconst_losses, val_kl_losses = (
+                self.validate()
+            )
             self.val_losses.append(val_loss)
 
             if hyperopt == 0:
@@ -228,22 +233,69 @@ class Training:
 
             current_lr = self.optimizer.param_groups[0]["lr"]
 
-            if self.run:
-                self.run[f"train/loss"].append(average_loss)
-                self.run[f"learning_rate"].append(self.optimizer.param_groups[0]["lr"])
-                self.run[f"validation/loss"].append(val_loss)
-                self.run[f"beta"].append(self.beta)
+            if isinstance(self.model, VariationalAutoencoder):
+                with torch.no_grad():
+                    _, z_mean, _ = self.model.forward(inputs)
+                    z_norm = z_mean.norm(dim=1).mean().item()
+                    z_std = torch.std(z_mean, dim=0).mean().item()
+                    z_abs_mean = torch.mean(torch.abs(z_mean), dim=0).mean().item()
 
-                for param, avg_value in train_differences.items():
-                    self.run[f"train/{param}_average"].append(avg_value)
+                if self.run:
+                    self.run[f"latent/mean_norm"].append(
+                        z_norm
+                    )  # ha < 0.1, akkor baj van (összeomlik a látenstér)
+                    self.run[f"latent/avg_std_dim"].append(
+                        z_std
+                    )  # ha ez 0.0 körül van, nem használja a dimenziókat
+                    self.run[f"latent/avg_abs_mean"].append(
+                        z_abs_mean
+                    )  # ha minden z_mean közel 0 ez is jelezhet összeomlást
 
-                for param, avg_value in val_differences.items():
-                    self.run[f"validation/{param}_average"].append(avg_value)
+                    self.run[f"train/total_loss"].append(average_loss)
+                    self.run[f"train/reconstruction_loss"].append(reconst_loss.item())
+                    self.run[f"train/KL_divergence_loss"].append(kl_div.item())
+                    self.run[f"train/KL_scaled_loss"].append((self.beta * kl_div).item())
+                    self.run[f"learning_rate"].append(
+                        self.optimizer.param_groups[0]["lr"]
+                    )
+                    self.run[f"validation/total_loss"].append(val_loss)
+                    self.run[f"validation/reconstruction_loss"].append(
+                        np.mean(val_reconst_losses)
+                    )
+                    self.run[f"validation/KL_divergence_loss"].append(
+                        np.mean(val_kl_losses)
+                    )
+                    self.run[f"beta"].append(self.beta)
 
-                self.run[f"train/diff_average"].append(train_total_difference)
-                self.run[f"validation/diff_average"].append(
-                    val_differences["diff_average"]
-                )
+                    for param, avg_value in train_differences.items():
+                        self.run[f"train/{param}_average"].append(avg_value)
+
+                    for param, avg_value in val_differences.items():
+                        self.run[f"validation/{param}_average"].append(avg_value)
+
+                    self.run[f"train/diff_average"].append(train_total_difference)
+                    self.run[f"validation/diff_average"].append(
+                        val_differences["diff_average"]
+                    )
+            elif isinstance(self.model, MaskedAutoencoder):
+                if self.run:
+                    self.run[f"train/loss"].append(average_loss)
+                    self.run[f"learning_rate"].append(
+                        self.optimizer.param_groups[0]["lr"]
+                    )
+                    self.run[f"validation/loss"].append(val_loss)
+                    self.run[f"beta"].append(self.beta)
+
+                    for param, avg_value in train_differences.items():
+                        self.run[f"train/{param}_average"].append(avg_value)
+
+                    for param, avg_value in val_differences.items():
+                        self.run[f"validation/{param}_average"].append(avg_value)
+
+                    self.run[f"train/diff_average"].append(train_total_difference)
+                    self.run[f"validation/diff_average"].append(
+                        val_differences["diff_average"]
+                    )
 
             # Kiírás az egyes train és validation eltérésekre
             train_differences_str = " | ".join(
@@ -273,6 +325,8 @@ class Training:
     def validate(self):
         self.model.eval()
         val_loss = 0
+        val_reconst_losses = []
+        val_kl_losses = []
         val_differences = {param: [] for param in parameters}
         val_total_differences = []
 
@@ -283,7 +337,7 @@ class Training:
 
                 if isinstance(self.model, VariationalAutoencoder):
                     outputs, z_mean, z_log_var = self.model.forward(inputs)
-                    loss, _, _ = self.model.loss(
+                    loss, reconst_loss, kl_div = self.model.loss(
                         inputs, outputs, z_mean, z_log_var, self.beta
                     )
                 elif isinstance(self.model, MaskedAutoencoder):
@@ -291,6 +345,9 @@ class Training:
                     loss = self.model.loss(inputs, outputs)
                 else:
                     raise ValueError("Unsupported model type. Expected VAE or MAE!")
+
+                val_reconst_losses.append(reconst_loss.item())
+                val_kl_losses.append(kl_div.item())
 
                 if validation_method == "denormalized":
                     if normalization == "z_score":
@@ -350,7 +407,12 @@ class Training:
 
         val_differences["diff_average"] = val_total_difference
 
-        return val_loss / len(self.valloader), val_differences
+        return (
+            val_loss / len(self.valloader),
+            val_differences,
+            val_reconst_losses,
+            val_kl_losses,
+        )
 
     def test(self):
         self.model.load_state_dict(
