@@ -118,7 +118,8 @@ class Training:
             train_total_differences = []
 
             # self.beta = beta_max * (1 - np.exp(-epoch / tau))
-            self.beta = min(beta_max, beta_min + epoch * beta_multiplier)
+            # self.beta = min(beta_max, beta_min + epoch * beta_multiplier)
+            self.beta = beta_min
 
             for data in self.trainloader:
                 inputs, _ = data
@@ -240,28 +241,28 @@ class Training:
                     z_abs_mean = torch.mean(torch.abs(z_mean), dim=0).mean().item()
 
                 if self.run:
-                    self.run["latent/mean_norm"].append(
+                    self.run[f"latent/mean_norm"].append(
                         z_norm
                     )  # ha < 0.1, akkor baj van (összeomlik a látenstér)
-                    self.run["latent/avg_std_dim"].append(
+                    self.run[f"latent/avg_std_dim"].append(
                         z_std
                     )  # ha ez 0.0 körül van, nem használja a dimenziókat
-                    self.run["latent/avg_abs_mean"].append(
+                    self.run[f"latent/avg_abs_mean"].append(
                         z_abs_mean
                     )  # ha minden z_mean közel 0 ez is jelezhet összeomlást
 
-                    self.run[f"train/loss"].append(average_loss)
-                    self.run["train/loss/reconstruction"].append(reconst_loss.item())
-                    self.run["train/loss/KL_divergence"].append(kl_div.item())
-                    self.run["train/loss/KL_scaled"].append((self.beta * kl_div).item())
+                    self.run[f"train/total_loss"].append(average_loss)
+                    self.run[f"train/reconstruction_loss"].append(reconst_loss.item())
+                    self.run[f"train/KL_divergence_loss"].append(kl_div.item())
+                    self.run[f"train/KL_scaled_loss"].append((self.beta * kl_div).item())
                     self.run[f"learning_rate"].append(
                         self.optimizer.param_groups[0]["lr"]
                     )
-                    self.run[f"validation/loss"].append(val_loss)
-                    self.run["validation/loss/reconstruction"].append(
+                    self.run[f"validation/total_loss"].append(val_loss)
+                    self.run[f"validation/reconstruction_loss"].append(
                         np.mean(val_reconst_losses)
                     )
-                    self.run["validation/loss/KL_divergence"].append(
+                    self.run[f"validation/KL_divergence_loss"].append(
                         np.mean(val_kl_losses)
                     )
                     self.run[f"beta"].append(self.beta)
