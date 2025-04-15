@@ -266,25 +266,30 @@ def aposztrof_nincs(manouver_names):
         file.write("\n".join(modified_list))
     print(modified_list)
 
+
 def sort_columns_in_files(folder_path, test_mode=True):
     # Ellenőrizzük, hogy a mappa létezik-e
     if not os.path.exists(folder_path):
         print(f"Hiba: A megadott mappa nem létezik: {folder_path}")
         return
-    
+
     # Mappa összes CSV fájljának listázása
-    file_paths = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith('.csv')]
-    
+    file_paths = [
+        os.path.join(folder_path, f)
+        for f in os.listdir(folder_path)
+        if f.endswith(".csv")
+    ]
+
     if not file_paths:
         print("Nincsenek CSV fájlok a megadott mappában.")
         return
-    
+
     for file_path in file_paths:
         df = pd.read_csv(file_path)
-        
+
         # Oszlopok ABC sorrendbe rendezése
         df = df[sorted(df.columns)]
-        
+
         # Ha tesztmódban fut, akkor új fájlba menti az eredményt
         if test_mode:
             new_file_path = file_path.replace(".csv", "_sorted_abc.csv")
@@ -294,34 +299,37 @@ def sort_columns_in_files(folder_path, test_mode=True):
             df.to_csv(file_path, index=False)
             print(f"Oszlopok ABC sorrendben rendezve: {file_path}")
 
+
 def load_and_average_manoeuvres(directory, save_directory):
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
-    
+
     averaged_manoeuvres = {}
-    i = 0
+    skipped = 0
 
     for file in os.listdir(directory):
-        if file.endswith(".npy"):  # Csak .npy fájlokat dolgozunk fel
+        if file.endswith(".npy"):
             file_path = os.path.join(directory, file)
-            data = np.load(file_path)  # Betöltés
+            data = np.load(file_path)
             data = data[2500:]
-            
-            if data.shape[1] != 8:
-                print(f"Figyelmeztetés: {file} nem megfelelő alakú ({data.shape}), kihagyva.")
-                i += 1
+
+            if data.ndim != 2 or data.shape[1] != 8:
+                print(
+                    f"Figyelmeztetés: {file} nem megfelelő alakú ({data.shape}), kihagyva."
+                )
+                skipped += 1
                 continue
-            
-            average_vector = np.mean(data, axis=0)  # Átlagolás soronként
+
+            average_vector = np.mean(data, axis=0)
             averaged_manoeuvres[file] = average_vector
-            
-            # Mentés az új mappába
+
             save_path = os.path.join(save_directory, file)
             np.save(save_path, average_vector)
-    
-    print(f"Nem megfelelő fájlok száma: {i}")
+
+    print(f"Nem megfelelő fájlok száma: {skipped}")
 
     return averaged_manoeuvres
+
 
 def differences_data(in_dir, out_dir):
     # Ha a kimeneti mappa nem létezik, létrehozzuk
@@ -331,7 +339,7 @@ def differences_data(in_dir, out_dir):
     for filename in os.listdir(in_dir):
         if filename.endswith(".csv"):  # Csak CSV fájlokat dolgoz fel
             input_path = os.path.join(in_dir, filename)
-            
+
             # Új fájlnév előállítása (pl. "maneuver1.csv" -> "maneuver1_difference.csv")
             new_filename = filename.replace(".csv", "_difference.csv")
             output_path = os.path.join(out_dir, new_filename)
@@ -349,6 +357,7 @@ def differences_data(in_dir, out_dir):
 
     print("Minden fájl feldolgozása kész!")
 
-directory = "data_bottleneck/single_manoeuvres/all_maneuvers_model"
-save_directory = "data_bottleneck/averaged_manoeuvres/VAE_1_model"
+
+directory = "data_bottleneck/VAE_1/single_manoeuvres"
+save_directory = "data_bottleneck/VAE_1/averaged_manoeuvres"
 load_and_average_manoeuvres(directory, save_directory)

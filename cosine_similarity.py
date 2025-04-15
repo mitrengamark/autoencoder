@@ -29,13 +29,16 @@ class CosineSimilarity:
             group_vectors = [
                 np.load(os.path.join(directory, m + ".npy")) for m in valid_manoeuvres
             ]
+
+            for vec in group_vectors:
+                print(vec.shape)
+
+
             similarity_matrix = cosine_similarity(group_vectors)
 
             self.similarity_matrices[idx + 1] = (valid_manoeuvres, similarity_matrix)
 
-            self.plot_confusion_matrix(
-                valid_manoeuvres, similarity_matrix
-            )
+            self.plot_confusion_matrix(valid_manoeuvres, similarity_matrix)
 
     def plot_confusion_matrix(self, manoeuvres, similarity_matrix):
         # Csoportnév kinyerése (prefix alapján)
@@ -76,10 +79,10 @@ class CosineSimilarity:
         plt.xticks(rotation=90)
         plt.yticks(rotation=0)
 
-        plt.savefig(f"cosine_similarity_matrix_{group_name}.png")
+        # plt.savefig(f"cosine_similarity_matrix_{group_name}.png")
         plt.show()
 
-    def detect_redundancy(self, threshold=0.94):
+    def detect_redundancy(self, threshold=0.9):
         redundant_pairs = {}
 
         for group_idx, (labels, similarity_matrix) in self.similarity_matrices.items():
@@ -87,9 +90,7 @@ class CosineSimilarity:
             for i in range(len(labels)):
                 for j in range(i + 1, len(labels)):  # Csak a felső háromszöget nézzük
                     if similarity_matrix[i, j] >= threshold:
-                        similar_pairs.append(
-                            [labels[i], labels[j]]
-                        )
+                        similar_pairs.append([labels[i], labels[j]])
 
             if similar_pairs:
                 redundant_pairs[group_idx] = (
@@ -97,7 +98,7 @@ class CosineSimilarity:
                 )
 
         return redundant_pairs  # Egy dictionary, ahol a kulcs a csoport, az érték a hasonló párok listája
-    
+
     def remove_redundancy(self, redundant_maneuvers_by_group):
         # Csoportonként külön-külön tároljuk az eltávolított manővereket
         removed_manoeuvres_by_group = {}
@@ -108,29 +109,34 @@ class CosineSimilarity:
             # Addig futtatjuk az optimalizációt, amíg maradnak redundáns párok az adott csoportban
             while redundant_maneuvers:
                 # Gyakoriság számítása az adott csoport manővereire
-                counter = Counter(maneuver for pair in redundant_maneuvers for maneuver in pair)
-                
+                counter = Counter(
+                    maneuver for pair in redundant_maneuvers for maneuver in pair
+                )
+
                 # Leggyakoribb manőver kiválasztása
                 most_common_maneuver, _ = counter.most_common(1)[0]
-                
+
                 # Mentjük a listába
                 removed_manoeuvres.append(most_common_maneuver)
-                
+
                 # Kiszűrjük azokat a párokat, amelyek tartalmazzák a kiválasztott manővert
-                redundant_maneuvers = [pair for pair in redundant_maneuvers if most_common_maneuver not in pair]
+                redundant_maneuvers = [
+                    pair
+                    for pair in redundant_maneuvers
+                    if most_common_maneuver not in pair
+                ]
 
             removed_manoeuvres_by_group[group_idx] = removed_manoeuvres
 
-         # Az eltávolított manőverek mentése JSON fájlba
-        with open("manoeuvres_for_removing_94.json", "w") as file:
+        # Az eltávolított manőverek mentése JSON fájlba
+        with open("manoeuvres_for_removing_90.json", "w") as file:
             json.dump(removed_manoeuvres_by_group, file, indent=4)
 
         return removed_manoeuvres_by_group
 
 
-
 # Mappa elérési útvonala
-directory = "data_bottleneck/averaged_manoeuvres"
+directory = "data_bottleneck/VAE_1/averaged_manoeuvres"
 cos_sim = CosineSimilarity(directory)
 
 # Felhasználó által meghatározott csoportok
