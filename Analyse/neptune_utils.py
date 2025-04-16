@@ -18,7 +18,7 @@ from Config.load_config import (
 )
 
 
-def init_neptune():
+def init_neptune(config_name=None):
     """
     Inicializálja a Neptune.ai run-t és beállítja az alap paramétereket.
 
@@ -45,6 +45,8 @@ def init_neptune():
     run = neptune.init_run(
         project=project_name,
         api_token=api_token,
+        name=f"run_{config_name}" if config_name else "run",
+        tags=[config_name] if config_name else [],
     )
     if parameters:
         run["parameters"] = parameters

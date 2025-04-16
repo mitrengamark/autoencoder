@@ -4,6 +4,7 @@ import numpy as np
 import random
 import json
 import sys
+import os
 from data_process import DataProcess
 from train_test import Training
 from Factory.variational_autoencoder import VariationalAutoencoder
@@ -23,8 +24,9 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 # Neptune inicializáció
+config_path = os.environ.get("CONFIG_NAME", "default")
 if plot == 1 and test_mode == 0:
-    run = init_neptune()
+    run = init_neptune(config_path)
 else:
     run = None
 

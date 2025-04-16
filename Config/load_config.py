@@ -1,8 +1,18 @@
 import configparser
 import datetime
+import sys
+import os
+
+config_path = os.environ.get("CONFIG_PATH", None)
+
+if config_path is None and len(sys.argv) > 1:
+    config_path = sys.argv[1]
+
+if config_path is None:
+    config_path = "Config/config.ini"
 
 config = configparser.ConfigParser()
-config.read("Config/config.ini")
+config.read(config_path)
 
 # Dims
 latent_dim = int(config["Dims"]["latent_dim"])

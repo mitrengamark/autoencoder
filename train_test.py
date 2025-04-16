@@ -118,8 +118,8 @@ class Training:
             train_total_differences = []
 
             # self.beta = beta_max * (1 - np.exp(-epoch / tau))
-            # self.beta = min(beta_max, beta_min + epoch * beta_multiplier)
-            self.beta = beta_min
+            self.beta = min(beta_max, beta_min + epoch * beta_multiplier)
+            # self.beta = beta_min
 
             for data in self.trainloader:
                 inputs, _ = data
