@@ -14,6 +14,9 @@ if config_path is None:
 config = configparser.ConfigParser()
 config.read(config_path)
 
+print(f"Beolvasott config fájl: {config_path}")
+print(f"Szereplő szekciók: {config.sections()}")
+
 # Dims
 latent_dim = int(config["Dims"]["latent_dim"])
 bottleneck_dim = int(config["Dims"]["bottleneck_dim"])

@@ -13,3 +13,4 @@ __pycache__/
 /Bottleneck_data/**
 /Reduced_bottleneck_data/**
 saliency_output.json
+/logs

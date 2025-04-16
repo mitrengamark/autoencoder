@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CONFIG_DIR="Config/configs"
-CONFIGS=("ae.ini" "ae1.ini" "ae2.ini")
+CONFIGS=("ae3.ini" "ae4.ini" "ae5.ini" "ae6.ini")
 RUN_SCRIPT="python run.py"
 
 for CONFIG in "${CONFIGS[@]}"; do
