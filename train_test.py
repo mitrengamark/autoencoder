@@ -117,8 +117,10 @@ class Training:
             train_differences = {param: [] for param in parameters}  # Listát tárolunk
             train_total_differences = []
 
-            # self.beta = beta_max * (1 - np.exp(-epoch / tau))
-            self.beta = min(beta_max, beta_min + epoch * beta_multiplier)
+            if tau > 0:
+                self.beta = beta_max * (1 - np.exp(-epoch / tau))
+            else:
+                self.beta = min(beta_max, beta_min + epoch * beta_multiplier)
             # self.beta = beta_min
 
             for data in self.trainloader:
