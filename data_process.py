@@ -30,8 +30,17 @@ class DataProcess:
         self.batch_size = batch_size
         self.num_workers = num_workers
 
+        if data_dir == "data3":
+            suffix = "_combined.csv"
+        elif data_dir == "data_difference":
+            suffix = "_combined_difference.csv"
+        else:
+            raise ValueError(
+                "Unsupported data directory. Expected 'data3' or 'data_difference'!"
+            )
+
         selected_manoeuvres_list = [
-            m.strip() + "_combined.csv" for m in selected_manoeuvres if m.strip()
+            m.strip() + suffix for m in selected_manoeuvres if m.strip()
         ]
 
         all_files = [
