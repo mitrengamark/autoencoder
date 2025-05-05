@@ -478,54 +478,54 @@ class Training:
             sign_change_indices=self.sign_change_indices,
         )
         latent_data, label = vs.visualize_with_tsne()
-        # if num_manoeuvres == 1:
-        #     outlier_indices = detect_outliers(latent_data[2500:])
-        #     filtered_data = np.delete(latent_data[2500:], outlier_indices, axis=0)
-        #     print(f"Reduced data shape: {filtered_data.shape}")
-        #     time_labels = np.arange(len(filtered_data))
-        #     filtered_data, filtered_labels = filter_inconsistent_points(
-        #         filtered_data, time_labels
-        #     )
-        #     print(f"Reduced data shape: {filtered_data.shape}")
-        #     filtered_latent_data, filtered_labels = filter_outliers_by_grid(
-        #         filtered_data, filtered_labels
-        #     )
-        #     print(f"Reduced data shape: {filtered_data.shape}")
-        #     # filtered_latent_data = remove_data_step_by_step(
-        #     #     filtered_data, file_name="rész_szűrés"
-        #     # )
-        #     # print(f"Reduced data shape: {filtered_latent_data.shape}")
-        #     # filtered_latent_data = remove_redundant_data(filtered_data)
-        #     # create_comparison_heatmaps(
-        #     #     filtered_data, filtered_latent_data, file_name="rész_szűrés_heatmap"
-        #     # )
-        #     plot_removed_data(
-        #         latent_data, filtered_latent_data, file_name="teljes_szűrés"
-        #     )
-        #     create_comparison_heatmaps(
-        #         latent_data, filtered_latent_data, file_name="teljes_szűrés_heatmap"
-        #     )
-        # else:
-        #     mf = ManoeuvresFiltering(
-        #         reduced_data=latent_data,
-        #         bottleneck_data=bottleneck_outputs,
-        #         labels=labels,
-        #         label_mapping=self.label_mapping,
-        #     )
-        #     filtered_reduced_data, filtered_labels = mf.filter_manoeuvres()
-        #     if filtered_reduced_data == 2:
-        #         filtered_latent_data = filtered_reduced_data
-        #     else:
-        #         filtered_latent_data = vs.calculate_tsne(filtered_reduced_data)
-        #     plot_removed_data(latent_data, filtered_reduced_data)
-        #     create_comparison_heatmaps(latent_data, filtered_reduced_data)
+        if num_manoeuvres == 1:
+            outlier_indices = detect_outliers(latent_data[2500:])
+            filtered_data = np.delete(latent_data[2500:], outlier_indices, axis=0)
+            print(f"Reduced data shape: {filtered_data.shape}")
+            time_labels = np.arange(len(filtered_data))
+            filtered_data, filtered_labels = filter_inconsistent_points(
+                filtered_data, time_labels
+            )
+            print(f"Reduced data shape: {filtered_data.shape}")
+            filtered_latent_data, filtered_labels = filter_outliers_by_grid(
+                filtered_data, filtered_labels
+            )
+            print(f"Reduced data shape: {filtered_data.shape}")
+            # filtered_latent_data = remove_data_step_by_step(
+            #     filtered_data, file_name="rész_szűrés"
+            # )
+            # print(f"Reduced data shape: {filtered_latent_data.shape}")
+            # filtered_latent_data = remove_redundant_data(filtered_data)
+            # create_comparison_heatmaps(
+            #     filtered_data, filtered_latent_data, file_name="rész_szűrés_heatmap"
+            # )
+            plot_removed_data(
+                latent_data, filtered_latent_data, file_name="teljes_szűrés"
+            )
+            create_comparison_heatmaps(
+                latent_data, filtered_latent_data, file_name="teljes_szűrés_heatmap"
+            )
+        else:
+            mf = ManoeuvresFiltering(
+                reduced_data=latent_data,
+                bottleneck_data=bottleneck_outputs,
+                labels=labels,
+                label_mapping=self.label_mapping,
+            )
+            filtered_reduced_data, filtered_labels = mf.filter_manoeuvres()
+            if filtered_reduced_data == 2:
+                filtered_latent_data = filtered_reduced_data
+            else:
+                filtered_latent_data = vs.calculate_tsne(filtered_reduced_data)
+            plot_removed_data(latent_data, filtered_reduced_data)
+            create_comparison_heatmaps(latent_data, filtered_reduced_data)
 
-        # removed_data_procentage = (
-        #     (bottleneck_outputs.shape[0] - filtered_latent_data.shape[0]) * 100
-        # ) / bottleneck_outputs.shape[0]
-        # print(
-        #     f"Final reduced bottleneck shape: {filtered_latent_data.shape}, Removed data: {removed_data_procentage:.2f}%"
-        # )
+        removed_data_procentage = (
+            (bottleneck_outputs.shape[0] - filtered_latent_data.shape[0]) * 100
+        ) / bottleneck_outputs.shape[0]
+        print(
+            f"Final reduced bottleneck shape: {filtered_latent_data.shape}, Removed data: {removed_data_procentage:.2f}%"
+        )
 
         if validation_method == "denormalized":
             if normalization == "min_max":
@@ -567,7 +567,7 @@ class Training:
             saliencies.append(saliency)
 
         avg_saliency = torch.stack(saliencies).mean(dim=0)
-        # plot_saliency_map(self.all_columns, avg_saliency.numpy())
+        plot_saliency_map(self.all_columns, avg_saliency.numpy())
 
         # Accuracy
         reconstruction_accuracy(whole_input, whole_output, self.selected_columns)

@@ -1,4 +1,5 @@
 import neptune
+import os
 from Config.load_config import (
     latent_dim,
     hidden_dims,
@@ -27,6 +28,8 @@ def init_neptune(config_name=None):
     :param parameters: Opcionális szótár, amely tartalmazza a futtatás paramétereit.
     :return: Neptune run objektum.
     """
+    config_path = os.environ.get("CONFIG_PATH", "Config/config.ini")
+
     parameters = {
         "latent_dim": latent_dim,
         "hidden_dims": hidden_dims,
@@ -50,4 +53,6 @@ def init_neptune(config_name=None):
     )
     if parameters:
         run["parameters"] = parameters
+
+    run["config_file"].upload(config_path)
     return run
