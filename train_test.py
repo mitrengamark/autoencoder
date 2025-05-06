@@ -77,6 +77,7 @@ class Training:
 
         # Hiperparaméterek és tanítási konfigurációk
         self.beta = 0  # Dinamikus érték lesz tanítás során
+        self.beta_min = 1 / beta_min
         self.scheduler_name = scheduler_name
 
         # Címkék
@@ -119,8 +120,12 @@ class Training:
 
             if tau > 0:
                 self.beta = beta_max * (1 - np.exp(-epoch / tau))
-            else:
+            elif beta_max > 0:
                 self.beta = min(beta_max, beta_min + epoch * beta_multiplier)
+            else:
+                self.beta = min(1.0, epoch / self.beta_min)
+                if epoch == 0:
+                    self.beta = 1 / self.beta_min
             # self.beta = beta_min
 
             for data in self.trainloader:
