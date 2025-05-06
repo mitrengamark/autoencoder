@@ -122,11 +122,12 @@ class Training:
                 self.beta = beta_max * (1 - np.exp(-epoch / tau))
             elif beta_max > 0:
                 self.beta = min(beta_max, beta_min + epoch * beta_multiplier)
-            else:
+            elif beta_min > 0:
                 self.beta = min(1.0, epoch / self.beta_min)
                 if epoch == 0:
                     self.beta = 1 / self.beta_min
-            # self.beta = beta_min
+            else:
+                self.beta = beta_min
 
             for data in self.trainloader:
                 inputs, _ = data

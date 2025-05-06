@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CONFIG_DIR="Config/configs"
-CONFIGS=("ae_OG.ini")
+CONFIGS=("ae_OG1.ini")
 RUN_SCRIPT="python run.py"
 
 for CONFIG in "${CONFIGS[@]}"; do
