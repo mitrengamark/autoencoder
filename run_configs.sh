@@ -1,11 +1,28 @@
 #!/bin/bash
 
 CONFIG_DIR="Config/configs"
-CONFIGS=("ae_OG1.ini")
+CONFIGS=(
+    "allando_chirp.ini"
+    "allando_savvaltas.ini"
+    "allando_sin.ini"
+    "valtozo_savvaltas_fek.ini"
+    "valtozo_savvaltas_gas.ini"
+    "valtozo_sin_fek.ini"
+    "valtozo_sin_gas.ini"
+    "differences.ini"
+    "allando_chirp_diff.ini"
+    "allando_savvaltas_diff.ini"
+    "allando_sin_diff.ini"
+    "valtozo_savvaltas_fek_diff.ini"
+    "valtozo_savvaltas_gas_diff.ini"
+    "valtozo_sin_fek_diff.ini"
+    "valtozo_sin_gas_diff.ini"
+)
 RUN_SCRIPT="python run.py"
 
 for CONFIG in "${CONFIGS[@]}"; do
     CONFIG_PATH="$CONFIG_DIR/$CONFIG"
+    CONFIG_NAME=$(basename "$CONFIG" .ini)
     LOGNAME="log_${CONFIG_NAME}_$(date +%Y%m%d_%H%M%S).log"
 
     export CONFIG_PATH

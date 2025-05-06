@@ -28,7 +28,11 @@ def init_neptune(config_name=None):
     :param parameters: Opcionális szótár, amely tartalmazza a futtatás paramétereit.
     :return: Neptune run objektum.
     """
-    config_path = os.environ.get("CONFIG_PATH", "Config/config.ini")
+    config_path = os.environ.get("CONFIG_PATH")
+    if config_path is None:
+        raise ValueError("CONFIG_PATH környezeti változó nincs beállítva!")
+    
+    config_name = os.path.splitext(os.path.basename(config_path))[0]
 
     parameters = {
         "latent_dim": latent_dim,
@@ -48,7 +52,7 @@ def init_neptune(config_name=None):
     run = neptune.init_run(
         project=project_name,
         api_token=api_token,
-        name=f"run_{config_name}" if config_name else "run",
+        name=config_name,
         tags=[config_name] if config_name else [],
     )
     if parameters:
