@@ -2,8 +2,8 @@
 
 CONFIG_DIR="Config/configs"
 CONFIGS=(
-    "allando_chirp.ini"
-    "allando_savvaltas.ini"
+    # "allando_chirp.ini"
+    # "allando_savvaltas.ini"
     "allando_sin.ini"
     "valtozo_savvaltas_fek.ini"
     "valtozo_savvaltas_gas.ini"

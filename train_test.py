@@ -77,7 +77,8 @@ class Training:
 
         # Hiperparaméterek és tanítási konfigurációk
         self.beta = 0  # Dinamikus érték lesz tanítás során
-        self.beta_min = 1 / beta_min
+        if beta_min > 0:
+            self.beta_min = 1 / beta_min
         self.scheduler_name = scheduler_name
 
         # Címkék
