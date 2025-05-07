@@ -2,14 +2,6 @@
 
 CONFIG_DIR="Config/configs"
 CONFIGS=(
-    "allando_chirp.ini"
-    "allando_savvaltas.ini"
-    "allando_sin.ini"
-    "valtozo_savvaltas_fek.ini"
-    "valtozo_savvaltas_gas.ini"
-    "valtozo_sin_fek.ini"
-    "valtozo_sin_gas.ini"
-    "differences.ini"
     "allando_chirp_diff.ini"
     "allando_savvaltas_diff.ini"
     "allando_sin_diff.ini"
@@ -17,6 +9,11 @@ CONFIGS=(
     "valtozo_savvaltas_gas_diff.ini"
     "valtozo_sin_fek_diff.ini"
     "valtozo_sin_gas_diff.ini"
+    "valtozo_savvaltas_fek.ini"
+    "valtozo_savvaltas_gas.ini"
+    "valtozo_sin_fek.ini"
+    "valtozo_sin_gas.ini"
+    "allando_sin.ini"
 )
 RUN_SCRIPT="python run.py"
 
