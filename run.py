@@ -91,7 +91,8 @@ if test_mode == 0:
     if save_model == 1:
         training.save_model()
 elif test_mode == 1:
-    latent_data, label, bottleneck_outputs, labels, avg_saliency = training.test()
+    # latent_data, label, bottleneck_outputs, labels, avg_saliency = training.test()
+    training.test()
     
     # latent_data = latent_data[2500:]
     # # Ellenőrzés
@@ -126,12 +127,12 @@ elif test_mode == 1:
     # print(f"Bottleneck adatok elmentve: {output_file_2}")
 
     # Mentés JSON fájlba
-    with open("saliency_output.json", "w") as f:
-        json.dump({
-            "saliency": avg_saliency.tolist(),
-            "features": all_columns
-        }, f)
+#     with open("saliency_output.json", "w") as f:
+#         json.dump({
+#             "saliency": avg_saliency.tolist(),
+#             "features": all_columns
+#         }, f)
 
-    print("Saliency elmentve: saliency_output.json")
-else:
-    process_figures()
+#     print("Saliency elmentve: saliency_output.json")
+# else:
+#     process_figures()
