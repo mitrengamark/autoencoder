@@ -5,12 +5,17 @@ import seaborn as sns
 import json
 from sklearn.metrics.pairwise import cosine_similarity
 from collections import Counter
+from data_preprocess import load_and_average_manoeuvres
 
 
 class CosineSimilarity:
-    def __init__(self, directory):
+    def __init__(self, directory, save_dir):
         self.directory = directory
+        self.save_dir = save_dir
+        self.model_name = directory.split(os.sep)[1]
         self.similarity_matrices = {}
+
+        os.makedirs(self.save_dir, exist_ok=True)
 
     def compute_cosine_similarity_within_groups(self, grouped_manoeuvres):
         for idx, group in enumerate(grouped_manoeuvres):
@@ -27,7 +32,7 @@ class CosineSimilarity:
                 continue
 
             group_vectors = [
-                np.load(os.path.join(directory, m + ".npy")) for m in valid_manoeuvres
+                np.load(os.path.join(self.directory, m + ".npy")) for m in valid_manoeuvres
             ]
             similarity_matrix = cosine_similarity(group_vectors)
 
@@ -63,8 +68,8 @@ class CosineSimilarity:
         sns.heatmap(
             similarity_matrix,
             annot=annot_flag,
-            # xticklabels=labels,
-            # yticklabels=labels,
+            xticklabels=labels,
+            yticklabels=labels,
             cmap="coolwarm",
             fmt=".2f",
         )
@@ -74,7 +79,9 @@ class CosineSimilarity:
         plt.xticks(rotation=90)
         plt.yticks(rotation=0)
 
-        plt.savefig(f"cosine_similarity_matrix_{group_name}_z_score.png")
+        filename = f"{self.model_name}_cosine_similarity_matrix_{group_name}.png"
+        full_path = os.path.join(self.save_dir, filename)
+        plt.savefig(full_path)
         plt.show()
 
     def detect_redundancy(self, threshold=0.9):
@@ -131,8 +138,9 @@ class CosineSimilarity:
 
 
 # Mappa elérési útvonala
-directory = "data_bottleneck/VAE_1/averaged_manoeuvres_z_score"
-cos_sim = CosineSimilarity(directory)
+average_directory = "data_bottleneck/VAE_1/averaged_manoeuvres_z_score"
+save_dir = "cosine_similarity_matrices/VAE_1"
+cos_sim = CosineSimilarity(average_directory, save_dir)
 
 # Felhasználó által meghatározott csoportok
 basic_maneuvers_list = [
