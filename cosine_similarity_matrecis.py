@@ -1,5 +1,6 @@
 import os
 from cosine_similarity import CosineSimilarity
+from data_preprocess import load_and_average_manoeuvres
 
 basic_maneuvers_list = [
     [
@@ -485,15 +486,19 @@ vae_dirs = [
 ]
 
 for vae in vae_dirs:
-    average_directory = os.path.join(parent_directory, vae, "averaged_manoeuvres")
-
-    if not os.path.exists(average_directory):
-        print(f"Figyelem: {average_directory} nem létezik, kihagyva.")
-        continue
-
+    single_dir = os.path.join(parent_directory, vae, "single_manoeuvres")
+    average_dir = os.path.join(parent_directory, vae, "averaged_manoeuvres")
     save_dir = os.path.join("cosine_similarity_matrices", vae)
 
-    cos_sim = CosineSimilarity(average_directory, save_dir)
+    if not os.path.exists(single_dir):
+        print(f"Hiányzik: {single_dir}, kihagyva.")
+        continue
+
+    if not os.path.exists(average_dir) or len(os.listdir(average_dir)) == 0:
+        print(f"Átlagolás: {single_dir} → {average_dir}")
+        load_and_average_manoeuvres(single_dir, average_dir)
+
+    cos_sim = CosineSimilarity(average_dir, save_dir)
     cos_sim.compute_cosine_similarity_within_groups(basic_maneuvers_list)
     redundant_pairs = cos_sim.detect_redundancy()
     removed_manoeuvres_by_group = cos_sim.remove_redundancy(redundant_pairs)
