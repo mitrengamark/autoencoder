@@ -498,7 +498,7 @@ for vae in vae_dirs:
         print(f"Átlagolás: {single_dir} → {average_dir}")
         load_and_average_manoeuvres(single_dir, average_dir)
 
-    cos_sim = CosineSimilarity(average_dir, save_dir)
+    cos_sim = CosineSimilarity(average_dir, save_dir, threshold=98)
     cos_sim.compute_cosine_similarity_within_groups(basic_maneuvers_list)
     redundant_pairs = cos_sim.detect_redundancy()
     removed_manoeuvres_by_group = cos_sim.remove_redundancy(redundant_pairs)

@@ -8,9 +8,10 @@ from collections import Counter
 
 
 class CosineSimilarity:
-    def __init__(self, directory, save_dir):
+    def __init__(self, directory, save_dir, threshold):
         self.directory = directory
         self.save_dir = save_dir
+        self.threshold = threshold
         self.model_name = directory.split(os.sep)[1]
         self.similarity_matrices = {}
 
@@ -80,11 +81,12 @@ class CosineSimilarity:
 
         filename = f"{self.model_name}_cosine_similarity_matrix_{group_name}.png"
         full_path = os.path.join(self.save_dir, filename)
-        plt.savefig(full_path)
-        plt.show()
+        # plt.savefig(full_path)
+        # plt.show()
 
-    def detect_redundancy(self, threshold=0.9):
+    def detect_redundancy(self):
         redundant_pairs = {}
+        threshold = self.threshold / 100
 
         for group_idx, (labels, similarity_matrix) in self.similarity_matrices.items():
             similar_pairs = []
@@ -130,7 +132,7 @@ class CosineSimilarity:
             removed_manoeuvres_by_group[group_idx] = removed_manoeuvres
 
         # Az eltávolított manőverek mentése JSON fájlba
-        filename = f"manoeuvres_for_removing_90_{self.model_name}.json"
+        filename = f"manoeuvres_for_removing_{self.threshold}_{self.model_name}.json"
         filepath = os.path.join(self.save_dir, filename)
         with open(filepath, "w") as file:
             json.dump(removed_manoeuvres_by_group, file, indent=4)
