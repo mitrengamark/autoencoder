@@ -6,25 +6,67 @@ import os
 # Fájlnevek és elérési útvonal
 base_path = "data_plot"
 filenames = {
-    "All data": "All data.csv",
-    "Chirp (constant speed)": "Chirp (constant speed).csv",
-    "Lane change (constant speed)": "Lane change (constant speed).csv",
-    "Sinusoidal (constant speed)": "Sinusoidal (constant speed).csv",
-    "Lane change (acceleration)": "Lane change (acceleration).csv",
-    "Lane change (slow down)": "Lane change (slow down).csv",
-    "Sinusoidal (acceleration)": "Sinusoidal (acceleration).csv",
+    # "All data": "All data.csv",
+    # "Chirp (constant speed)": "Chirp (constant speed).csv",
+    # "Chirp (constant speed) threshold 0.9": "Chirp (constant speed) threshold 0.9.csv",
+    # "Chirp (constant speed) threshold 0.95": "Chirp (constant speed) threshold 0.95.csv",
+    # "Chirp (constant speed) threshold 0.98": "Chirp (constant speed) threshold 0.98.csv",
+    # "Lane change (constant speed)": "Lane change (constant speed).csv",
+    # "Lane change (constant speed) threshold 0.9": "Lane change (constant speed) threshold 0.9.csv",
+    # "Lane change (constant speed) threshold 0.95": "Lane change (constant speed) threshold 0.95.csv",
+    # "Lane change (constant speed) threshold 0.98": "Lane change (constant speed) threshold 0.98.csv",
+    # "Sinusoidal (constant speed)": "Sinusoidal (constant speed).csv",
+    # "Sinusoidal (constant speed) threshold 0.9": "Sinusoidal (constant speed) threshold 0.9.csv",
+    # "Sinusoidal (constant speed) threshold 0.95": "Sinusoidal (constant speed) threshold 0.95.csv",
+    # "Sinusoidal (constant speed) threshold 0.98": "Sinusoidal (constant speed) threshold 0.98.csv",
+    # "Lane change (acceleration)": "Lane change (acceleration).csv",
+    # "Lane change (acceleration) threshold 0.9": "Lane change (acceleration) threshold 0.9.csv",
+    # "Lane change (acceleration) threshold 0.95": "Lane change (acceleration) threshold 0.95.csv",
+    # "Lane change (acceleration) threshold 0.98": "Lane change (acceleration) threshold 0.98.csv",
+    # "Lane change (slow down)": "Lane change (slow down).csv",
+    # "Lane change (slow down) threshold 0.9": "Lane change (slow down) threshold 0.9.csv",
+    # "Lane change (slow down) threshold 0.95": "Lane change (slow down) threshold 0.95.csv",
+    # "Lane change (slow down) threshold 0.98": "Lane change (slow down) threshold 0.98.csv",
+    # "Sinusoidal (acceleration)": "Sinusoidal (acceleration).csv",
+    # "Sinusoidal (acceleration) threshold 0.9": "Sinusoidal (acceleration) threshold 0.9.csv",
+    # "Sinusoidal (acceleration) threshold 0.95": "Sinusoidal (acceleration) threshold 0.95.csv",
+    # "Sinusoidal (acceleration) threshold 0.98": "Sinusoidal (acceleration) threshold 0.98.csv",
     "Sinusoidal (slow down)": "Sinusoidal (slow down).csv",
+    "Sinusoidal (slow down) threshold 0.9": "Sinusoidal (slow down) threshold 0.9.csv",
+    "Sinusoidal (slow down) threshold 0.95": "Sinusoidal (slow down) threshold 0.95.csv",
+    "Sinusoidal (slow down) threshold 0.98": "Sinusoidal (slow down) threshold 0.98.csv",
 }
 
 custom_colors = {
-    "All data": "#D60000",  # fekete
-    "Chirp (constant speed)": "#3AB2EE",
-    "Lane change (constant speed)": "#115D97",
-    "Sinusoidal (constant speed)": "#5A47EB",
-    "Lane change (acceleration)": "#115D97",
-    "Lane change (slow down)": "#3AB2EE",
-    "Sinusoidal (acceleration)": "#610891",
-    "Sinusoidal (slow down)": "#5A47EB",
+    # "All data": "#D60000",
+    # "Chirp (constant speed)": "#D60000",
+    # "Chirp (constant speed) threshold 0.9": "#3AB2EE",
+    # "Chirp (constant speed) threshold 0.95": "#115D97",
+    # "Chirp (constant speed) threshold 0.98": "#5A47EB",
+    # "Lane change (constant speed)": "#D60000",
+    # "Lane change (constant speed) threshold 0.9": "#3AB2EE",
+    # "Lane change (constant speed) threshold 0.95": "#115D97",
+    # "Lane change (constant speed) threshold 0.98": "#5A47EB",
+    # "Sinusoidal (constant speed)": "#D60000",
+    # "Sinusoidal (constant speed) threshold 0.9": "#3AB2EE",
+    # "Sinusoidal (constant speed) threshold 0.95": "#115D97",
+    # "Sinusoidal (constant speed) threshold 0.98": "#5A47EB",
+    # "Lane change (acceleration)": "#D60000",
+    # "Lane change (acceleration) threshold 0.9": "#3AB2EE",
+    # "Lane change (acceleration) threshold 0.95": "#115D97",
+    # "Lane change (acceleration) threshold 0.98": "#5A47EB",
+    # "Lane change (slow down)": "#D60000",
+    # "Lane change (slow down) threshold 0.9": "#3AB2EE",
+    # "Lane change (slow down) threshold 0.95": "#115D97",
+    # "Lane change (slow down) threshold 0.98": "#5A47EB",
+    # "Sinusoidal (acceleration)": "#D60000",
+    # "Sinusoidal (acceleration) threshold 0.9": "#3AB2EE",
+    # "Sinusoidal (acceleration) threshold 0.95": "#115D97",
+    # "Sinusoidal (acceleration) threshold 0.98": "#5A47EB",
+    "Sinusoidal (slow down)": "#D60000",
+    "Sinusoidal (slow down) threshold 0.9": "#3AB2EE",
+    "Sinusoidal (slow down) threshold 0.95": "#115D97",
+    "Sinusoidal (slow down) threshold 0.98": "#5A47EB",
 }
 
 dataframes = {}
@@ -34,8 +76,8 @@ for label, file in filenames.items():
         dataframes[label] = df.iloc[:, 2]
 
 # Csoportosítás
-constant_speed = ["All data", "Chirp (constant speed)", "Lane change (constant speed)", "Sinusoidal (constant speed)"]
-variable_speed = ["All data", "Lane change (acceleration)", "Lane change (slow down)", "Sinusoidal (acceleration)", "Sinusoidal (slow down)"]
+constant_speed = ["Sinusoidal (constant speed)", "Sinusoidal (constant speed) threshold 0.9", "Sinusoidal (constant speed) threshold 0.95", "Sinusoidal (constant speed) threshold 0.98"]
+variable_speed = ["Sinusoidal (slow down)", "Sinusoidal (slow down) threshold 0.9", "Sinusoidal (slow down) threshold 0.95", "Sinusoidal (slow down) threshold 0.98"]
 
 # Plotoló függvény
 def plot_losses(group, output_file):
@@ -57,5 +99,5 @@ def plot_losses(group, output_file):
     plt.close()
 
 # Plottok mentése fájlba
-plot_losses(constant_speed, "Jurnal_plots/constant_speed_losses.png")
-plot_losses(variable_speed, "Jurnal_plots/variable_speed_losses.png")
+# plot_losses(constant_speed, "Jurnal_plots/sinusoidal_constant_losses.png")
+plot_losses(variable_speed, "Jurnal_plots/sinusoidal_slow_down_losses.png")
