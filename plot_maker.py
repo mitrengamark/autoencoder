@@ -6,7 +6,10 @@ import os
 # Fájlnevek és elérési útvonal
 base_path = "data_plot"
 filenames = {
-    # "All data": "All data.csv",
+    "All data": "All data.csv",
+    "All data threshold 0.9": "All data threshold 0.9.csv",
+    "All data threshold 0.95": "All data threshold 0.95.csv",
+    "All data threshold 0.98": "All data threshold 0.98.csv",
     # "Chirp (constant speed)": "Chirp (constant speed).csv",
     # "Chirp (constant speed) threshold 0.9": "Chirp (constant speed) threshold 0.9.csv",
     # "Chirp (constant speed) threshold 0.95": "Chirp (constant speed) threshold 0.95.csv",
@@ -31,14 +34,17 @@ filenames = {
     # "Sinusoidal (acceleration) threshold 0.9": "Sinusoidal (acceleration) threshold 0.9.csv",
     # "Sinusoidal (acceleration) threshold 0.95": "Sinusoidal (acceleration) threshold 0.95.csv",
     # "Sinusoidal (acceleration) threshold 0.98": "Sinusoidal (acceleration) threshold 0.98.csv",
-    "Sinusoidal (slow down)": "Sinusoidal (slow down).csv",
-    "Sinusoidal (slow down) threshold 0.9": "Sinusoidal (slow down) threshold 0.9.csv",
-    "Sinusoidal (slow down) threshold 0.95": "Sinusoidal (slow down) threshold 0.95.csv",
-    "Sinusoidal (slow down) threshold 0.98": "Sinusoidal (slow down) threshold 0.98.csv",
+    # "Sinusoidal (slow down)": "Sinusoidal (slow down).csv",
+    # "Sinusoidal (slow down) threshold 0.9": "Sinusoidal (slow down) threshold 0.9.csv",
+    # "Sinusoidal (slow down) threshold 0.95": "Sinusoidal (slow down) threshold 0.95.csv",
+    # "Sinusoidal (slow down) threshold 0.98": "Sinusoidal (slow down) threshold 0.98.csv",
 }
 
 custom_colors = {
-    # "All data": "#D60000",
+    "All data": "#D60000",
+    "All data threshold 0.9": "#3AB2EE",
+    "All data threshold 0.95": "#115D97",
+    "All data threshold 0.98": "#5A47EB",
     # "Chirp (constant speed)": "#D60000",
     # "Chirp (constant speed) threshold 0.9": "#3AB2EE",
     # "Chirp (constant speed) threshold 0.95": "#115D97",
@@ -63,10 +69,10 @@ custom_colors = {
     # "Sinusoidal (acceleration) threshold 0.9": "#3AB2EE",
     # "Sinusoidal (acceleration) threshold 0.95": "#115D97",
     # "Sinusoidal (acceleration) threshold 0.98": "#5A47EB",
-    "Sinusoidal (slow down)": "#D60000",
-    "Sinusoidal (slow down) threshold 0.9": "#3AB2EE",
-    "Sinusoidal (slow down) threshold 0.95": "#115D97",
-    "Sinusoidal (slow down) threshold 0.98": "#5A47EB",
+    # "Sinusoidal (slow down)": "#D60000",
+    # "Sinusoidal (slow down) threshold 0.9": "#3AB2EE",
+    # "Sinusoidal (slow down) threshold 0.95": "#115D97",
+    # "Sinusoidal (slow down) threshold 0.98": "#5A47EB",
 }
 
 dataframes = {}
@@ -77,7 +83,7 @@ for label, file in filenames.items():
 
 # Csoportosítás
 constant_speed = ["Sinusoidal (constant speed)", "Sinusoidal (constant speed) threshold 0.9", "Sinusoidal (constant speed) threshold 0.95", "Sinusoidal (constant speed) threshold 0.98"]
-variable_speed = ["Sinusoidal (slow down)", "Sinusoidal (slow down) threshold 0.9", "Sinusoidal (slow down) threshold 0.95", "Sinusoidal (slow down) threshold 0.98"]
+variable_speed = ["All data", "All data threshold 0.9", "All data threshold 0.95", "All data threshold 0.98"]
 
 # Plotoló függvény
 def plot_losses(group, output_file):
@@ -100,4 +106,4 @@ def plot_losses(group, output_file):
 
 # Plottok mentése fájlba
 # plot_losses(constant_speed, "Jurnal_plots/sinusoidal_constant_losses.png")
-plot_losses(variable_speed, "Jurnal_plots/sinusoidal_slow_down_losses.png")
+plot_losses(variable_speed, "Jurnal_plots/all_data_losses.png")
