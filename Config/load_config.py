@@ -39,6 +39,7 @@ tau = int(config["Hyperparameters"]["tau"])
 beta_multiplier = float(config["Hyperparameters"]["beta_multiplier"])
 beta_warmup_epochs = int(config["Hyperparameters"]["beta_warmup_epochs"])
 slope = int(config["Hyperparameters"]["slope"])
+delay_epochs = int(config["Hyperparameters"]["delay_epochs"])
 beta_scheduler_name = config.get("Hyperparameters", "beta_scheduler_name")
 
 initial_lr = float(config["Hyperparameters"]["initial_lr"])
