@@ -357,7 +357,4 @@ def differences_data(in_dir, out_dir):
 
     print("Minden fájl feldolgozása kész!")
 
-
-# directory = "data_bottleneck/VAE_1/single_manoeuvres_z_score"
-# save_directory = "data_bottleneck/VAE_1/averaged_manoeuvres_z_score"
-# load_and_average_manoeuvres(directory, save_directory)
+differences_data("data3", "data_difference")

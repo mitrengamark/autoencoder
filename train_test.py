@@ -22,14 +22,12 @@ from Reduction.inconsistent_points import (
     filter_outliers_by_grid,
 )
 from data_process import DataProcess
+from Factory.beta_scheduler import beta_scheduler
 from Config.load_config import (
     num_manoeuvres,
     training_model,
     num_epochs,
     scheduler_name,
-    beta_min,
-    beta_max,
-    tau,
     hyperopt,
     model_path,
     saved_model,
@@ -39,7 +37,7 @@ from Config.load_config import (
     normalization,
     removing_steps,
     folder_name,
-    beta_multiplier,
+    beta_scheduler_name,
 )
 
 
@@ -76,9 +74,6 @@ class Training:
         self.optimizer = optimizer
 
         # Hiperparaméterek és tanítási konfigurációk
-        self.beta = 0  # Dinamikus érték lesz tanítás során
-        if beta_min > 0:
-            self.beta_min = 1 / beta_min
         self.scheduler_name = scheduler_name
 
         # Címkék
@@ -119,16 +114,7 @@ class Training:
             train_differences = {param: [] for param in parameters}  # Listát tárolunk
             train_total_differences = []
 
-            if tau > 0:
-                self.beta = beta_max * (1 - np.exp(-epoch / tau))
-            elif beta_max > 0:
-                self.beta = min(beta_max, beta_min + epoch * beta_multiplier)
-            elif beta_min > 0:
-                self.beta = min(1.0, epoch / self.beta_min)
-                if epoch == 0:
-                    self.beta = 1 / self.beta_min
-            else:
-                self.beta = beta_min
+            self.beta = beta_scheduler(epoch, beta_scheduler_name)
 
             for data in self.trainloader:
                 inputs, _ = data
@@ -263,7 +249,9 @@ class Training:
                     self.run[f"train/total_loss"].append(average_loss)
                     self.run[f"train/reconstruction_loss"].append(reconst_loss.item())
                     self.run[f"train/KL_divergence_loss"].append(kl_div.item())
-                    self.run[f"train/KL_scaled_loss"].append((self.beta * kl_div).item())
+                    self.run[f"train/KL_scaled_loss"].append(
+                        (self.beta * kl_div).item()
+                    )
                     self.run[f"learning_rate"].append(
                         self.optimizer.param_groups[0]["lr"]
                     )

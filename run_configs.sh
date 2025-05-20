@@ -17,7 +17,7 @@ CONFIGS=(
     # "valtozo_savvaltas_gas_diff.ini"
     # "valtozo_sin_fek_diff.ini"
     # "valtozo_sin_gas_diff.ini"
-    "OG_remake_98.ini"
+    # "OG_remake_98.ini"
 )
 RUN_SCRIPT="python run.py"
 
