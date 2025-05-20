@@ -24,7 +24,7 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 # Neptune inicializáció
-config_path = os.environ.get("CONFIG_NAME", "default")
+config_path = os.environ.get("CONFIG_PATH", "Config/config.ini")
 if plot == 1 and test_mode == 0:
     run = init_neptune(config_path)
 else:

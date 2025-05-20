@@ -28,9 +28,9 @@ def init_neptune(config_name=None):
     :param parameters: Opcionális szótár, amely tartalmazza a futtatás paramétereit.
     :return: Neptune run objektum.
     """
-    config_path = os.environ.get("CONFIG_PATH")
+    config_path = config_name or os.environ.get("CONFIG_PATH")
     if config_path is None:
-        raise ValueError("CONFIG_PATH környezeti változó nincs beállítva!")
+        raise ValueError("CONFIG_PATH környezeti változó nincs beállítva és nem adtál meg paramétert sem!")
     
     config_name = os.path.splitext(os.path.basename(config_path))[0]
 
