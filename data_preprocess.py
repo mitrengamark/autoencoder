@@ -7,7 +7,7 @@ import re
 
 
 def mat_to_csv():
-    data_dir = "data"
+    data_dir = "data_bmw/data_mat"
     mat_files = [f for f in os.listdir(data_dir) if f.endswith(".mat")]
 
     for mat_file in mat_files:
@@ -357,4 +357,6 @@ def differences_data(in_dir, out_dir):
 
     print("Minden fájl feldolgozása kész!")
 
-differences_data("data3", "data_difference")
+# differences_data("data3", "data_difference")
+
+mat_to_csv()
