@@ -41,13 +41,42 @@ def mat_to_csv():
                     )
 
 
+def report_csv_lengths(data_dir = "data_bmw"):
+    """
+    Kiírja a 'data' mappában lévő .csv fájlok sorainak számát,
+    majd megjelöli a legrövidebb és leghosszabb fájlt.
+    """
+    csv_files = glob.glob(os.path.join(data_dir, "*.csv"))
+
+    if not csv_files:
+        print("Nincs .csv fájl a megadott könyvtárban.")
+        return
+
+    lengths = {}
+
+    for csv_file in csv_files:
+        try:
+            df = pd.read_csv(csv_file)
+            num_rows = len(df)
+            lengths[csv_file] = num_rows
+        except Exception as e:
+            print(f"Hiba a fájl beolvasásakor: {csv_file}, hiba: {e}")
+
+    min_file = min(lengths, key=lengths.get)
+    max_file = max(lengths, key=lengths.get)
+
+    print("\n--- Összegzés ---")
+    print(f"Legrövidebb fájl: {os.path.basename(min_file)} ({lengths[min_file]} sor)")
+    print(f"Leghosszabb fájl: {os.path.basename(max_file)} ({lengths[max_file]} sor)")
+
+
 def delete_csv_with_keyword(keyword):
     """
     Törli a .csv fájlokat a 'data' mappából, amelyek nevében szerepel a megadott kulcsszó.
 
     :param keyword: Az a szövegrészlet, amely alapján a fájlokat törölni kell.
     """
-    data_dir = "data"
+    data_dir = "data_bmw"
     csv_files = glob.glob(os.path.join(data_dir, "*.csv"))
     deleted_files = []
 
@@ -213,13 +242,13 @@ def merge_csv_for_manoeuvres(
             column_names.append(variable_name)
 
         # A legrövidebb fájl hossza
-        # min_length = min(file_lengths)
-        # print(f"Legrövidebb fájl hossza: {min_length}")
+        min_length = min(file_lengths)
+        print(f"Legrövidebb fájl hossza: {min_length}")
 
         # Azonos méretre vágás és összegyűjtés
         for file in matching_files:
             df = pd.read_csv(file)
-            trimmed_vector = df.values[:10805]  # Azonos méretre vágás
+            trimmed_vector = df.values[:12001]  # Azonos méretre vágás
             list_of_vectors.append(trimmed_vector)
 
         # A listát numpy array-é alakítjuk és egyesítjük oszlopokként
@@ -357,6 +386,11 @@ def differences_data(in_dir, out_dir):
 
     print("Minden fájl feldolgozása kész!")
 
+
 # differences_data("data3", "data_difference")
 
-mat_to_csv()
+# report_csv_lengths(data_dir="data_bmw")
+# delete_csv_with_keyword("tout")
+
+manoeuver_names = collect_maoeuver_names()
+merge_csv_for_manoeuvres(manoeuver_names, input_dir="data_bmw", output_dir="data_bmw_combined", save=True)
