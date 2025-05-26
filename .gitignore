@@ -14,3 +14,5 @@ __pycache__/
 /Reduced_bottleneck_data/**
 saliency_output.json
 /logs
+/data_bmw/**
+/data_bmw_combined/**
