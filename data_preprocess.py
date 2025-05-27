@@ -392,5 +392,5 @@ def differences_data(in_dir, out_dir):
 # report_csv_lengths(data_dir="data_bmw")
 # delete_csv_with_keyword("tout")
 
-manoeuver_names = collect_maoeuver_names()
-merge_csv_for_manoeuvres(manoeuver_names, input_dir="data_bmw", output_dir="data_bmw_combined", save=True)
+# manoeuver_names = collect_maoeuver_names()
+# merge_csv_for_manoeuvres(manoeuver_names, input_dir="data_bmw", output_dir="data_bmw_combined", save=True)

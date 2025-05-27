@@ -477,13 +477,18 @@ basic_maneuvers_list = [
     ],
 ]
 
+# --- PARAMÉTEREZÉS ---
 parent_directory = "data_bottleneck"
+selected_vae_dirs = ["bmw_OG_remake"]
 
-# Kilistázza az összes almappát
-vae_dirs = [
-    d for d in os.listdir(parent_directory)
-    if os.path.isdir(os.path.join(parent_directory, d))
-]
+# --- MAPPÁK KIVÁLASZTÁSA ---
+if selected_vae_dirs:
+    vae_dirs = selected_vae_dirs
+else:
+    vae_dirs = [
+        d for d in os.listdir(parent_directory)
+        if os.path.isdir(os.path.join(parent_directory, d))
+    ]
 
 for vae in vae_dirs:
     single_dir = os.path.join(parent_directory, vae, "single_manoeuvres")

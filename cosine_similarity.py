@@ -81,7 +81,7 @@ class CosineSimilarity:
 
         filename = f"{self.model_name}_cosine_similarity_matrix_{group_name}.png"
         full_path = os.path.join(self.save_dir, filename)
-        # plt.savefig(full_path)
+        plt.savefig(full_path)
         # plt.show()
 
     def detect_redundancy(self):

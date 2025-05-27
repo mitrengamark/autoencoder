@@ -928,7 +928,14 @@ root_dir = "cosine_similarity_matrices"
 output_dir = "reduced_manoeuvres_lists"
 os.makedirs(output_dir, exist_ok=True)
 
+allowed_subdirs = ["bmw_OG_remake"]
+
 for subdir, _, files in os.walk(root_dir):
+    # Ha van szűrés, és a mappa neve nem szerepel a listában, akkor kihagyjuk
+    subdir_name = os.path.basename(subdir)
+    if allowed_subdirs and subdir_name not in allowed_subdirs:
+        continue
+    
     for file in files:
         if file.startswith("manoeuvres_for_removing_") and file.endswith(".json"):
             json_path = os.path.join(subdir, file)
