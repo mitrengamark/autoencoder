@@ -34,6 +34,8 @@ class DataProcess:
             suffix = "_combined.csv"
         elif data_dir == "data_difference":
             suffix = "_combined_difference.csv"
+        elif data_dir == "data_bmw_combined":
+            suffix = "_combined.csv"
         else:
             raise ValueError(
                 "Unsupported data directory. Expected 'data3' or 'data_difference'!"
@@ -180,7 +182,7 @@ class DataProcess:
                 )
 
             data_tensor = torch.tensor(df.values, dtype=torch.float32)
-            self.data = data_tensor  # [2500:]
+            self.data = data_tensor[:10805]
 
             if normalization == "min_max":
                 normalized_data = self.normalize(data_tensor)

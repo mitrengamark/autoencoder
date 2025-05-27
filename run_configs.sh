@@ -2,18 +2,14 @@
 
 CONFIG_DIR="Config/configs"
 CONFIGS=(
-    "vae_1.ini"
-    "vae_2.ini"
-    "vae_3.ini"
-    "vae_4.ini"
-    "vae_5.ini"
-    "vae_6.ini"
-    "vae_7.ini"
-    "vae_8.ini"
-    "vae_9.ini"
-    "vae_10.ini"
-    "vae_11.ini"
-    "vae_12.ini"
+    "bmw_OG_remake.ini"
+    "bmw_allando_chirp.ini"
+    "bmw_allando_savvaltas.ini"
+    "bmw_allando_sin.ini"
+    "bmw_valtozo_savvaltas_fek.ini"
+    "bmw_valtozo_savvaltas_gas.ini"
+    "bmw_valtozo_sin_fek.ini"
+    "bmw_valtozo_sin_gas.ini"
 )
 RUN_SCRIPT="python run.py"
 
