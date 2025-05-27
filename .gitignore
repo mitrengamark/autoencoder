@@ -16,3 +16,5 @@ saliency_output.json
 /logs
 /data_bmw/**
 /data_bmw_combined/**
+/data_plot/**
+/Jurnal_plots/**
