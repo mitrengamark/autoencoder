@@ -2,10 +2,27 @@
 
 CONFIG_DIR="Config/configs"
 CONFIGS=(
-    "bmw_OG_remake_98.ini"
-    "bmw_OG_remake_95.ini"
-    "bmw_OG_remake_90.ini"
-    
+    "bmw_allando_chirp_98.ini"
+    "bmw_allando_chirp_95.ini"
+    "bmw_allando_chirp_90.ini"
+    "bmw_allando_savvaltas_98.ini"
+    "bmw_allando_savvaltas_95.ini"
+    "bmw_allando_savvaltas_90.ini"
+    "bmw_allando_sin_98.ini"
+    "bmw_allando_sin_95.ini"
+    "bmw_allando_sin_90.ini"
+    "bmw_valtozo_savvaltas_fek_98.ini"
+    "bmw_valtozo_savvaltas_fek_95.ini"
+    "bmw_valtozo_savvaltas_fek_90.ini"
+    "bmw_valtozo_savvaltas_gas_98.ini"
+    "bmw_valtozo_savvaltas_gas_95.ini"
+    "bmw_valtozo_savvaltas_gas_90.ini"
+    "bmw_valtozo_sin_fek_98.ini"
+    "bmw_valtozo_sin_fek_95.ini"
+    "bmw_valtozo_sin_fek_90.ini"
+    "bmw_valtozo_sin_gas_98.ini"
+    "bmw_valtozo_sin_gas_95.ini"
+    "bmw_valtozo_sin_gas_90.ini"
 )
 RUN_SCRIPT="python run.py"
 

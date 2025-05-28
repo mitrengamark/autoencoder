@@ -461,7 +461,7 @@ class Training:
             bottleneck_outputs = bottleneck_outputs.mean(dim=1).numpy()
             # bottleneck_outputs_flattened = bottleneck_outputs.view(-1, bottleneck_outputs.size(-1)).numpy()  # [batch_size * seq_len, feature_dim]
 
-        save_path = f"data_bottleneck/bmw_OG_remake/single_manoeuvres/{folder_name}.npy"
+        save_path = f"data_bottleneck/bmw_valtozo_sin_fek/single_manoeuvres/{folder_name}.npy"
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         np.save(save_path, bottleneck_outputs)  # Mentés NumPy formátumban
 

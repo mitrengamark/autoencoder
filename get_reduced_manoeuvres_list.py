@@ -928,7 +928,7 @@ root_dir = "cosine_similarity_matrices"
 output_dir = "reduced_manoeuvres_lists"
 os.makedirs(output_dir, exist_ok=True)
 
-allowed_subdirs = ["bmw_OG_remake"]
+allowed_subdirs = ["bmw_allando_sin", "bmw_allando_savvaltas", "bmw_allando_chirp", "bmw_valtozo_savvaltas_gas", "bmw_valtozo_savvaltas_fek", "bmw_valtozo_sin_gas", "bmw_valtozo_sin_fek"]
 
 for subdir, _, files in os.walk(root_dir):
     # Ha van szűrés, és a mappa neve nem szerepel a listában, akkor kihagyjuk

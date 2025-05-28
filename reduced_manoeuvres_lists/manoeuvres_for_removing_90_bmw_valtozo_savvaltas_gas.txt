@@ -1,0 +1,1 @@
+selected_manoeuvres = valtozo_v_savvaltas_gas_kozepes_pedal0_5, valtozo_v_savvaltas_gas_magas_pedal0_5, valtozo_v_savvaltas_gas_kozepes_pedal1_0

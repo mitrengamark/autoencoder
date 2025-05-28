@@ -1,0 +1,1 @@
+selected_manoeuvres = valtozo_v_sin_gas_a2_f3_pedal0_2, valtozo_v_sin_gas_a2_f7_pedal1_0, valtozo_v_sin_gas_a8_f3_pedal0_2, valtozo_v_sin_gas_a8_f3_pedal1_0, valtozo_v_sin_gas_a8_f5_pedal1_0, valtozo_v_sin_gas_a8_f7_pedal0_2
