@@ -93,7 +93,7 @@ if test_mode == 0:
 elif test_mode == 1:
     # latent_data, label, bottleneck_outputs, labels, avg_saliency = training.test()
     training.test()
-    
+
     # latent_data = latent_data[2500:]
     # # Ellenőrzés
     # print("latent_data type:", type(latent_data))

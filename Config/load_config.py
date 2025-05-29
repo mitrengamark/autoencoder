@@ -120,4 +120,5 @@ validation_method = config.get("Validation", "validation_method")
 hidden_dims = [int(dim) for dim in hidden_dims_str.strip("[]").split(", ")]
 warmup_epochs = num_epochs * 0.1
 current_date = datetime.datetime.now().strftime("%m_%d_%H_%M")
-model_path = f"Models/{training_model}_{num_epochs}_{current_date}.pth"
+config_name = os.path.splitext(os.path.basename(config_path))[0]
+model_path = f"Models/{training_model}_{num_epochs}_{current_date}_{config_name}.pth"

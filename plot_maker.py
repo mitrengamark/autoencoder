@@ -82,8 +82,20 @@ for label, file in filenames.items():
         dataframes[label] = df.iloc[:, 2]
 
 # Csoportosítás
-constant_speed = ["All data", "All data threshold 0.9", "All data threshold 0.95", "All data threshold 0.98"]
-variable_speed = ["All data", "Lane change (acceleration)", "Lane change (slow down)", "Sinusoidal (acceleration)", "Sinusoidal (slow down)"]
+constant_speed = [
+    "All data",
+    "All data threshold 0.9",
+    "All data threshold 0.95",
+    "All data threshold 0.98",
+]
+variable_speed = [
+    "All data",
+    "Lane change (acceleration)",
+    "Lane change (slow down)",
+    "Sinusoidal (acceleration)",
+    "Sinusoidal (slow down)",
+]
+
 
 # Plotoló függvény
 def plot_losses(group, output_file):
@@ -94,7 +106,7 @@ def plot_losses(group, output_file):
                 x=range(len(dataframes[label])),
                 y=dataframes[label],
                 label=label,
-                color=custom_colors.get(label, "#333333")  # fallback szín
+                color=custom_colors.get(label, "#333333"),  # fallback szín
             )
     plt.xlabel("Epoch")
     plt.ylabel("Validation Loss")
@@ -103,6 +115,7 @@ def plot_losses(group, output_file):
     plt.tight_layout()
     plt.savefig(output_file, dpi=300)
     plt.close()
+
 
 # Plottok mentése fájlba
 plot_losses(constant_speed, "Jurnal_plots/BMW/all_data_losses.png")
