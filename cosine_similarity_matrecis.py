@@ -479,7 +479,7 @@ basic_maneuvers_list = [
 
 # --- PARAMÉTEREZÉS ---
 parent_directory = "data_bottleneck"
-selected_vae_dirs = ["bmw_allando_sin", "bmw_allando_savvaltas", "bmw_allando_chirp", "bmw_valtozo_savvaltas_gas", "bmw_valtozo_savvaltas_fek", "bmw_valtozo_sin_gas", "bmw_valtozo_sin_fek"]
+selected_vae_dirs = ["bmw_model_tesla_data", "tesla_model_bmw_data"]  # Válaszd ki a kívánt VAE mappákat, vagy hagyd üresen az összeshez
 
 # --- MAPPÁK KIVÁLASZTÁSA ---
 if selected_vae_dirs:
@@ -503,7 +503,7 @@ for vae in vae_dirs:
         print(f"Átlagolás: {single_dir} → {average_dir}")
         load_and_average_manoeuvres(single_dir, average_dir)
 
-    cos_sim = CosineSimilarity(average_dir, save_dir, threshold=90)
+    cos_sim = CosineSimilarity(average_dir, save_dir, threshold=98)
     cos_sim.compute_cosine_similarity_within_groups(basic_maneuvers_list)
     redundant_pairs = cos_sim.detect_redundancy()
     removed_manoeuvres_by_group = cos_sim.remove_redundancy(redundant_pairs)
