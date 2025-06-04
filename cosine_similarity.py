@@ -38,7 +38,7 @@ class CosineSimilarity:
 
             self.similarity_matrices[idx + 1] = (valid_manoeuvres, similarity_matrix)
 
-            self.plot_confusion_matrix(valid_manoeuvres, similarity_matrix)
+            # self.plot_confusion_matrix(valid_manoeuvres, similarity_matrix)
 
     def plot_confusion_matrix(self, manoeuvres, similarity_matrix):
         # Csoportnév kinyerése (prefix alapján)
