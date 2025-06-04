@@ -973,4 +973,5 @@ for subdir, _, files in os.walk(root_dir):
 
             print(f"Eredeti manőverszám: {len(input_list)}")
             print(f"Szűrt manőverszám: {len(filtered_manoeuvres)}")
+            print(f"Rendundancia: {len(to_remove)/len(input_list) * 100:.0f}%")
             # print(config_line)
