@@ -928,7 +928,7 @@ root_dir = "cosine_similarity_matrices"
 output_dir = "reduced_manoeuvres_lists"
 os.makedirs(output_dir, exist_ok=True)
 
-allowed_subdirs = ["bmw_allando_sin", "bmw_allando_savvaltas", "bmw_allando_chirp", "bmw_valtozo_savvaltas_gas", "bmw_valtozo_savvaltas_fek", "bmw_valtozo_sin_gas", "bmw_valtozo_sin_fek"]
+allowed_subdirs = ["bmw_model_tesla_data", "bmw_OG_remake", "OG_remake", "tesla_model_bmw_data"]
 
 for subdir, _, files in os.walk(root_dir):
     # Ha van szűrés, és a mappa neve nem szerepel a listában, akkor kihagyjuk
@@ -949,7 +949,7 @@ for subdir, _, files in os.walk(root_dir):
             for group in data.values():
                 to_remove.update(group)
 
-            if "OG_remake" in file:
+            if "OG_remake" or "model" in file:
                 input_list = all_manoeuvres
             else:
                 matched_key = next((k for k in manoeuvre_groups if k in file), None)
