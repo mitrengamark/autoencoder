@@ -17,7 +17,7 @@ class CosineSimilarity:
 
         os.makedirs(self.save_dir, exist_ok=True)
 
-    def compute_cosine_similarity_within_groups(self, grouped_manoeuvres):
+    def compute_cosine_similarity_within_groups(self, grouped_manoeuvres, plot=True):
         for idx, group in enumerate(grouped_manoeuvres):
             valid_manoeuvres = [
                 m
@@ -38,7 +38,8 @@ class CosineSimilarity:
 
             self.similarity_matrices[idx + 1] = (valid_manoeuvres, similarity_matrix)
 
-            # self.plot_confusion_matrix(valid_manoeuvres, similarity_matrix)
+            if plot:
+                self.plot_confusion_matrix(valid_manoeuvres, similarity_matrix)
 
     def plot_confusion_matrix(self, manoeuvres, similarity_matrix):
         # Csoportnév kinyerése (prefix alapján)
@@ -82,8 +83,8 @@ class CosineSimilarity:
         filename = f"{self.model_name}_cosine_similarity_matrix_{group_name}.png"
         full_path = os.path.join(self.save_dir, filename)
         plt.savefig(full_path)
+        plt.close()
         # plt.show()
-
     def detect_redundancy(self):
         redundant_pairs = {}
         threshold = self.threshold / 100
