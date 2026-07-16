@@ -937,6 +937,18 @@ allowed_subdirs = [
     "pca_data3_zscore",
     "pca_data_bmw_cutted_minmax",
     "pca_data_bmw_cutted_zscore",
+    "kmeans_bmw_OG_remake",
+    "kmedoids_bmw_OG_remake",
+    "kmeans_OG_remake",
+    "kmedoids_OG_remake",
+    "kmeans_pca_data3_minmax",
+    "kmedoids_pca_data3_minmax",
+    "kmeans_pca_data3_zscore",
+    "kmedoids_pca_data3_zscore",
+    "kmeans_pca_data_bmw_cutted_minmax",
+    "kmedoids_pca_data_bmw_cutted_minmax",
+    "kmeans_pca_data_bmw_cutted_zscore",
+    "kmedoids_pca_data_bmw_cutted_zscore",
 ]
 
 for subdir, _, files in os.walk(root_dir):

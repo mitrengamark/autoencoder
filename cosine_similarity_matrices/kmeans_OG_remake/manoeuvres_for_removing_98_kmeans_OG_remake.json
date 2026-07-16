@@ -1,0 +1,69 @@
+{
+    "1": [
+        "allando_v_savvaltas_alacsony_v30",
+        "allando_v_savvaltas_alacsony_v40",
+        "allando_v_savvaltas_magas_v100"
+    ],
+    "2": [
+        "allando_v_chirp_a1_v100",
+        "allando_v_chirp_a1_v85",
+        "allando_v_chirp_a3_v20",
+        "allando_v_chirp_a3_v95",
+        "allando_v_chirp_a5_v110",
+        "allando_v_chirp_a5_v30",
+        "allando_v_chirp_a5_v40",
+        "allando_v_chirp_a5_v80"
+    ],
+    "3": [
+        "allando_v_sin_a2_f1_v130",
+        "allando_v_sin_a2_f1_v90",
+        "allando_v_sin_a2_f1_v95",
+        "allando_v_sin_a2_f3_v10",
+        "allando_v_sin_a2_f3_v105",
+        "allando_v_sin_a2_f3_v110",
+        "allando_v_sin_a2_f3_v130",
+        "allando_v_sin_a2_f3_v135",
+        "allando_v_sin_a2_f5_v110",
+        "allando_v_sin_a2_f5_v5",
+        "allando_v_sin_a2_f7_v55",
+        "allando_v_sin_a8_f1_v50",
+        "allando_v_sin_a8_f1_v60",
+        "allando_v_sin_a8_f3_v120",
+        "allando_v_sin_a8_f3_v40",
+        "allando_v_sin_a8_f3_v45",
+        "allando_v_sin_a8_f3_v50",
+        "allando_v_sin_a8_f3_v60",
+        "allando_v_sin_a8_f3_v65",
+        "allando_v_sin_a8_f3_v70",
+        "allando_v_sin_a8_f3_v75",
+        "allando_v_sin_a8_f3_v85",
+        "allando_v_sin_a8_f5_v10",
+        "allando_v_sin_a8_f5_v115",
+        "allando_v_sin_a8_f5_v120",
+        "allando_v_sin_a8_f5_v125",
+        "allando_v_sin_a8_f5_v25",
+        "allando_v_sin_a8_f5_v40",
+        "allando_v_sin_a8_f5_v45",
+        "allando_v_sin_a8_f5_v5",
+        "allando_v_sin_a8_f5_v50",
+        "allando_v_sin_a8_f5_v55",
+        "allando_v_sin_a8_f5_v85",
+        "allando_v_sin_a8_f5_v90",
+        "allando_v_sin_a8_f7_v10",
+        "allando_v_sin_a8_f7_v110",
+        "allando_v_sin_a8_f7_v115",
+        "allando_v_sin_a8_f7_v125",
+        "allando_v_sin_a8_f7_v25",
+        "allando_v_sin_a8_f7_v80",
+        "allando_v_sin_a8_f7_v95"
+    ],
+    "4": [],
+    "5": [],
+    "6": [
+        "valtozo_v_sin_gas_a2_f5_pedal0_2",
+        "valtozo_v_sin_gas_a8_f5_pedal0_2"
+    ],
+    "7": [
+        "valtozo_v_sin_fek_a8_f7_pedal0_5"
+    ]
+}

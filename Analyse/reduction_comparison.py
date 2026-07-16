@@ -73,9 +73,35 @@ def compare_json_sets_by_threshold_from_selected_subfolders(root_dir, subfolders
     return comparison_results, pd.DataFrame(comparison_results)
 
 
+COMPARISON_SUBFOLDERS = [
+    # BMW / data_bmw_cutted source: proposed (VAE), PCA, clustering baselines
+    "bmw_OG_remake",
+    "pca_data_bmw_cutted_minmax",
+    "pca_data_bmw_cutted_zscore",
+    "kmeans_bmw_OG_remake",
+    "kmedoids_bmw_OG_remake",
+    "kmeans_pca_data_bmw_cutted_minmax",
+    "kmedoids_pca_data_bmw_cutted_minmax",
+    "kmeans_pca_data_bmw_cutted_zscore",
+    "kmedoids_pca_data_bmw_cutted_zscore",
+    # Tesla / data3 source: proposed (VAE), PCA, clustering baselines
+    "OG_remake",
+    "pca_data3_minmax",
+    "pca_data3_zscore",
+    "kmeans_OG_remake",
+    "kmedoids_OG_remake",
+    "kmeans_pca_data3_minmax",
+    "kmedoids_pca_data3_minmax",
+    "kmeans_pca_data3_zscore",
+    "kmedoids_pca_data3_zscore",
+    # Cross-domain VAE variants (legacy comparison)
+    "bmw_model_tesla_data",
+    "tesla_model_bmw_data",
+]
+
 results, df_results = compare_json_sets_by_threshold_from_selected_subfolders(
     "cosine_similarity_matrices",
-    ["bmw_OG_remake", "OG_remake", "bmw_model_tesla_data", "tesla_model_bmw_data"],
+    COMPARISON_SUBFOLDERS,
 )
 output_path = "Results/redundancy_comparison_results.csv"
 df_results.to_csv(output_path, index=False)

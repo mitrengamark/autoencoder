@@ -8,11 +8,11 @@ from collections import Counter
 
 
 class CosineSimilarity:
-    def __init__(self, directory, save_dir, threshold):
+    def __init__(self, directory, save_dir, threshold, model_name=None):
         self.directory = directory
         self.save_dir = save_dir
         self.threshold = threshold
-        self.model_name = directory.split(os.sep)[1]
+        self.model_name = model_name or directory.split(os.sep)[1]
         self.similarity_matrices = {}
 
         os.makedirs(self.save_dir, exist_ok=True)
