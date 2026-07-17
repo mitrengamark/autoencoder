@@ -20,3 +20,4 @@ saliency_output.json
 /Jurnal_plots/**
 /data_bottleneck/**
 .env
+wandb
