@@ -1,0 +1,40 @@
+{
+  "os":  "Linux-5.15.0-185-generic-x86_64-with-glibc2.35",
+  "python":  "CPython 3.10.12",
+  "startedAt":  "2026-07-17T09:27:16.995394Z",
+  "program":  "/home/miti/autoencoder/run.py",
+  "codePath":  "run.py",
+  "codePathLocal":  "run.py",
+  "git":  {
+    "remote":  "git@github.com:mitrengamark/autoencoder.git",
+    "commit":  "54d35d2cd79db9c651642631ec47dd1a32332eed"
+  },
+  "email":  "mitrengamark@edu.bme.hu",
+  "root":  "/home/miti/autoencoder",
+  "host":  "fickoserver",
+  "executable":  "/home/miti/autoencoder/ae/bin/python3",
+  "cpu_count":  20,
+  "cpu_count_logical":  28,
+  "gpu":  "NVIDIA GeForce RTX 4070 Ti SUPER",
+  "gpu_count":  1,
+  "disk":  {
+    "/":  {
+      "total":  "972211806208",
+      "used":  "796132900864"
+    }
+  },
+  "memory":  {
+    "total":  "33373126656"
+  },
+  "gpu_nvidia":  [
+    {
+      "name":  "NVIDIA GeForce RTX 4070 Ti SUPER",
+      "memoryTotal":  "17171480576",
+      "cudaCores":  8448,
+      "architecture":  "Ada",
+      "uuid":  "GPU-350190ba-4683-f9af-5e1b-835d804f1613"
+    }
+  ],
+  "cudaVersion":  "12.2",
+  "writerId":  "o6sovxjwoazw70vmgvzdcu0jtccq5s4k"
+}

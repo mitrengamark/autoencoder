@@ -1,0 +1,42 @@
+2026-07-17 11:27:16,997 INFO    MainThread:3211981 [wandb_setup.py:_flush():81] Current SDK version is 0.28.1
+2026-07-17 11:27:16,997 INFO    MainThread:3211981 [wandb_setup.py:_flush():81] Configure stats pid to 3211981
+2026-07-17 11:27:16,998 INFO    MainThread:3211981 [wandb_setup.py:_flush():81] Loading settings from environment variables
+2026-07-17 11:27:16,998 INFO    MainThread:3211981 [wandb_init.py:setup_run_log_directory():729] Logging user logs to /home/miti/autoencoder/wandb/run-20260717_112716-k97e7qlv/logs/debug.log
+2026-07-17 11:27:16,998 INFO    MainThread:3211981 [wandb_init.py:setup_run_log_directory():730] Logging internal logs to /home/miti/autoencoder/wandb/run-20260717_112716-k97e7qlv/logs/debug-internal.log
+2026-07-17 11:27:16,998 INFO    MainThread:3211981 [wandb_init.py:init():772] calling init triggers
+2026-07-17 11:27:16,998 INFO    MainThread:3211981 [wandb_init.py:init():777] wandb.init called with sweep_config: {}
+config: {'latent_dim': 8, 'hidden_dims': [32, 16], 'num_epochs': 150, 'training_model': 'VAE', 'mask_ratio': 0.7, 'scheduler': 'ReduceLROnPlateau', 'step_size': 10, 'gamma': 0.85, 'patience': 5, 'initial_lr': 0.0001, 'max_lr': 0.001, 'final_lr': 1e-05, 'model': 'Models/VAE_150_07_17_11_27_ae_OG_remake.pth', 'config_path': 'Config/configs/ae_OG_remake.ini', '_wandb': {}}
+2026-07-17 11:27:16,998 INFO    MainThread:3211981 [wandb_init.py:init():820] starting backend
+2026-07-17 11:27:16,998 INFO    MainThread:3211981 [wandb_init.py:init():835] sending inform_init request
+2026-07-17 11:27:17,131 INFO    MainThread:3211981 [wandb_init.py:init():840] backend started and connected
+2026-07-17 11:27:17,149 INFO    MainThread:3211981 [wandb_init.py:init():910] updated telemetry
+2026-07-17 11:27:17,152 INFO    MainThread:3211981 [wandb_init.py:init():933] communicating run to backend with 90.0 second timeout
+2026-07-17 11:27:18,110 INFO    MainThread:3211981 [wandb_init.py:init():978] starting run threads in backend
+2026-07-17 11:27:18,161 INFO    MainThread:3211981 [wandb_run.py:_console_start():2621] atexit reg
+2026-07-17 11:27:18,161 INFO    MainThread:3211981 [wandb_run.py:_redirect():2471] redirect: wrap_raw
+2026-07-17 11:27:18,161 INFO    MainThread:3211981 [wandb_run.py:_redirect():2540] Wrapping output streams.
+2026-07-17 11:27:18,161 INFO    MainThread:3211981 [wandb_run.py:_redirect():2563] Redirects installed.
+2026-07-17 11:27:18,162 INFO    MainThread:3211981 [wandb_init.py:init():1016] run started, returning control to user process
+2026-07-17 11:28:54,566 INFO    wandb-AsyncioManager-main:3211981 [service_client.py:_forward_responses():122] [no run ID] Reached EOF.
+2026-07-17 11:28:54,566 INFO    wandb-AsyncioManager-main:3211981 [mailbox.py:close():154] [no run ID] Closing mailbox, abandoning 2 handles.
+2026-07-17 11:28:54,567 ERROR   wandb-AsyncioManager-main:3211981 [asyncio_manager.py:fn_wrap_exceptions():197] Uncaught exception in run_soon callback.
+Traceback (most recent call last):
+  File "/home/miti/autoencoder/ae/lib/python3.10/site-packages/wandb/sdk/lib/asyncio_manager.py", line 195, in fn_wrap_exceptions
+    await fn()
+  File "/home/miti/autoencoder/ae/lib/python3.10/site-packages/wandb/sdk/lib/run_messages.py", line 90, in loop
+    await asyncio_compat.race(
+  File "/home/miti/autoencoder/ae/lib/python3.10/site-packages/wandb/sdk/lib/asyncio_compat.py", line 279, in race
+    async with open_task_group(race=True) as tg:
+  File "/usr/lib/python3.10/contextlib.py", line 206, in __aexit__
+    await anext(self.gen)
+  File "/home/miti/autoencoder/ae/lib/python3.10/site-packages/wandb/sdk/lib/asyncio_compat.py", line 241, in open_task_group
+    await task_group._wait_all(race=race, timeout=exit_timeout)
+  File "/home/miti/autoencoder/ae/lib/python3.10/site-packages/wandb/sdk/lib/asyncio_compat.py", line 181, in _wait_all
+    raise exc
+  File "/home/miti/autoencoder/ae/lib/python3.10/site-packages/wandb/sdk/lib/run_messages.py", line 113, in _print_all
+    result = await handle.wait_async(timeout=None)
+  File "/home/miti/autoencoder/ae/lib/python3.10/site-packages/wandb/sdk/mailbox/mailbox_handle.py", line 127, in wait_async
+    response = await self._handle.wait_async(timeout=timeout)
+  File "/home/miti/autoencoder/ae/lib/python3.10/site-packages/wandb/sdk/mailbox/response_handle.py", line 123, in wait_async
+    raise HandleAbandonedError()
+wandb.sdk.mailbox.mailbox_handle.HandleAbandonedError

@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 import os
+import time
 from Factory.variational_autoencoder import VariationalAutoencoder
 from Factory.masked_autoencoder import MaskedAutoencoder
 from Factory.scheduler import scheduler_maker
@@ -23,6 +24,7 @@ from Reduction.inconsistent_points import (
 )
 from data_process import DataProcess
 from Factory.beta_scheduler import beta_scheduler
+from Analyse.wandb_utils import log_epoch_metrics
 from Config.load_config import (
     num_manoeuvres,
     training_model,
@@ -100,15 +102,19 @@ class Training:
         self.reconst_losses = []
         self.kl_losses = []
         self.val_losses = []
+        self.epoch_times = []
+        self.efficiency_tracker = None
 
         self.dp = DataProcess()
 
     def train(self):
         self.model.train()
+        self.epoch_times = []
         if hyperopt == 0:
             scheduler = scheduler_maker(optimizer=self.optimizer)
 
         for epoch in range(num_epochs):
+            epoch_start = time.perf_counter()
             loss_per_episode = 0
             reconst_loss_per_epoch = 0
             kl_loss_per_epoch = 0
@@ -237,63 +243,42 @@ class Training:
                     z_abs_mean = torch.mean(torch.abs(z_mean), dim=0).mean().item()
 
                 if self.run:
-                    self.run[f"latent/mean_norm"].append(
-                        z_norm
-                    )  # ha < 0.1, akkor baj van (összeomlik a látenstér)
-                    self.run[f"latent/avg_std_dim"].append(
-                        z_std
-                    )  # ha ez 0.0 körül van, nem használja a dimenziókat
-                    self.run[f"latent/avg_abs_mean"].append(
-                        z_abs_mean
-                    )  # ha minden z_mean közel 0 ez is jelezhet összeomlást
-
-                    self.run[f"train/total_loss"].append(average_loss)
-                    self.run[f"train/reconstruction_loss"].append(reconst_loss.item())
-                    self.run[f"train/KL_divergence_loss"].append(kl_div.item())
-                    self.run[f"train/KL_scaled_loss"].append(
-                        (self.beta * kl_div).item()
-                    )
-                    self.run[f"learning_rate"].append(
-                        self.optimizer.param_groups[0]["lr"]
-                    )
-                    self.run[f"validation/total_loss"].append(val_loss)
-                    self.run[f"validation/reconstruction_loss"].append(
-                        np.mean(val_reconst_losses)
-                    )
-                    self.run[f"validation/KL_divergence_loss"].append(
-                        np.mean(val_kl_losses)
-                    )
-                    self.run[f"beta"].append(self.beta)
-
+                    metrics = {
+                        "latent/mean_norm": z_norm,
+                        "latent/avg_std_dim": z_std,
+                        "latent/avg_abs_mean": z_abs_mean,
+                        "train/total_loss": average_loss,
+                        "train/reconstruction_loss": reconst_loss.item(),
+                        "train/KL_divergence_loss": kl_div.item(),
+                        "train/KL_scaled_loss": (self.beta * kl_div).item(),
+                        "learning_rate": self.optimizer.param_groups[0]["lr"],
+                        "validation/total_loss": val_loss,
+                        "validation/reconstruction_loss": np.mean(val_reconst_losses),
+                        "validation/KL_divergence_loss": np.mean(val_kl_losses),
+                        "beta": self.beta,
+                        "train/diff_average": train_total_difference,
+                        "validation/diff_average": val_differences["diff_average"],
+                    }
                     for param, avg_value in train_differences.items():
-                        self.run[f"train/{param}_average"].append(avg_value)
-
+                        metrics[f"train/{param}_average"] = avg_value
                     for param, avg_value in val_differences.items():
-                        self.run[f"validation/{param}_average"].append(avg_value)
-
-                    self.run[f"train/diff_average"].append(train_total_difference)
-                    self.run[f"validation/diff_average"].append(
-                        val_differences["diff_average"]
-                    )
+                        metrics[f"validation/{param}_average"] = avg_value
+                    log_epoch_metrics(self.run, metrics, step=epoch)
             elif isinstance(self.model, MaskedAutoencoder):
                 if self.run:
-                    self.run[f"train/loss"].append(average_loss)
-                    self.run[f"learning_rate"].append(
-                        self.optimizer.param_groups[0]["lr"]
-                    )
-                    self.run[f"validation/loss"].append(val_loss)
-                    self.run[f"beta"].append(self.beta)
-
+                    metrics = {
+                        "train/loss": average_loss,
+                        "learning_rate": self.optimizer.param_groups[0]["lr"],
+                        "validation/loss": val_loss,
+                        "beta": self.beta,
+                        "train/diff_average": train_total_difference,
+                        "validation/diff_average": val_differences["diff_average"],
+                    }
                     for param, avg_value in train_differences.items():
-                        self.run[f"train/{param}_average"].append(avg_value)
-
+                        metrics[f"train/{param}_average"] = avg_value
                     for param, avg_value in val_differences.items():
-                        self.run[f"validation/{param}_average"].append(avg_value)
-
-                    self.run[f"train/diff_average"].append(train_total_difference)
-                    self.run[f"validation/diff_average"].append(
-                        val_differences["diff_average"]
-                    )
+                        metrics[f"validation/{param}_average"] = avg_value
+                    log_epoch_metrics(self.run, metrics, step=epoch)
 
             # Kiírás az egyes train és validation eltérésekre
             train_differences_str = " | ".join(
@@ -315,8 +300,9 @@ class Training:
                 f"Validation Differences: {val_differences_str}\n **Total Avg: {val_differences['diff_average']:.6f}**"
             )
 
-        if self.run:
-            self.run.stop()
+            self.epoch_times.append(time.perf_counter() - epoch_start)
+            if self.efficiency_tracker is not None:
+                self.efficiency_tracker.sample()
 
         self.plot_losses()
 

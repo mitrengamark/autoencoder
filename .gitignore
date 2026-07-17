@@ -19,3 +19,4 @@ saliency_output.json
 /data_plot/**
 /Jurnal_plots/**
 /data_bottleneck/**
+.env

@@ -1,6 +1,7 @@
 matplotlib
 seaborn
-neptune
+wandb
+python-dotenv
 torch
 pandas
 configobj
@@ -8,3 +9,4 @@ scikit_learn
 scipy
 optuna
 numpy
+psutil

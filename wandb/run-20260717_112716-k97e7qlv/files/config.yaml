@@ -1,0 +1,86 @@
+_wandb:
+    value:
+        cli_version: 0.28.1
+        e:
+            o6sovxjwoazw70vmgvzdcu0jtccq5s4k:
+                codePath: run.py
+                codePathLocal: run.py
+                cpu_count: 20
+                cpu_count_logical: 28
+                cudaVersion: "12.2"
+                disk:
+                    /:
+                        total: "972211806208"
+                        used: "796132900864"
+                email: mitrengamark@edu.bme.hu
+                executable: /home/miti/autoencoder/ae/bin/python3
+                git:
+                    commit: 54d35d2cd79db9c651642631ec47dd1a32332eed
+                    remote: git@github.com:mitrengamark/autoencoder.git
+                gpu: NVIDIA GeForce RTX 4070 Ti SUPER
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Ada
+                      cudaCores: 8448
+                      memoryTotal: "17171480576"
+                      name: NVIDIA GeForce RTX 4070 Ti SUPER
+                      uuid: GPU-350190ba-4683-f9af-5e1b-835d804f1613
+                host: fickoserver
+                memory:
+                    total: "33373126656"
+                os: Linux-5.15.0-185-generic-x86_64-with-glibc2.35
+                program: /home/miti/autoencoder/run.py
+                python: CPython 3.10.12
+                root: /home/miti/autoencoder
+                startedAt: "2026-07-17T09:27:16.995394Z"
+                writerId: o6sovxjwoazw70vmgvzdcu0jtccq5s4k
+        m: []
+        python_version: 3.10.12
+        t:
+            "1":
+                - 1
+                - 5
+                - 53
+            "2":
+                - 1
+                - 5
+                - 53
+            "3":
+                - 3
+                - 13
+                - 15
+                - 16
+            "4": 3.10.12
+            "5": 0.28.1
+            "12": 0.28.1
+            "13": linux-x86_64
+config_path:
+    value: Config/configs/ae_OG_remake.ini
+final_lr:
+    value: 1e-05
+gamma:
+    value: 0.85
+hidden_dims:
+    value:
+        - 32
+        - 16
+initial_lr:
+    value: 0.0001
+latent_dim:
+    value: 8
+mask_ratio:
+    value: 0.7
+max_lr:
+    value: 0.001
+model:
+    value: Models/VAE_150_07_17_11_27_ae_OG_remake.pth
+num_epochs:
+    value: 150
+patience:
+    value: 5
+scheduler:
+    value: ReduceLROnPlateau
+step_size:
+    value: 10
+training_model:
+    value: VAE

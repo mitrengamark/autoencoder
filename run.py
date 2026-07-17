@@ -10,9 +10,27 @@ from train_test import Training
 from Factory.variational_autoencoder import VariationalAutoencoder
 from Factory.masked_autoencoder import MaskedAutoencoder
 from Factory.optimizer import optimizer_maker
-from Analyse.neptune_utils import init_neptune
+from Analyse.wandb_utils import init_wandb, finish_wandb
 from Analyse.process_figure import process_figures
-from Config.load_config import seed, training_model, save_model, test_mode, plot
+from Analyse.efficiency_metrics import (
+    EfficiencyTracker,
+    build_efficiency_metrics,
+    write_efficiency_json,
+    append_efficiency_csv,
+    log_efficiency_to_wandb,
+)
+from Config.load_config import (
+    seed,
+    training_model,
+    save_model,
+    test_mode,
+    plot,
+    batch_size,
+    num_epochs,
+    data_dir,
+    selected_manoeuvres,
+    config_name,
+)
 
 torch.cuda.empty_cache()
 torch.manual_seed(seed)
@@ -23,10 +41,10 @@ random.seed(seed)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
-# Neptune inicializáció
+# Weights & Biases inicializáció
 config_path = os.environ.get("CONFIG_PATH", "Config/config.ini")
 if plot == 1 and test_mode == 0:
-    run = init_neptune(config_path)
+    run = init_wandb(config_path)
 else:
     run = None
 
@@ -87,7 +105,42 @@ training = Training(
 )
 
 if test_mode == 0:
+    tracker = EfficiencyTracker()
+    training.efficiency_tracker = tracker
+    tracker.start()
     training.train()
+    train_wall_sec, peak_rss_mb, peak_cuda_mb = tracker.stop()
+
+    metrics = build_efficiency_metrics(
+        config_path=config_path,
+        config_name=config_name,
+        data_dir=data_dir,
+        batch_size=batch_size,
+        num_epochs=num_epochs,
+        device=device,
+        trainloader=trainloader,
+        valloader=valloader,
+        testloader=testloader,
+        selected_manoeuvres=selected_manoeuvres,
+        train_wall_sec=train_wall_sec,
+        epoch_times=training.epoch_times,
+        peak_rss_mb=peak_rss_mb,
+        peak_cuda_mb=peak_cuda_mb,
+    )
+    json_path = write_efficiency_json(metrics)
+    csv_path = append_efficiency_csv(metrics)
+    log_efficiency_to_wandb(run, metrics)
+    print(f"Efficiency metrics saved: {json_path}, {csv_path}")
+    print(
+        f"  manoeuvres={metrics['num_manoeuvres']}, "
+        f"train_wall_sec={metrics['train_wall_sec']}, "
+        f"peak_rss_mb={metrics['peak_rss_mb']}, "
+        f"peak_cuda_mb={metrics['peak_cuda_allocated_mb']}"
+    )
+
+    if run:
+        finish_wandb(run)
+
     if save_model == 1:
         training.save_model()
 elif test_mode == 1:

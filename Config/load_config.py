@@ -37,10 +37,13 @@ beta_min = float(config["Hyperparameters"]["beta_min"])
 beta_max = float(config["Hyperparameters"]["beta_max"])
 tau = int(config["Hyperparameters"]["tau"])
 beta_multiplier = float(config["Hyperparameters"]["beta_multiplier"])
-beta_warmup_epochs = int(config["Hyperparameters"]["beta_warmup_epochs"])
-slope = int(config["Hyperparameters"]["slope"])
-delay_epochs = int(config["Hyperparameters"]["delay_epochs"])
-beta_scheduler_name = config.get("Hyperparameters", "beta_scheduler_name")
+# Optional beta-scheduler fields (absent in older OG remake configs)
+beta_warmup_epochs = int(config.get("Hyperparameters", "beta_warmup_epochs", fallback="100"))
+slope = int(config.get("Hyperparameters", "slope", fallback="10"))
+delay_epochs = int(config.get("Hyperparameters", "delay_epochs", fallback="50"))
+beta_scheduler_name = config.get(
+    "Hyperparameters", "beta_scheduler_name", fallback="constant"
+)
 
 initial_lr = float(config["Hyperparameters"]["initial_lr"])
 max_lr = float(config["Hyperparameters"]["max_lr"])
@@ -109,8 +112,10 @@ distance_metric = config.get("Filtering", "distance_metric")
 
 # Callbacks
 plot = int(config["Callbacks"]["plot"])
-project_name = config.get("Callbacks", "neptune_project")
-api_token = config.get("Callbacks", "neptune_token")
+project_name = config.get("Callbacks", "wandb_project", fallback=None)
+if not project_name:
+    project_name = config.get("Callbacks", "neptune_project", fallback="autoencoder-identification")
+wandb_project = project_name
 
 # Validation
 parameters = config.get("Validation", "parameters").split(", ")
