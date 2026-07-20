@@ -1,6 +1,7 @@
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import math
 import os
 import time
@@ -40,6 +41,7 @@ from Config.load_config import (
     removing_steps,
     folder_name,
     beta_scheduler_name,
+    config_name,
 )
 
 
@@ -304,7 +306,18 @@ class Training:
             if self.efficiency_tracker is not None:
                 self.efficiency_tracker.sample()
 
+        self.save_val_loss_csv()
         self.plot_losses()
+
+    def save_val_loss_csv(self):
+        """Write per-epoch validation loss to Results/val_losses/<config_name>.csv."""
+        output_dir = os.path.join("Results", "val_losses")
+        os.makedirs(output_dir, exist_ok=True)
+        csv_path = os.path.join(output_dir, f"{config_name}.csv")
+        pd.DataFrame(
+            {"epoch": range(len(self.val_losses)), "val_loss": self.val_losses}
+        ).to_csv(csv_path, index=False)
+        print(f"Validation loss CSV saved: {csv_path}")
 
     def validate(self):
         self.model.eval()
