@@ -21,3 +21,4 @@ saliency_output.json
 /data_bottleneck/**
 .env
 wandb
+mat/
