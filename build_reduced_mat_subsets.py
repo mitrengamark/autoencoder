@@ -1,8 +1,13 @@
 """
 Build filtered .mat subsets from reduced_manoeuvres_lists txt files.
 
+Each txt is produced by get_reduced_manoeuvres_list.py and contains the
+*kept* (non-redundant) maneuvers as:
+
+    selected_manoeuvres = name1, name2, ...
+
 For each list (threshold 90/95/98, methods containing pca/kmeans/kmedoid),
-copy all source .mat files except those marked for removal in the txt.
+copy only those selected source .mat files into the output folder.
 """
 
 from __future__ import annotations
@@ -19,9 +24,21 @@ METHOD_TOKENS = ("pca", "kmeans", "kmedoid")
 
 LIST_NAME_RE = re.compile(r"^manoeuvres_for_removing_(\d+)_(.+)\.txt$")
 
+TIER1_SUFFIXES = (
+    "pca_minmax_90",
+    "pca_minmax_95",
+    "pca_minmax_98",
+    "VAE_kmeans_90",
+    "VAE_kmeans_95",
+    "VAE_kmeans_98",
+    "VAE_kmedoids_90",
+    "VAE_kmedoids_95",
+    "VAE_kmedoids_98",
+)
 
-def parse_removed_manoeuvres(txt_path: Path) -> set[str]:
-    """Parse removed manoeuvre names from a one-line selected_manoeuvres txt."""
+
+def parse_selected_manoeuvres(txt_path: Path) -> set[str]:
+    """Parse kept manoeuvre names from a one-line selected_manoeuvres txt."""
     content = txt_path.read_text(encoding="utf-8").strip()
     if "=" not in content:
         raise ValueError(f"Unexpected format (no '='): {txt_path}")
@@ -103,16 +120,19 @@ def process_list(txt_path: Path) -> dict:
     if not source_dir.is_dir():
         raise FileNotFoundError(f"Missing source mat directory: {source_dir}")
 
-    removed = parse_removed_manoeuvres(txt_path)
+    selected = parse_selected_manoeuvres(txt_path)
     source_mats = list_source_mats(source_dir)
-    missing_removed = sorted(removed - set(source_mats))
+    missing_selected = sorted(selected - set(source_mats))
 
     out_dir = OUT_ROOT / output_dir_name(dataset, method, threshold)
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     copied = 0
-    for name, src_path in source_mats.items():
-        if name in removed:
+    for name in sorted(selected):
+        src_path = source_mats.get(name)
+        if src_path is None:
             continue
         shutil.copy2(src_path, out_dir / src_path.name)
         copied += 1
@@ -122,17 +142,45 @@ def process_list(txt_path: Path) -> dict:
         "method": method,
         "threshold": threshold,
         "dataset": dataset,
-        "removed": len(removed),
+        "selected": len(selected),
         "copied": copied,
         "total": len(source_mats),
-        "missing_removed": missing_removed,
+        "removed": len(source_mats) - copied,
+        "missing_selected": missing_selected,
         "out_dir": out_dir,
     }
+
+
+def organize_into_tiers() -> None:
+    """Move generated folders into tier1 / tier2 for the identification handoff."""
+    tier1 = OUT_ROOT / "tier1"
+    tier2 = OUT_ROOT / "tier2"
+    tier1.mkdir(parents=True, exist_ok=True)
+    tier2.mkdir(parents=True, exist_ok=True)
+
+    for path in sorted(OUT_ROOT.iterdir()):
+        if not path.is_dir() or path.name in {"tier1", "tier2"}:
+            continue
+        is_tier1 = any(
+            path.name == f"{ds}_{suffix}"
+            for ds in ("bmw", "tesla")
+            for suffix in TIER1_SUFFIXES
+        )
+        dest_root = tier1 if is_tier1 else tier2
+        dest = dest_root / path.name
+        if dest.exists():
+            shutil.rmtree(dest)
+        shutil.move(str(path), str(dest))
 
 
 def main() -> None:
     if not LISTS_DIR.is_dir():
         raise FileNotFoundError(f"Missing lists directory: {LISTS_DIR}")
+
+    # Clear previous (possibly inverted) outputs, including tier folders.
+    if OUT_ROOT.exists():
+        shutil.rmtree(OUT_ROOT)
+    OUT_ROOT.mkdir(parents=True, exist_ok=True)
 
     results: list[dict] = []
     skipped = 0
@@ -146,22 +194,27 @@ def main() -> None:
         results.append(result)
         print(
             f"{output_dir_name(result['dataset'], result['method'], result['threshold'])}: "
-            f"removed={result['removed']}, copied={result['copied']}/{result['total']}"
+            f"selected={result['selected']}, copied={result['copied']}/{result['total']} "
+            f"(removed={result['removed']})"
         )
-        if result["missing_removed"]:
+        if result["missing_selected"]:
             print(
-                f"  warning: {len(result['missing_removed'])} removed names not in source mats"
+                f"  warning: {len(result['missing_selected'])} selected names not in source mats"
             )
+
+    organize_into_tiers()
 
     print()
     print(f"Processed lists: {len(results)}")
     print(f"Skipped lists: {skipped}")
     print(f"Output root: {OUT_ROOT.resolve()}")
+    print(f"tier1 folders: {len(list((OUT_ROOT / 'tier1').iterdir()))}")
+    print(f"tier2 folders: {len(list((OUT_ROOT / 'tier2').iterdir()))}")
 
     if results:
-        total_missing = sum(len(r["missing_removed"]) for r in results)
+        total_missing = sum(len(r["missing_selected"]) for r in results)
         if total_missing:
-            print(f"Total missing removed names across lists: {total_missing}")
+            print(f"Total missing selected names across lists: {total_missing}")
 
 
 if __name__ == "__main__":

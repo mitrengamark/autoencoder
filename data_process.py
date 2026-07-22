@@ -34,11 +34,12 @@ class DataProcess:
             suffix = "_combined.csv"
         elif data_dir == "data_difference":
             suffix = "_combined_difference.csv"
-        elif data_dir == "data_bmw_combined":
+        elif data_dir in ("data_bmw_combined", "data_bmw_cutted"):
             suffix = "_combined.csv"
         else:
             raise ValueError(
-                "Unsupported data directory. Expected 'data3' or 'data_difference'!"
+                "Unsupported data directory. Expected 'data3', 'data_difference', "
+                "'data_bmw_combined', or 'data_bmw_cutted'!"
             )
 
         selected_manoeuvres_list = [

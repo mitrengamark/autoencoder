@@ -1,5 +1,5 @@
 """
-PCA baseline for maneuver redundancy reduction (Reviewer #2).
+PCA baseline for maneuver redundancy reduction.
 
 Mirrors the VAE workflow: PCA(8) -> per-maneuver time averaging -> within-group
 cosine similarity -> redundant maneuver removal.

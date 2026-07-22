@@ -1,5 +1,5 @@
 """
-Clustering-based selection baseline (Reviewer #2).
+Clustering-based selection baseline.
 
 Reuses averaged maneuver vectors and matches the cosine method's per-group
 reduction budget (thresholds 90-99). Outputs the same JSON format as
