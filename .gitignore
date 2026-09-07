@@ -24,3 +24,6 @@ wandb
 mat/
 data_tesla/
 /texts/**
+/chroma_db/**
+/.venv-embeddings/
+.venv-embeddings/

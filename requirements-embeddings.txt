@@ -1,0 +1,5 @@
+# Embedding pipeline deps (install in a dedicated env alongside SGLang).
+# SGLang itself: pip install sglang  (or use your existing SGLang environment)
+openai>=1.0.0
+chromadb>=0.4.0
+python-dotenv>=1.0.0
