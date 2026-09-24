@@ -1,0 +1,10 @@
+,valtozo_v_savvaltas_fek_alacsony_pedal0_2,valtozo_v_savvaltas_fek_alacsony_pedal0_5,valtozo_v_savvaltas_fek_alacsony_pedal1_0,valtozo_v_savvaltas_fek_kozepes_pedal0_2,valtozo_v_savvaltas_fek_kozepes_pedal0_5,valtozo_v_savvaltas_fek_kozepes_pedal1_0,valtozo_v_savvaltas_fek_magas_pedal0_2,valtozo_v_savvaltas_fek_magas_pedal0_5,valtozo_v_savvaltas_fek_magas_pedal1_0
+valtozo_v_savvaltas_fek_alacsony_pedal0_2,1.000000,0.950754,0.905082,0.996386,0.949331,0.903410,0.991007,0.946675,0.904122
+valtozo_v_savvaltas_fek_alacsony_pedal0_5,0.950754,1.000000,0.921706,0.949674,0.996699,0.920526,0.948405,0.990298,0.922983
+valtozo_v_savvaltas_fek_alacsony_pedal1_0,0.905082,0.921706,1.000000,0.904322,0.920900,0.995948,0.905266,0.920388,0.992230
+valtozo_v_savvaltas_fek_kozepes_pedal0_2,0.996386,0.949674,0.904322,1.000000,0.950398,0.904590,0.991999,0.947417,0.904886
+valtozo_v_savvaltas_fek_kozepes_pedal0_5,0.949331,0.996699,0.920900,0.950398,1.000000,0.921996,0.949150,0.991460,0.923895
+valtozo_v_savvaltas_fek_kozepes_pedal1_0,0.903410,0.920526,0.995948,0.904590,0.921996,1.000000,0.905588,0.921338,0.993352
+valtozo_v_savvaltas_fek_magas_pedal0_2,0.991007,0.948405,0.905266,0.991999,0.949150,0.905588,1.000000,0.953800,0.906820
+valtozo_v_savvaltas_fek_magas_pedal0_5,0.946675,0.990298,0.920388,0.947417,0.991460,0.921338,0.953800,1.000000,0.924226
+valtozo_v_savvaltas_fek_magas_pedal1_0,0.904122,0.922983,0.992230,0.904886,0.923895,0.993352,0.906820,0.924226,1.000000

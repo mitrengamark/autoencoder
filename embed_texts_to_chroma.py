@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Embed row-level vehicle-state text descriptions into ChromaDB via SGLang.
+Embed row-level vehicle-state text descriptions into ChromaDB via Ollama.
 
-Uses OpenAI-compatible /v1/embeddings (gte-Qwen2 on port 30001 by default).
+Uses Ollama's OpenAI-compatible /v1/embeddings
+(default: qwen3-embedding:latest on http://127.0.0.1:11434/v1).
 Supports resume, batching, and separate Tesla/BMW databases.
 """
 
@@ -10,7 +11,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import signal
 import sys
+import threading
 import time
 import traceback
 from pathlib import Path
@@ -24,12 +28,73 @@ DEFAULT_MAPPINGS: tuple[tuple[str, str, str], ...] = (
 
 DEFAULT_LOG_FILE = "logs/embed_texts_to_chroma.log"
 DEFAULT_OOM_SCORE_ADJ = 700
+DEFAULT_OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "127.0.0.1:11434")
+DEFAULT_BASE_URL = f"http://{DEFAULT_OLLAMA_HOST}/v1"
+DEFAULT_MODEL = os.environ.get("OLLAMA_EMBED_MODEL", "qwen3-embedding:latest")
+DEFAULT_MIN_AVAIL_MEM_GB = float(os.environ.get("EMBED_MIN_AVAIL_MEM_GB", "5"))
+DEFAULT_MEM_POLL_SEC = float(os.environ.get("EMBED_MEM_POLL_SEC", "2"))
+
+# Set by SIGTERM from the system-wide memory watchdog.
+_stop_requested = threading.Event()
+
+
+def read_mem_available_bytes() -> int | None:
+    """System-wide MemAvailable from /proc/meminfo (accounts for all users)."""
+    try:
+        with open("/proc/meminfo", encoding="utf-8") as handle:
+            for line in handle:
+                if line.startswith("MemAvailable:"):
+                    # value is in kB
+                    return int(line.split()[1]) * 1024
+    except OSError:
+        return None
+    return None
+
+
+def start_system_memory_watchdog(
+    min_avail_gb: float = DEFAULT_MIN_AVAIL_MEM_GB,
+    poll_sec: float = DEFAULT_MEM_POLL_SEC,
+) -> None:
+    """Stop this process when whole-machine MemAvailable drops below threshold."""
+    if min_avail_gb <= 0:
+        print("System memory watchdog disabled (min_avail_gb <= 0)")
+        return
+
+    min_avail_bytes = int(min_avail_gb * (1024**3))
+
+    def _on_sigterm(signum, frame) -> None:  # noqa: ARG001
+        _stop_requested.set()
+
+    signal.signal(signal.SIGTERM, _on_sigterm)
+
+    def _loop() -> None:
+        while not _stop_requested.is_set():
+            avail = read_mem_available_bytes()
+            if avail is not None and avail < min_avail_bytes:
+                msg = (
+                    f"WATCHDOG: system MemAvailable={avail / (1024**3):.2f} GiB "
+                    f"< {min_avail_gb:.2f} GiB — stopping embed to protect the machine"
+                )
+                print(msg, flush=True)
+                print(msg, file=sys.stderr, flush=True)
+                _stop_requested.set()
+                try:
+                    os.kill(os.getpid(), signal.SIGTERM)
+                except OSError:
+                    os._exit(2)
+                return
+            time.sleep(poll_sec)
+
+    thread = threading.Thread(target=_loop, name="system-mem-watchdog", daemon=True)
+    thread.start()
+    print(
+        f"System memory watchdog: stop if MemAvailable < {min_avail_gb:.2f} GiB "
+        f"(poll every {poll_sec:.1f}s)"
+    )
 
 
 def apply_oom_victim_score(score: int = DEFAULT_OOM_SCORE_ADJ) -> None:
     """Prefer OOM-killing this process over SSH/shells when memory is exhausted."""
-    import os
-
     raw = os.environ.get("OOM_SCORE_ADJ")
     if raw is not None:
         try:
@@ -206,6 +271,11 @@ def process_txt_file(
         pending_texts.clear()
 
     for row_idx, text in iter_text_lines(txt_path):
+        if _stop_requested.is_set():
+            flush_pending()
+            raise SystemExit(
+                "Stopped by system memory watchdog (partial file flushed; resume will continue)"
+            )
         doc_id = make_doc_id(maneuver, row_idx)
         pending_ids.append(doc_id)
         pending_docs.append(text)
@@ -267,17 +337,24 @@ def embed_dataset(
         metadata={"hnsw:space": "cosine"},
     )
 
-    embed_client = OpenAI(base_url=base_url, api_key="None")
+    embed_client = OpenAI(base_url=base_url, api_key="ollama")
 
     print(
         f"Embedding {total_files} files from {dataset} -> {chroma_path} "
-        f"(collection={collection_name}, resume={resume})"
+        f"(collection={collection_name}, resume={resume}, "
+        f"model={model}, base_url={base_url})"
     )
 
     total_rows = 0
     t0 = time.time()
 
     for file_idx, txt_path in enumerate(txt_files, start=1):
+        if _stop_requested.is_set():
+            raise SystemExit(
+                "Stopped by system memory watchdog "
+                f"(completed {len(completed_files)} files in this DB so far)"
+            )
+
         rel = txt_path.name
         if resume and rel in completed_files:
             print(f"[{file_idx}/{total_files}] skip (done): {rel}")
@@ -295,10 +372,19 @@ def embed_dataset(
                 batch_size,
                 chroma_batch_size,
             )
+        except SystemExit:
+            raise
         except Exception as exc:
             print(f"[{file_idx}/{total_files}] ERROR {rel}: {exc}", file=sys.stderr)
             traceback.print_exc()
             raise
+
+        if _stop_requested.is_set():
+            # File may be only partially done — do not mark complete.
+            raise SystemExit(
+                f"Stopped by system memory watchdog during {rel} "
+                "(partial rows kept in Chroma; resume will skip existing ids)"
+            )
 
         total_rows += rows
         completed_files.add(rel)
@@ -306,9 +392,11 @@ def embed_dataset(
 
         elapsed = time.time() - file_t0
         rate = rows / elapsed if elapsed > 0 else 0.0
+        # Avoid collection.count() every file — it gets expensive/memory-heavy
+        # as the HNSW index grows.
         print(
             f"[{file_idx}/{total_files}] {rel} -> {rows} rows "
-            f"({rate:.1f} rows/s, collection count={collection.count()})"
+            f"({rate:.1f} rows/s)"
         )
 
     elapsed_total = time.time() - t0
@@ -343,7 +431,7 @@ def resolve_mappings(args) -> list[tuple[str, str, str, str]]:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Embed vehicle-state texts into ChromaDB via SGLang."
+        description="Embed vehicle-state texts into ChromaDB via Ollama."
     )
     parser.add_argument(
         "--texts-root",
@@ -374,19 +462,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--base-url",
-        default="http://127.0.0.1:30001/v1",
-        help="SGLang OpenAI-compatible base URL.",
+        default=DEFAULT_BASE_URL,
+        help=f"Ollama OpenAI-compatible base URL (default: {DEFAULT_BASE_URL}).",
     )
     parser.add_argument(
         "--model",
-        default="Alibaba-NLP/gte-Qwen2-7B-instruct",
-        help="Embedding model id passed to /v1/embeddings.",
+        default=DEFAULT_MODEL,
+        help=f"Ollama embedding model name (default: {DEFAULT_MODEL}).",
     )
     parser.add_argument(
         "--batch-size",
         type=int,
-        default=64,
-        help="Texts per embedding API call (default: 64).",
+        default=32,
+        help="Texts per embedding API call (default: 32).",
     )
     parser.add_argument(
         "--chroma-batch-size",
@@ -415,6 +503,21 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_LOG_FILE,
         help=f"Run log path; truncated at each start (default: {DEFAULT_LOG_FILE}).",
     )
+    parser.add_argument(
+        "--min-avail-mem-gb",
+        type=float,
+        default=DEFAULT_MIN_AVAIL_MEM_GB,
+        help=(
+            "Stop embed when system-wide MemAvailable falls below this many GiB "
+            f"(default: {DEFAULT_MIN_AVAIL_MEM_GB}; 0 disables)."
+        ),
+    )
+    parser.add_argument(
+        "--mem-poll-sec",
+        type=float,
+        default=DEFAULT_MEM_POLL_SEC,
+        help=f"How often to poll MemAvailable (default: {DEFAULT_MEM_POLL_SEC}s).",
+    )
     return parser
 
 
@@ -432,9 +535,16 @@ def main() -> None:
         log_path = root / log_path
     log_handle = setup_run_log(log_path)
 
+    start_system_memory_watchdog(
+        min_avail_gb=args.min_avail_mem_gb,
+        poll_sec=args.mem_poll_sec,
+    )
+
     try:
         mappings = resolve_mappings(args)
         for dataset, chroma_rel, vehicle, collection_name in mappings:
+            if _stop_requested.is_set():
+                raise SystemExit("Stopped by system memory watchdog before next dataset")
             chroma_path = Path(chroma_rel)
             if not chroma_path.is_absolute():
                 chroma_path = root / chroma_path
@@ -451,6 +561,9 @@ def main() -> None:
                 resume=not args.no_resume,
                 limit_files=args.limit_files,
             )
+    except SystemExit as exc:
+        print(f"Exit: {exc}", flush=True)
+        raise
     except Exception:
         traceback.print_exc()
         raise

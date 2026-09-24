@@ -25,11 +25,11 @@ MEM_KILL="${EARLYOOM_MEM_KILL:-4}"
 SWAP_MIN="${EARLYOOM_SWAP_MIN:-10}"
 SWAP_KILL="${EARLYOOM_SWAP_KILL:-5}"
 
-echo "Starting user earlyoom: kill when avail mem < ${MEM_KILL}% (notify < ${MEM_MIN}%), prefer python/sglang, avoid sshd/screen/bash"
+echo "Starting user earlyoom: kill when avail mem < ${MEM_KILL}% (notify < ${MEM_MIN}%), prefer python/ollama, avoid sshd/screen/bash"
 exec earlyoom \
   -m "${MEM_MIN},${MEM_KILL}" \
   -s "${SWAP_MIN},${SWAP_KILL}" \
   -r 30 \
   --avoid '^(sshd|systemd|bash|tmux|screen|zsh|fish|cursor-server|node)$' \
-  --prefer '^(python3|python|sglang)$' \
+  --prefer '^(python3|python|ollama)$' \
   "$@"

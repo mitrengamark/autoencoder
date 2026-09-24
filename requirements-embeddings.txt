@@ -1,5 +1,4 @@
-# Embedding pipeline deps (install in a dedicated env alongside SGLang).
-# SGLang itself: pip install sglang  (or use your existing SGLang environment)
+# Embedding pipeline deps (Ollama server is external: https://ollama.com)
 openai>=1.0.0
 chromadb>=0.4.0
 python-dotenv>=1.0.0

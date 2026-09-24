@@ -10,10 +10,14 @@ oom_set_victim_score() {
   fi
 }
 
-# Re-exec the caller script under a systemd user scope with a hard memory cap.
-# Usage from a script:
-#   export MEMORY_MAX=100G MEMORY_HIGH=90G OOM_SCORE_ADJ=800
-#   oom_reexec_under_memory_scope SGLANG_UNDER_MEMORY_SCOPE "$@"
+# Re-exec the caller script under a systemd user scope with RAM + swap caps.
+# MemoryMax must be large enough to use free system RAM (Chroma HNSW grows).
+# MemorySwapMax stops the job from filling the whole machine swap while RAM
+# outside the old tiny cap sat unused.
+#
+# Usage:
+#   export MEMORY_MAX=100G MEMORY_HIGH=90G MEMORY_SWAP_MAX=8G OOM_SCORE_ADJ=700
+#   oom_reexec_under_memory_scope EMBED_UNDER_MEMORY_SCOPE "$@"
 oom_reexec_under_memory_scope() {
   local flag_name="$1"
   shift
@@ -33,26 +37,25 @@ oom_reexec_under_memory_scope() {
 
   local mem_max="${MEMORY_MAX:-100G}"
   local mem_high="${MEMORY_HIGH:-90G}"
+  local swap_max="${MEMORY_SWAP_MAX:-8G}"
   local score="${OOM_SCORE_ADJ:-800}"
 
-  echo "Re-exec under systemd user scope: MemoryMax=${mem_max} MemoryHigh=${mem_high} OOMPolicy=kill"
+  echo "Re-exec under systemd user scope: MemoryMax=${mem_max} MemoryHigh=${mem_high} MemorySwapMax=${swap_max} OOMPolicy=kill"
   exec systemd-run --user --same-dir --collect --scope \
     --expand-environment=yes \
     -E "${flag_name}=1" \
     -E "OOM_SCORE_ADJ=${score}" \
     -E "MEMORY_MAX=${mem_max}" \
     -E "MEMORY_HIGH=${mem_high}" \
-    -E "HF_TOKEN=${HF_TOKEN:-}" \
-    -E "HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN:-}" \
-    -E "SGLANG_EMBED_MODEL=${SGLANG_EMBED_MODEL:-}" \
-    -E "SGLANG_HOST=${SGLANG_HOST:-}" \
-    -E "SGLANG_PORT=${SGLANG_PORT:-}" \
-    -E "SGLANG_MEMORY_MAX=${SGLANG_MEMORY_MAX:-}" \
-    -E "SGLANG_MEMORY_HIGH=${SGLANG_MEMORY_HIGH:-}" \
+    -E "MEMORY_SWAP_MAX=${swap_max}" \
+    -E "OLLAMA_HOST=${OLLAMA_HOST:-}" \
+    -E "OLLAMA_EMBED_MODEL=${OLLAMA_EMBED_MODEL:-}" \
     -E "EMBED_MEMORY_MAX=${EMBED_MEMORY_MAX:-}" \
     -E "EMBED_MEMORY_HIGH=${EMBED_MEMORY_HIGH:-}" \
+    -E "EMBED_MEMORY_SWAP_MAX=${EMBED_MEMORY_SWAP_MAX:-}" \
     -p "MemoryMax=${mem_max}" \
     -p "MemoryHigh=${mem_high}" \
+    -p "MemorySwapMax=${swap_max}" \
     -p OOMPolicy=kill \
     -- "$0" "$@"
 }

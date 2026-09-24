@@ -82,9 +82,33 @@ class CosineSimilarity:
 
         filename = f"{self.model_name}_cosine_similarity_matrix_{group_name}.png"
         full_path = os.path.join(self.save_dir, filename)
-        plt.savefig(full_path)
+        plt.savefig(full_path, dpi=160, bbox_inches="tight")
         plt.close()
-        # plt.show()
+
+        # Persist numerical matrix + labels next to the heatmap
+        matrix_path = os.path.join(
+            self.save_dir,
+            f"{self.model_name}_cosine_similarity_matrix_{group_name}.npy",
+        )
+        labels_path = os.path.join(
+            self.save_dir,
+            f"{self.model_name}_cosine_similarity_matrix_{group_name}_labels.json",
+        )
+        csv_path = os.path.join(
+            self.save_dir,
+            f"{self.model_name}_cosine_similarity_matrix_{group_name}.csv",
+        )
+        np.save(matrix_path, similarity_matrix.astype(np.float32))
+        with open(labels_path, "w", encoding="utf-8") as handle:
+            json.dump({"group": group_name, "manoeuvres": manoeuvres}, handle, indent=2)
+        # CSV with full maneuver names as row/column headers
+        import csv
+
+        with open(csv_path, "w", encoding="utf-8", newline="") as handle:
+            writer = csv.writer(handle)
+            writer.writerow([""] + manoeuvres)
+            for name, row in zip(manoeuvres, similarity_matrix):
+                writer.writerow([name] + [f"{v:.6f}" for v in row])
     def detect_redundancy(self):
         redundant_pairs = {}
         threshold = self.threshold / 100
