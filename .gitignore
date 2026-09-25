@@ -25,5 +25,7 @@ mat/
 data_tesla/
 /texts/**
 /chroma_db/**
+/.venv/
+.venv/
 /.venv-embeddings/
 .venv-embeddings/
