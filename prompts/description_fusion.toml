@@ -29,9 +29,9 @@ If A, B, C or D contain overlapping generic sentences, keep the specialist detai
 
 Do not mention filenames, image identifiers, JSON field names, task labels (A/B/C/D), LLM analysis, preprocessing, cropping, truncation or embedding.
 
-Do not include a maneuver filename or identifier.
+Never include, invent or guess any maneuver name, file stem, campaign ID, run identifier or maneuver category.
 
-Do not guess the maneuver category.
+If A, B, C or D contradict each other on the same quantity, keep the more specific specialist claim and drop the conflicting wording. Do not write opposing statements about the same value (for example calling equal left/right peaks asymmetric).
 
 If several analyses describe the same event, merge them into one temporally coherent statement. Mention duplicated facts only once.
 
@@ -73,9 +73,14 @@ Write in concise technical English with consistent terminology across maneuvers.
 
 OUTPUT
 
-Produce one continuous paragraph-style technical description of approximately two hundred to three hundred words.
+Return ONLY a JSON object with a single string field:
 
-Do not use section headings, bullet lists or JSON.
+{"description":"<paragraph>"}
+
+The "description" value must be one continuous paragraph-style technical description of approximately two hundred to three hundred words.
+
+Do not put planning notes, step lists, or chain-of-thought outside or inside that field.
+Do not use section headings or bullet lists inside the paragraph.
 
 Follow this conceptual order inside the continuous text:
 

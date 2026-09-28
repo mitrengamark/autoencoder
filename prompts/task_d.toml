@@ -38,7 +38,7 @@ initial_state: force levels and sideslip at the start of the force evolution.
 temporal_evolution: Fx and Fy buildup per wheel; paths through Fx–Fy and sideslip–Fy planes over time color.
 main_events: peak braking/traction Fx, peak cornering Fy, nonlinear or loop-like force paths.
 signal_relationships: sideslip vs Fy per wheel; Fx vs Fy coupling; front vs rear axle force balance.
-symmetry_asymmetry: left/right and front/rear force asymmetry.
+symmetry_asymmetry: left/right and front/rear force asymmetry only when magnitudes clearly differ; otherwise state symmetry. Do not mention any maneuver name or identifier.
 oscillatory_behavior: only if Fx/Fy time traces oscillate clearly.
 final_state: forces and sideslip at end of window.
 important_numeric_features: peak Fx/Fy in N, sideslip in rad, axle means when provided.

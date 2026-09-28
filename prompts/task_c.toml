@@ -38,7 +38,7 @@ initial_state: slip levels and wheel speeds before the main slip events.
 temporal_evolution: growth and decay of sideslip and longslip per wheel; wheel-speed tracking or spin-up.
 main_events: peak sideslip, sign reversals, longslip spikes, wheel-speed divergence.
 signal_relationships: front vs rear axle; left vs right; slip vs wheel speed on the same wheel.
-symmetry_asymmetry: FL/FR and RL/RR differences; front vs rear axle means.
+symmetry_asymmetry: FL/FR and RL/RR differences only when magnitudes clearly differ; otherwise state symmetry. Front vs rear axle means.
 oscillatory_behavior: oscillatory slip or wheel-speed content when visible.
 final_state: residual slip and wheel speeds.
 important_numeric_features: per-wheel or axle-mean peaks with rad, -, or rad/s units.

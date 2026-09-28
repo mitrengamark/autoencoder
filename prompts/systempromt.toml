@@ -12,7 +12,11 @@ Do not infer vehicle parameters, road conditions, driver intentions or physical 
 
 Do not mention filenames, plotting methods, image numbers, JSON structures or preprocessing operations in the analysis.
 
+Do not invent, guess or mention any maneuver name, file stem, campaign ID, run identifier or dataset label. Describe only the dynamics visible in the plots and metadata.
+
 Do not treat minor numerical noise as a meaningful dynamic event.
+
+Keep every field internally consistent and consistent with the cited numbers. Do not call left/right or front/rear behavior asymmetric (or divergent) when the compared values are equal or nearly equal; say symmetric or balanced instead. Do not contradict an earlier field with a later one.
 
 Write in concise technical English. Use SI units.
 

@@ -12,10 +12,12 @@ import base64
 import json
 import re
 import sys
+import threading
 import time
 import traceback
 import urllib.error
 import urllib.request
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -34,7 +36,46 @@ from pca_baseline import GROUP_PREFIXES, THRESHOLDS
 DEFAULT_OLLAMA_HOST = "127.0.0.1:11434"
 DEFAULT_VLM_MODEL = "qwen3-vl:32b"
 DEFAULT_EMBED_MODEL = "qwen3-embedding:latest"
+# qwen3-vl ships with 262k context + thinking; both make /api/chat glacial.
+DEFAULT_NUM_CTX = 16384
+DEFAULT_NUM_PREDICT = 4096
+# Fusion prose is ~200-300 words; avoid burning the full 4096 budget on CoT.
+DEFAULT_FUSION_NUM_PREDICT = 1024
+# qwen3-vl ignores think=False unless the chat template sees /no_think.
+NO_THINK_PREFIX = "/no_think\n"
 MODEL_NAME = "text_vlm_tesla"
+
+# region agent log
+_DEBUG_LOG_PATH = Path("/home/mark_mitrenga/codes/autoencoder/.cursor/debug-9f4061.log")
+_DEBUG_SESSION_ID = "9f4061"
+
+
+def _agent_debug_log(
+    hypothesis_id: str,
+    location: str,
+    message: str,
+    data: dict[str, Any],
+    *,
+    run_id: str = "post-fix",
+) -> None:
+    try:
+        payload = {
+            "sessionId": _DEBUG_SESSION_ID,
+            "runId": run_id,
+            "hypothesisId": hypothesis_id,
+            "location": location,
+            "message": message,
+            "data": data,
+            "timestamp": int(time.time() * 1000),
+        }
+        _DEBUG_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with _DEBUG_LOG_PATH.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
+# endregion
 
 WHEELS = ("FL", "FR", "RL", "RR")
 
@@ -137,6 +178,12 @@ TASK_SPECS: dict[str, dict[str, Any]] = {
 MAT_FILTER_THRESHOLDS = (90, 95, 98)
 
 
+def log(msg: str) -> None:
+    """Timestamped progress line (always flushed)."""
+    stamp = datetime.now().strftime("%H:%M:%S")
+    print(f"[{stamp}] {msg}", flush=True)
+
+
 def read_prompt(path: Path) -> str:
     return path.read_text(encoding="utf-8").strip()
 
@@ -145,21 +192,56 @@ def ollama_base(host: str) -> str:
     return host if host.startswith("http") else f"http://{host}"
 
 
-def ollama_post(host: str, path: str, payload: dict, timeout: float) -> dict:
+class _Heartbeat:
+    """Prints waiting status while a blocking Ollama call runs."""
+
+    def __init__(self, label: str, interval_s: float = 15.0) -> None:
+        self.label = label
+        self.interval_s = interval_s
+        self._stop = threading.Event()
+        self._t0 = time.monotonic()
+        self._thread = threading.Thread(target=self._loop, name="ollama-heartbeat", daemon=True)
+
+    def __enter__(self) -> "_Heartbeat":
+        self._thread.start()
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self._stop.set()
+        self._thread.join(timeout=2.0)
+
+    def _loop(self) -> None:
+        while not self._stop.wait(self.interval_s):
+            elapsed = time.monotonic() - self._t0
+            log(f"  ... still waiting on Ollama ({self.label}) — {elapsed:.0f}s elapsed")
+
+
+def ollama_post(host: str, path: str, payload: dict, timeout: float, label: str) -> dict:
     url = f"{ollama_base(host).rstrip('/')}{path}"
     data = json.dumps(payload).encode("utf-8")
+    payload_mb = len(data) / (1024 * 1024)
+    log(
+        f"  → POST {url}  model={payload.get('model')}  "
+        f"payload={payload_mb:.1f} MiB  timeout={timeout:.0f}s  ({label})"
+    )
     req = urllib.request.Request(
         url,
         data=data,
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    t0 = time.monotonic()
+    with _Heartbeat(label):
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            raw = resp.read().decode("utf-8")
+    elapsed = time.monotonic() - t0
+    log(f"  ← Ollama OK in {elapsed:.1f}s  response={len(raw) / 1024:.1f} KiB  ({label})")
+    return json.loads(raw)
 
 
 def encode_image_b64(path: Path, max_side: int = 1280) -> str:
     """Encode PNG for Ollama; optionally downscale large plots."""
+    src_kb = path.stat().st_size / 1024
     try:
         from io import BytesIO
 
@@ -175,9 +257,53 @@ def encode_image_b64(path: Path, max_side: int = 1280) -> str:
                 )
             buf = BytesIO()
             img.save(buf, format="JPEG", quality=85)
-            return base64.b64encode(buf.getvalue()).decode("ascii")
+            encoded = base64.b64encode(buf.getvalue()).decode("ascii")
+            log(
+                f"  image {path.name}: {w}x{h} → JPEG "
+                f"{len(buf.getvalue()) / 1024:.0f} KiB (src {src_kb:.0f} KiB)"
+            )
+            return encoded
     except ImportError:
-        return base64.b64encode(path.read_bytes()).decode("ascii")
+        encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+        log(f"  image {path.name}: raw PNG {src_kb:.0f} KiB (no Pillow)")
+        return encoded
+
+
+def _looks_like_cot(text: str) -> bool:
+    """Detect chain-of-thought dumps mistakenly used as the final answer."""
+    head = text.lstrip()[:400].lower()
+    markers = (
+        "<think>",
+        "we are given",
+        "we must fuse",
+        "let's break down",
+        "steps:",
+        "step 1",
+        "now, we must write",
+        "conceptual order",
+    )
+    return any(m in head for m in markers)
+
+
+def _ensure_no_think(system: str) -> str:
+    s = system.lstrip()
+    if s.startswith("/no_think"):
+        return system
+    return NO_THINK_PREFIX + system
+
+
+def _unwrap_fusion_description(text: str) -> str:
+    """If fusion returned JSON {\"description\": \"...\"}, unwrap to prose."""
+    raw = text.strip()
+    if not raw.startswith("{"):
+        return raw
+    try:
+        obj = json.loads(raw)
+    except json.JSONDecodeError:
+        return raw
+    if isinstance(obj, dict) and isinstance(obj.get("description"), str):
+        return obj["description"].strip()
+    return raw
 
 
 def ollama_chat(
@@ -189,25 +315,112 @@ def ollama_chat(
     *,
     json_format: bool,
     timeout: float,
+    label: str = "chat",
+    num_ctx: int = DEFAULT_NUM_CTX,
+    num_predict: int = DEFAULT_NUM_PREDICT,
+    think: bool = False,
 ) -> str:
-    images = [encode_image_b64(p) for p in image_paths]
+    system = _ensure_no_think(system)
+    log(
+        f"  encode {len(image_paths)} image(s) for {label} "
+        f"(system={len(system)} chars, user={len(user_text)} chars)"
+    )
+    user_msg: dict[str, Any] = {"role": "user", "content": user_text}
+    if image_paths:
+        user_msg["images"] = [encode_image_b64(p) for p in image_paths]
     payload: dict[str, Any] = {
         "model": model,
         "messages": [
             {"role": "system", "content": system},
-            {"role": "user", "content": user_text, "images": images},
+            user_msg,
         ],
         "stream": False,
-        "options": {"temperature": 0},
+        # Qwen3-VL defaults to thinking=on; think=False alone is unreliable —
+        # /no_think in the system prompt is what actually suppresses CoT.
+        "think": think,
+        "options": {
+            "temperature": 0,
+            # Model default context is 262144 — keep this modest.
+            "num_ctx": int(num_ctx),
+            "num_predict": int(num_predict),
+        },
     }
     if json_format:
         payload["format"] = "json"
-    body = ollama_post(host, "/api/chat", payload, timeout)
+    log(
+        f"  chat options: think={think} num_ctx={num_ctx} "
+        f"num_predict={num_predict} format_json={json_format} "
+        f"no_think_prefix={system.lstrip().startswith('/no_think')}"
+    )
+    # region agent log
+    _agent_debug_log(
+        "H1",
+        "run_tesla_vlm_redundancy_pipeline.py:ollama_chat:request",
+        "ollama chat request options",
+        {
+            "label": label,
+            "think": think,
+            "json_format": json_format,
+            "num_ctx": num_ctx,
+            "num_predict": num_predict,
+            "has_no_think_prefix": system.lstrip().startswith("/no_think"),
+            "n_images": len(image_paths),
+            "system_chars": len(system),
+            "user_chars": len(user_text),
+        },
+    )
+    # endregion
+    body = ollama_post(host, "/api/chat", payload, timeout, label=label)
     msg = body.get("message") or {}
-    content = msg.get("content")
+    content = (msg.get("content") or "").strip()
+    thinking = (msg.get("thinking") or body.get("thinking") or "").strip()
+    eval_count = body.get("eval_count")
+    prompt_eval_count = body.get("prompt_eval_count")
+    used_thinking_fallback = False
+    # qwen3-vl often leaves content empty and puts the answer in "thinking"
+    # even when think=False; with /no_think that field is usually the answer
+    # itself (not a multi-page CoT plan).
+    if not content and thinking:
+        log(
+            f"  WARNING: empty content, using thinking field "
+            f"({len(thinking)} chars)  ({label})"
+        )
+        content = thinking
+        used_thinking_fallback = True
+    elif thinking:
+        log(f"  (model also returned thinking={len(thinking)} chars)")
     if not content:
         raise RuntimeError(f"Empty Ollama response: {body!r}")
-    return content.strip()
+    cot_like = _looks_like_cot(content)
+    digit_count = len(re.findall(r"\d", content))
+    # region agent log
+    _agent_debug_log(
+        "H2",
+        "run_tesla_vlm_redundancy_pipeline.py:ollama_chat:response",
+        "ollama chat response shape",
+        {
+            "label": label,
+            "content_len": len(msg.get("content") or ""),
+            "thinking_len": len(thinking),
+            "used_thinking_fallback": used_thinking_fallback,
+            "cot_like": cot_like,
+            "digit_count": digit_count,
+            "eval_count": eval_count,
+            "prompt_eval_count": prompt_eval_count,
+            "hit_num_predict": (
+                isinstance(eval_count, int) and eval_count >= int(num_predict)
+            ),
+            "preview": content[:180],
+        },
+    )
+    # endregion
+    if cot_like:
+        log(
+            f"  WARNING: reply looks like chain-of-thought, not final answer "
+            f"({label})"
+        )
+    log(f"  reply length={len(content)} chars  ({label})")
+    return content
 
 
 def ollama_embed(host: str, model: str, text: str, timeout: float) -> list[float]:
@@ -215,20 +428,28 @@ def ollama_embed(host: str, model: str, text: str, timeout: float) -> list[float
     payload = {"model": model, "input": text}
     url = f"{base}/embeddings"
     data = json.dumps(payload).encode("utf-8")
+    log(
+        f"  → POST {url}  model={model}  text={len(text)} chars  "
+        f"timeout={timeout:.0f}s  (embed)"
+    )
     req = urllib.request.Request(
         url,
         data=data,
         headers={"Content-Type": "application/json", "Authorization": "Bearer ollama"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        body = json.loads(resp.read().decode("utf-8"))
+    t0 = time.monotonic()
+    with _Heartbeat("embed"):
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+    elapsed = time.monotonic() - t0
     items = body.get("data") or []
     if not items:
         raise RuntimeError(f"No embedding data: {body!r}")
     emb = items[0].get("embedding")
     if emb is None:
         raise RuntimeError(f"Missing embedding vector: {body!r}")
+    log(f"  ← embed OK in {elapsed:.1f}s  dim={len(emb)}")
     return list(emb)
 
 
@@ -238,7 +459,8 @@ def subset_features(
     derived: list[str],
 ) -> dict:
     out: dict[str, Any] = {}
-    for key in ("dt", "duration_s", "n_samples", "maneuver", "truncate_after_s"):
+    # Never forward maneuver/file identifiers to the VLM.
+    for key in ("dt", "duration_s", "n_samples", "truncate_after_s"):
         if key in features:
             out[key] = features[key]
     sig_block = features.get("signals") or {}
@@ -292,9 +514,13 @@ def run_task_with_retry(
     *,
     max_attempts: int,
     timeout: float,
+    label: str,
+    num_ctx: int = DEFAULT_NUM_CTX,
+    num_predict: int = DEFAULT_NUM_PREDICT,
 ) -> dict:
     last_err: Exception | None = None
     for attempt in range(1, max_attempts + 1):
+        log(f"  Task {label}: attempt {attempt}/{max_attempts}")
         try:
             raw = ollama_chat(
                 host,
@@ -304,19 +530,32 @@ def run_task_with_retry(
                 images,
                 json_format=True,
                 timeout=timeout,
+                label=f"task_{label}",
+                num_ctx=num_ctx,
+                num_predict=num_predict,
+                think=False,
             )
+            if _looks_like_cot(raw):
+                raise ValueError(
+                    f"Task {label}: model returned chain-of-thought instead of JSON"
+                )
             obj = json.loads(raw)
             validate_task_json(obj)
+            log(f"  Task {label}: JSON OK")
             return obj
         except (
             json.JSONDecodeError,
             ValueError,
+            RuntimeError,
             urllib.error.URLError,
             TimeoutError,
         ) as exc:
             last_err = exc
+            log(f"  Task {label}: attempt {attempt} FAILED: {exc}")
             if attempt < max_attempts:
-                time.sleep(2.0 * attempt)
+                wait = 2.0 * attempt
+                log(f"  Task {label}: retry in {wait:.0f}s")
+                time.sleep(wait)
     assert last_err is not None
     raise last_err
 
@@ -333,29 +572,44 @@ def stage_text(
     max_attempts: int,
     timeout: float,
     errors_path: Path,
+    num_ctx: int = DEFAULT_NUM_CTX,
+    num_predict: int = DEFAULT_NUM_PREDICT,
 ) -> None:
+    log(f"text stage: loading prompts from {prompts_dir}")
     system = read_prompt(prompts_dir / "systempromt.toml")
     fusion_prompt = read_prompt(prompts_dir / "description_fusion.toml")
+    log(
+        f"text stage: model={vlm_model} host={host} timeout={timeout:.0f}s "
+        f"num_ctx={num_ctx} num_predict={num_predict} think=False "
+        f"maneuvers={len(maneuvers)} overwrite={overwrite}"
+    )
 
     for i, maneuver in enumerate(maneuvers, start=1):
         plot_dir = plots_root / maneuver
         out_dir = texts_root / maneuver
         out_dir.mkdir(parents=True, exist_ok=True)
+        t_maneuver = time.monotonic()
 
         features_path = plot_dir / "features.json"
         with features_path.open(encoding="utf-8") as handle:
             features_full = json.load(handle)
 
-        print(f"[text {i}/{len(maneuvers)}] {maneuver}", flush=True)
+        log(f"===== [text {i}/{len(maneuvers)}] {maneuver} =====")
 
         task_outputs: dict[str, dict] = {}
         try:
             for task_id, spec in TASK_SPECS.items():
                 out_path = out_dir / f"{task_id}.json"
                 if out_path.is_file() and not overwrite:
+                    log(f"  Task {task_id}: skip (exists) → {out_path}")
                     task_outputs[task_id] = load_json_file(out_path)
                     continue
 
+                log(
+                    f"  Task {task_id}: START  images={spec['images']}  "
+                    f"signals={len(spec['signals'])} derived={len(spec['derived'])}"
+                )
+                t_task = time.monotonic()
                 task_prompt = read_prompt(prompts_dir / spec["prompt_file"])
                 images = [plot_dir / name for name in spec["images"]]
                 missing_img = [str(p) for p in images if not p.is_file()]
@@ -366,11 +620,12 @@ def stage_text(
                     features_full, spec["signals"], spec["derived"]
                 )
                 user_text = (
-                    f"Task {task_id} for maneuver: {maneuver}\n"
+                    f"Task {task_id}.\n"
                     f"Analyze ONLY the plots and metadata for Task {task_id}. "
-                    "Do not summarize the whole maneuver or duplicate content meant for other tasks.\n\n"
+                    "Do not summarize the whole recording or duplicate content meant for other tasks.\n"
+                    "Do not invent or mention any maneuver name, file stem or run identifier.\n\n"
                     "Numerical metadata (subset for this task):\n"
-                    f"{json.dumps(feat_subset, indent=2)}"
+                    f"{json.dumps(feat_subset, ensure_ascii=False)}"
                 )
                 obj = run_task_with_retry(
                     host,
@@ -380,41 +635,101 @@ def stage_text(
                     images,
                     max_attempts=max_attempts,
                     timeout=timeout,
+                    label=task_id,
+                    num_ctx=num_ctx,
+                    num_predict=num_predict,
                 )
                 with out_path.open("w", encoding="utf-8") as handle:
                     json.dump(obj, handle, indent=2)
                 task_outputs[task_id] = obj
+                log(
+                    f"  Task {task_id}: DONE in {time.monotonic() - t_task:.1f}s → {out_path}"
+                )
 
             desc_path = out_dir / "description.txt"
             if desc_path.is_file() and not overwrite:
-                pass
+                log(f"  fusion: skip (exists) → {desc_path}")
             else:
+                log("  fusion: START (description_fusion, no images)")
+                t_fus = time.monotonic()
+                # Compact JSON (no indent) cuts prompt tokens; VL still needed
+                # for consistency with A–D but fusion is text-only.
                 fusion_user = (
                     "Structured analyses A, B, C, D (JSON):\n\n"
-                    f"A:\n{json.dumps(task_outputs['A'], indent=2)}\n\n"
-                    f"B:\n{json.dumps(task_outputs['B'], indent=2)}\n\n"
-                    f"C:\n{json.dumps(task_outputs['C'], indent=2)}\n\n"
-                    f"D:\n{json.dumps(task_outputs['D'], indent=2)}"
+                    f"A:\n{json.dumps(task_outputs['A'], ensure_ascii=False)}\n\n"
+                    f"B:\n{json.dumps(task_outputs['B'], ensure_ascii=False)}\n\n"
+                    f"C:\n{json.dumps(task_outputs['C'], ensure_ascii=False)}\n\n"
+                    f"D:\n{json.dumps(task_outputs['D'], ensure_ascii=False)}\n\n"
+                    "Return ONLY JSON of the form "
+                    '{"description":"<one continuous 200-300 word paragraph>"}. '
+                    "Inside description: spell every number and unit in words; "
+                    "no digits; no planning notes; no lists."
                 )
-                desc = ollama_chat(
+                # Plain-text fusion lets qwen3-vl burn num_predict on CoT.
+                # format=json + /no_think yields the paragraph directly.
+                raw_desc = ollama_chat(
                     host,
                     vlm_model,
                     fusion_prompt,
                     fusion_user,
                     [],
-                    json_format=False,
+                    json_format=True,
                     timeout=timeout,
+                    label="fusion",
+                    num_ctx=num_ctx,
+                    num_predict=min(num_predict, DEFAULT_FUSION_NUM_PREDICT),
+                    think=False,
                 )
+                desc = _unwrap_fusion_description(raw_desc)
+                if _looks_like_cot(desc):
+                    # region agent log
+                    _agent_debug_log(
+                        "H3",
+                        "run_tesla_vlm_redundancy_pipeline.py:fusion:cot_reject",
+                        "fusion output rejected as CoT",
+                        {
+                            "raw_len": len(raw_desc),
+                            "desc_len": len(desc),
+                            "preview": desc[:240],
+                        },
+                    )
+                    # endregion
+                    raise RuntimeError(
+                        "Fusion returned chain-of-thought instead of the "
+                        "final description paragraph"
+                    )
                 desc_path.write_text(desc.strip() + "\n", encoding="utf-8")
                 digit_count = len(re.findall(r"\d", desc))
+                word_count = len(desc.split())
+                # region agent log
+                _agent_debug_log(
+                    "H3",
+                    "run_tesla_vlm_redundancy_pipeline.py:fusion:done",
+                    "fusion description quality",
+                    {
+                        "chars": len(desc),
+                        "words": word_count,
+                        "digits": digit_count,
+                        "cot_like": _looks_like_cot(desc),
+                        "preview": desc[:240],
+                    },
+                )
+                # endregion
+                log(
+                    f"  fusion: DONE in {time.monotonic() - t_fus:.1f}s → {desc_path} "
+                    f"({len(desc)} chars, words={word_count}, digits={digit_count})"
+                )
                 if digit_count:
-                    print(
-                        f"  WARNING description.txt contains {digit_count} digit chars "
-                        "(fusion prompt asks for words-only numbers)",
-                        flush=True,
+                    log(
+                        "  WARNING: description.txt contains digit chars "
+                        "(fusion prompt asks for words-only numbers)"
                     )
+            log(
+                f"===== [text {i}/{len(maneuvers)}] {maneuver} DONE "
+                f"in {time.monotonic() - t_maneuver:.1f}s ====="
+            )
         except Exception as exc:
-            print(f"  ERROR {maneuver}: {exc}", file=sys.stderr, flush=True)
+            log(f"  ERROR {maneuver}: {exc}")
             traceback.print_exc()
             append_error(
                 errors_path,
@@ -449,13 +764,13 @@ def stage_embed(
     for i, maneuver in enumerate(maneuvers, start=1):
         desc_path = texts_root / maneuver / "description.txt"
         if not desc_path.is_file():
-            print(f"[embed {i}/{len(maneuvers)}] skip (no description): {maneuver}")
+            log(f"[embed {i}/{len(maneuvers)}] skip (no description): {maneuver}")
             continue
 
         if not overwrite:
             got = collection.get(ids=[maneuver], include=[])
             if got.get("ids"):
-                print(f"[embed {i}/{len(maneuvers)}] skip (exists): {maneuver}")
+                log(f"[embed {i}/{len(maneuvers)}] skip (exists): {maneuver}")
                 continue
 
         text = desc_path.read_text(encoding="utf-8").strip()
@@ -467,6 +782,7 @@ def stage_embed(
             continue
 
         try:
+            log(f"[embed {i}/{len(maneuvers)}] START {maneuver}")
             vec = ollama_embed(host, embed_model, text, timeout)
             collection.upsert(
                 ids=[maneuver],
@@ -474,9 +790,9 @@ def stage_embed(
                 documents=[text],
                 metadatas=[{"maneuver": maneuver, "group": maneuver_group(maneuver)}],
             )
-            print(f"[embed {i}/{len(maneuvers)}] {maneuver} dim={len(vec)}", flush=True)
+            log(f"[embed {i}/{len(maneuvers)}] DONE {maneuver} dim={len(vec)}")
         except Exception as exc:
-            print(f"  ERROR embed {maneuver}: {exc}", file=sys.stderr)
+            log(f"  ERROR embed {maneuver}: {exc}")
             append_error(
                 errors_path,
                 {"stage": "embed", "maneuver": maneuver, "error": str(exc)},
@@ -507,9 +823,10 @@ def stage_cosine(
 
     ids = list(maneuvers)
     if not ids:
-        print("cosine: no maneuvers", flush=True)
+        log("cosine: no maneuvers")
         return
 
+    log(f"cosine: fetching {len(ids)} embeddings from Chroma")
     result = collection.get(ids=ids, include=["embeddings"])
     id_to_emb = {
         i: np.asarray(e, dtype=np.float64)
@@ -518,21 +835,23 @@ def stage_cosine(
     present = [m for m in maneuvers if m in id_to_emb]
     missing = sorted(set(maneuvers) - set(present))
     if missing:
-        print(f"cosine: missing embeddings for {len(missing)} maneuvers", flush=True)
+        log(f"cosine: missing embeddings for {len(missing)} maneuvers")
 
     groups = build_groups(present)
     similarity_matrices: dict[int, tuple[list[str], np.ndarray]] = {}
 
     for idx, group in enumerate(groups, start=1):
         if len(group) < 2:
-            print(f"cosine group {idx}: skip (n={len(group)})", flush=True)
+            log(f"cosine group {idx}: skip (n={len(group)})")
             continue
+        log(f"cosine group {idx}: n={len(group)} computing matrix")
         vectors = np.stack([id_to_emb[m] for m in group], axis=0)
         sim = cosine_similarity(vectors)
         similarity_matrices[idx] = (group, sim)
 
     matrices_dir.mkdir(parents=True, exist_ok=True)
     if plot:
+        log("cosine: writing heatmaps / npy / csv")
         plotter = CosineSimilarity("", str(matrices_dir), threshold=90, model_name=MODEL_NAME)
         for _idx, (names, matrix) in similarity_matrices.items():
             plotter.plot_confusion_matrix(names, matrix)
@@ -545,10 +864,9 @@ def stage_cosine(
         redundant = cos_sim.detect_redundancy()
         removed = cos_sim.remove_redundancy(redundant)
         n_removed = sum(len(v) for v in removed.values())
-        print(
+        log(
             f"  threshold {threshold}%: groups_with_pairs={len(redundant)}, "
-            f"removed={n_removed}",
-            flush=True,
+            f"removed={n_removed}"
         )
 
 
@@ -572,7 +890,7 @@ def stage_mat_filter(
     for thr in MAT_FILTER_THRESHOLDS:
         json_path = find_removal_json(method_dir, thr, MODEL_NAME)
         if json_path is None:
-            print(f"mat filter {thr}: no removal JSON, skip", flush=True)
+            log(f"mat filter {thr}: no removal JSON, skip")
             continue
 
         removed = load_removed(json_path)
@@ -605,9 +923,8 @@ def stage_mat_filter(
                 continue
             copy_or_link(src, out_dir / src.name, mode)
             copied += 1
-        print(
-            f"mat filter {thr}: kept={len(kept_names)} copied={copied} -> {out_dir}",
-            flush=True,
+        log(
+            f"mat filter {thr}: kept={len(kept_names)} copied={copied} → {out_dir}"
         )
 
 
@@ -637,6 +954,18 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--vlm-model", default=DEFAULT_VLM_MODEL)
     p.add_argument("--embed-model", default=DEFAULT_EMBED_MODEL)
     p.add_argument("--vlm-timeout", type=float, default=1800.0)
+    p.add_argument(
+        "--num-ctx",
+        type=int,
+        default=DEFAULT_NUM_CTX,
+        help="Ollama num_ctx (default 16384; model ships with 262144 which is tiny-slow).",
+    )
+    p.add_argument(
+        "--num-predict",
+        type=int,
+        default=DEFAULT_NUM_PREDICT,
+        help="Max generated tokens per call (default 4096).",
+    )
     p.add_argument("--embed-timeout", type=float, default=120.0)
     p.add_argument("--max-attempts", type=int, default=3)
     p.add_argument("--limit", type=int, default=None)
@@ -674,18 +1003,19 @@ def main() -> None:
         maneuvers = [m for m in args.maneuvers if m in all_maneuvers]
         unknown = set(args.maneuvers) - set(maneuvers)
         if unknown:
-            print(f"WARNING: unknown maneuvers skipped: {sorted(unknown)}", file=sys.stderr)
+            log(f"WARNING: unknown maneuvers skipped: {sorted(unknown)}")
     else:
         maneuvers = all_maneuvers
     if args.limit is not None:
         maneuvers = maneuvers[: max(0, args.limit)]
 
-    print(f"Manoeuvers: {len(maneuvers)} (from {plots_root})", flush=True)
+    log(f"Manoeuvers: {len(maneuvers)} (from {plots_root})")
+    log(f"Stages: {args.stages}")
 
     stages = set(args.stages)
 
     if "text" in stages:
-        print("=== stage: text ===", flush=True)
+        log("=== stage: text ===")
         stage_text(
             plots_root=plots_root,
             texts_root=texts_root,
@@ -697,10 +1027,12 @@ def main() -> None:
             max_attempts=args.max_attempts,
             timeout=args.vlm_timeout,
             errors_path=errors_path,
+            num_ctx=args.num_ctx,
+            num_predict=args.num_predict,
         )
 
     if "embed" in stages:
-        print("=== stage: embed ===", flush=True)
+        log("=== stage: embed ===")
         stage_embed(
             texts_root=texts_root,
             chroma_path=chroma_path,
@@ -714,7 +1046,7 @@ def main() -> None:
         )
 
     if "cosine" in stages:
-        print("=== stage: cosine ===", flush=True)
+        log("=== stage: cosine ===")
         # Use all maneuvers with descriptions in texts_root for grouping
         embed_maneuvers = sorted(
             p.name
@@ -730,7 +1062,7 @@ def main() -> None:
         )
 
     if "mat" in stages:
-        print("=== stage: mat ===", flush=True)
+        log("=== stage: mat ===")
         stage_mat_filter(
             root=root,
             source_dir=mat_source,
@@ -739,7 +1071,7 @@ def main() -> None:
             mode=args.mat_link_mode,
         )
 
-    print("Done.", flush=True)
+    log("Done.")
 
 
 if __name__ == "__main__":
