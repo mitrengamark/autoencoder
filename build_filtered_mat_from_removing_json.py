@@ -51,24 +51,32 @@ def find_removal_json(method_dir: Path, threshold: int, method: str) -> Path | N
     return matches[0] if matches else None
 
 
+def canonical_mat_stem(stem: str) -> str:
+    """Single maneuver key for a .mat filename stem."""
+    s = stem
+    for suffix in ("_combined", "_mat", "_csv"):
+        if s.endswith(suffix):
+            s = s[: -len(suffix)]
+    return s
+
+
 def index_source_mats(source_dir: Path) -> dict[str, Path]:
     """
-    Map maneuver basename -> .mat path.
+    Map canonical maneuver basename -> .mat path.
 
-    Accepts both ``name.mat`` and ``name_combined.mat`` (prefers exact name.mat).
+    Accepts ``name.mat``, ``name_combined.mat``, ``name_mat.mat``, ``name_csv.mat``.
+    One entry per file (canonical stem without _combined/_mat/_csv).
     """
     by_name: dict[str, Path] = {}
     for path in sorted(source_dir.glob("*.mat")):
-        stem = path.stem
-        keys = [stem]
-        if stem.endswith("_combined"):
-            keys.append(stem[: -len("_combined")])
-        for key in keys:
-            # Prefer non-_combined file if both exist
-            if key not in by_name or (
-                by_name[key].stem.endswith("_combined") and not stem.endswith("_combined")
-            ):
-                by_name[key] = path
+        key = canonical_mat_stem(path.stem)
+        prev = by_name.get(key)
+        if prev is None:
+            by_name[key] = path
+            continue
+        # Prefer filename whose stem equals the canonical key
+        if path.stem == key and prev.stem != key:
+            by_name[key] = path
     return by_name
 
 

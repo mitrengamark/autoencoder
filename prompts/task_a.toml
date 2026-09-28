@@ -26,4 +26,16 @@ For oscillatory steering or lateral-response signals, describe frequency evoluti
 
 When citing numbers, prefer the supplied metadata for the plotted signals (and derived speed/acceleration magnitudes if provided): min, max, mean, std, peak values, timing of extrema and dominant frequency.
 
-Prioritize JSON fields that this task can support: initial_state, temporal_evolution, main_events, signal_relationships, oscillatory_behavior, final_state, important_numeric_features and technical_summary. Use symmetry_asymmetry only for clear directional imbalance between positive/negative lateral response (for example vy, ay or yaw rate), not for wheel-side asymmetry.
+TASK-SPECIFIC JSON CONTENT
+
+Write about gas, brake, steering angle, vx, vy, ax, ay, az, yaw rate, speed_kmh and accel_magnitude only.
+
+initial_state: throttle/brake/steering and vx–vy–ax–ay at the start.
+temporal_evolution: how controls and vx/vy/ax/ay/yawrate evolve in time.
+main_events: steering chirp or steps, accel/brake phases, lateral response peaks tied to controls.
+signal_relationships: gas/brake vs vx/ax; steering vs yawrate/vy/ay (with timing).
+symmetry_asymmetry: signed imbalance in vy, ay or yawrate only if visible here.
+oscillatory_behavior: chirp or oscillation in steering and coupled lateral channels.
+final_state: control inputs and vx/vy/ax/ay/yawrate at the end.
+important_numeric_features: 5–12 items naming signal + value + unit from metadata (for example vx max in m/s).
+technical_summary: driver inputs and global longitudinal/lateral response; no tires, no path map, no Fx/Fy.

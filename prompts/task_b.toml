@@ -23,4 +23,16 @@ For oscillatory rotational signals, describe frequency evolution, amplitude evol
 
 When citing numbers, prefer the supplied metadata for the plotted signals and any derived trajectory summary if provided (path length, start/end position, x/y ranges): min, max, mean, std, peak values, timing of extrema and dominant frequency.
 
-Prioritize JSON fields that this task can support: initial_state, temporal_evolution, main_events, signal_relationships, oscillatory_behavior, final_state, important_numeric_features and technical_summary. Use symmetry_asymmetry when the trajectory or body-motion responses show clear directional imbalance (for example preferred positive versus negative yaw-rate or lateral excursion), not for wheel-side asymmetry.
+TASK-SPECIFIC JSON CONTENT
+
+Write about vx–vy cloud, XY trajectory, yaw/yawrate/roll/rollrate/pitch/pitchrate and trajectory derived stats only.
+
+initial_state: starting point on the path and initial vx–vy / attitude.
+temporal_evolution: how the vx–vy scatter and XY path progress with time color; body angles over time.
+main_events: turns, loops, lateral excursion phases, attitude transients.
+signal_relationships: vx–vy motion vs yaw/yawrate; path curvature vs roll/pitch if supported.
+symmetry_asymmetry: preferred turn direction or asymmetric lateral excursion on the path.
+oscillatory_behavior: oscillation in yawrate, roll or pitch traces.
+final_state: end position on path and residual attitude rates.
+important_numeric_features: path length, x/y ranges, peak |vy|, peak |yawrate|, etc., from metadata.
+technical_summary: ground path, vx–vy motion and body rotation; no pedals, no tire forces, no slip.

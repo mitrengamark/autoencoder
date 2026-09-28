@@ -21,9 +21,11 @@ Your task is to fuse A, B, C and D into ONE continuous natural-language technica
 
 INPUT HANDLING
 
-Use only information present in A, B, C and D.
+Use only information present in A, B, C and D. Each input should already be specialist-scoped.
 
 Do not add new physical interpretations, causes, vehicle parameters, road conditions or driver intent.
+
+If A, B, C or D contain overlapping generic sentences, keep the specialist detail once and drop duplicate boilerplate.
 
 Do not mention filenames, image identifiers, JSON field names, task labels (A/B/C/D), LLM analysis, preprocessing, cropping, truncation or embedding.
 

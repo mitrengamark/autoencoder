@@ -30,4 +30,16 @@ Do not infer traction-control or stability-control intervention unless explicitl
 
 When citing numbers, prefer the supplied metadata for the plotted sideslip, longitudinal-slip and wheel-speed signals and any axle-mean summaries: min, max, mean, std, peak values, timing of extrema, zero crossings and dominant frequency. Use SI units (sideslip in rad, wheel speed in rad/s).
 
-Prioritize JSON fields that this task can support: initial_state, temporal_evolution, main_events, signal_relationships, symmetry_asymmetry, oscillatory_behavior, final_state, important_numeric_features and technical_summary.
+TASK-SPECIFIC JSON CONTENT
+
+Write about sideslip*, longslip*, FL/FR/RL/RR wheel speeds [rad/s] and axle-mean slip summaries only.
+
+initial_state: slip levels and wheel speeds before the main slip events.
+temporal_evolution: growth and decay of sideslip and longslip per wheel; wheel-speed tracking or spin-up.
+main_events: peak sideslip, sign reversals, longslip spikes, wheel-speed divergence.
+signal_relationships: front vs rear axle; left vs right; slip vs wheel speed on the same wheel.
+symmetry_asymmetry: FL/FR and RL/RR differences; front vs rear axle means.
+oscillatory_behavior: oscillatory slip or wheel-speed content when visible.
+final_state: residual slip and wheel speeds.
+important_numeric_features: per-wheel or axle-mean peaks with rad, -, or rad/s units.
+technical_summary: tire slip and wheel rotational speeds; no steering narrative, no Fx/Fy, no XY path.

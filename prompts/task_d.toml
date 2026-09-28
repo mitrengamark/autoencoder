@@ -30,4 +30,16 @@ For both time-colored multi-wheel plots, assume the viridis color progression re
 
 When citing numbers, prefer the supplied metadata for Fx*, Fy* and sideslip* (and any axle-mean force summaries): min, max, mean, std, peak values, timing of extrema and dominant frequency. Use SI units (forces in N, sideslip in rad).
 
-Prioritize JSON fields that this task can support: initial_state, temporal_evolution, main_events, signal_relationships, symmetry_asymmetry, final_state, important_numeric_features and technical_summary. Fill oscillatory_behavior only when the force traces themselves show clear oscillatory structure.
+TASK-SPECIFIC JSON CONTENT
+
+Write about Fx*, Fy*, sideslip* (as used in sideslip–Fy plots) and axle-mean Fx/Fy only.
+
+initial_state: force levels and sideslip at the start of the force evolution.
+temporal_evolution: Fx and Fy buildup per wheel; paths through Fx–Fy and sideslip–Fy planes over time color.
+main_events: peak braking/traction Fx, peak cornering Fy, nonlinear or loop-like force paths.
+signal_relationships: sideslip vs Fy per wheel; Fx vs Fy coupling; front vs rear axle force balance.
+symmetry_asymmetry: left/right and front/rear force asymmetry.
+oscillatory_behavior: only if Fx/Fy time traces oscillate clearly.
+final_state: forces and sideslip at end of window.
+important_numeric_features: peak Fx/Fy in N, sideslip in rad, axle means when provided.
+technical_summary: tire forces and force–slip relationships; no controls, no path, no wheel-speed-only story.
