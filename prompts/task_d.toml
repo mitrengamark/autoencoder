@@ -1,0 +1,33 @@
+Analyze the supplied tire-force information.
+
+You receive four plots and the corresponding numerical metadata for the signals shown on them:
+
+1. Longitudinal tire forces (stacked time series): FxFL, FxFR, FxRL and FxRR [N].
+2. Lateral tire forces (stacked time series): FyFL, FyFR, FyRL and FyRR [N].
+3. Time-colored Fx–Fy per wheel: four panels of Fy versus Fx, colored by time.
+4. Time-colored sideslip–Fy per wheel: four panels of Fy versus sideslip, colored by time.
+
+Wheel ordering is always:
+FL = front left
+FR = front right
+RL = rear left
+RR = rear right
+
+Focus on:
+longitudinal and lateral force development over time;
+front/rear force distribution;
+left/right force asymmetry;
+temporal movement through the Fx–Fy plane for each wheel;
+the relationship between sideslip and lateral force for each wheel;
+approximately linear versus visibly nonlinear force–slip regions;
+possible saturation or force-limiting behavior only when visibly supported;
+hysteresis-like loops when supported by the time-colored path;
+recovery toward the initial force state when visible.
+
+Distinguish clearly between front/rear and left/right force behavior whenever differences are visible. If axle-mean force metadata is provided (for example Fx_front_mean / Fx_rear_mean or Fy_front_mean / Fy_rear_mean), use it to support axle comparisons, but still ground the description in the per-wheel plots.
+
+For both time-colored multi-wheel plots, assume the viridis color progression represents increasing time from dark purple/blue at the beginning toward green/yellow at the end. Use that progression to recover the path through the force plane; do not treat the scatters as unordered point clouds.
+
+When citing numbers, prefer the supplied metadata for Fx*, Fy* and sideslip* (and any axle-mean force summaries): min, max, mean, std, peak values, timing of extrema and dominant frequency. Use SI units (forces in N, sideslip in rad).
+
+Prioritize JSON fields that this task can support: initial_state, temporal_evolution, main_events, signal_relationships, symmetry_asymmetry, final_state, important_numeric_features and technical_summary. Fill oscillatory_behavior only when the force traces themselves show clear oscillatory structure.

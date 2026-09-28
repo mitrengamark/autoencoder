@@ -1,0 +1,88 @@
+You receive four structured JSON analyses of the SAME vehicle maneuver. Each JSON was produced by a separate specialist task and uses this field structure:
+
+- initial_state
+- temporal_evolution
+- main_events
+- signal_relationships
+- symmetry_asymmetry
+- oscillatory_behavior
+- final_state
+- important_numeric_features
+- technical_summary
+
+The four inputs are:
+
+A: vehicle control and global response
+B: trajectory and rotational/body dynamics
+C: tire slip and wheel speeds
+D: tire-force behavior
+
+Your task is to fuse A, B, C and D into ONE continuous natural-language technical description of the maneuver. This text will later be embedded for semantic similarity and redundancy analysis, so consistency and discriminative content matter more than literary style.
+
+INPUT HANDLING
+
+Use only information present in A, B, C and D.
+
+Do not add new physical interpretations, causes, vehicle parameters, road conditions or driver intent.
+
+Do not mention filenames, image identifiers, JSON field names, task labels (A/B/C/D), LLM analysis, preprocessing, cropping, truncation or embedding.
+
+Do not include a maneuver filename or identifier.
+
+Do not guess the maneuver category.
+
+If several analyses describe the same event, merge them into one temporally coherent statement. Mention duplicated facts only once.
+
+Ignore empty strings and empty lists.
+
+NUMBER AND UNIT WORDING (MANDATORY)
+
+Write every quantitative value and every unit in words. Do not use digits, decimal points written as numerals, SI unit symbols, or abbreviated unit tokens.
+
+Examples of the required style:
+- write "twenty-four point six meters per second", not "24.6 m/s"
+- write "one point two meters per second squared", not "1.2 m/s²"
+- write "three point one hertz", not "3.1 Hz"
+- write "minus zero point zero two radians", not "-0.02 rad"
+- write "fifteen hundred newtons", not "1500 N"
+- write "thirty-seven point nine seconds", not "37.9 s"
+
+Spell out signed values with "plus" or "minus" when the sign matters.
+Spell out ranges in words, for example "from about twenty-two to twenty-five meters per second".
+Keep approximately eight to fifteen discriminative numerical anchors; do not dump every statistic.
+
+CONTENT PRIORITIES
+
+Preserve temporal ordering from the initial state through the main events to the final state.
+
+Prefer features that distinguish this maneuver:
+control excitation pattern,
+velocity evolution,
+major longitudinal and lateral responses,
+trajectory evolution,
+yaw, roll and pitch behavior,
+tire-slip and wheel-speed evolution,
+front/rear and left/right asymmetries,
+tire-force evolution,
+nonlinear force-slip behavior,
+recovery or final-state behavior.
+
+Write in concise technical English with consistent terminology across maneuvers.
+
+OUTPUT
+
+Produce one continuous paragraph-style technical description of approximately two hundred to three hundred words.
+
+Do not use section headings, bullet lists or JSON.
+
+Follow this conceptual order inside the continuous text:
+
+1. Initial operating state and longitudinal motion.
+2. Control excitation and chronological sequence of the main maneuver.
+3. Lateral and rotational vehicle response.
+4. Trajectory and body-motion evolution.
+5. Tire slip and wheel-speed behavior.
+6. Tire-force behavior and relevant nonlinear relationships.
+7. Recovery and final dynamic state.
+
+The result must describe only this maneuver and must retain enough temporally ordered dynamic detail for semantic comparison with other descriptions produced by the same procedure.

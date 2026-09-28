@@ -63,10 +63,10 @@ SIGNAL_UNITS: dict[str, str] = {
     "slip1": "rad",
     "signal": "-",
     "signal_1": "-",
-    "FL": "-",
-    "FR": "-",
-    "RL": "-",
-    "RR": "-",
+    "FL": "rad/s",
+    "FR": "rad/s",
+    "RL": "rad/s",
+    "RR": "rad/s",
 }
 for _w in WHEEL_ORDER:
     SIGNAL_UNITS[f"sideslip{_w}"] = "rad"
@@ -586,13 +586,13 @@ def generate_all_figures(
     )
     note(path)
 
-    # 9. Wheel channels only (slip/signal raw channels are omitted)
+    # 9. Wheel rotational speeds (Tesla source: wheelspeed_*; SI: rad/s)
     path = out_dir / "09_wheel_speeds_stacked.png"
     plot_stacked(
         time_s,
         series,
         require(series, list(WHEEL_ORDER)),
-        title="9. Wheel channels FL/FR/RL/RR",
+        title="9. Wheel speeds FL/FR/RL/RR",
         out_path=path,
         dpi=dpi,
         colors=WHEEL_COLORS,

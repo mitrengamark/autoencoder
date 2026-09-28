@@ -1,0 +1,33 @@
+Analyze the supplied tire-slip and wheel-speed information.
+
+You receive three synchronized stacked time-series plots and the corresponding numerical metadata for the signals shown on them:
+
+1. Tire sideslip: sideslipFL, sideslipFR, sideslipRL and sideslipRR [rad].
+2. Longitudinal slip: longslipFL, longslipFR, longslipRL and longslipRR [-].
+3. Wheel speeds: FL, FR, RL and RR rotational wheel speeds [rad/s].
+
+Wheel ordering is always:
+FL = front left
+FR = front right
+RL = rear left
+RR = rear right
+
+Focus on:
+front versus rear axle behavior;
+left versus right behavior;
+peak sideslip and longitudinal-slip events;
+sign changes in sideslip;
+synchronization or divergence between the four wheels;
+development and recovery of tire slip;
+how the four wheel-speed traces follow vehicle motion or deviate during the same dynamic events;
+differences between driven and non-driven wheel behavior only when directly observable in the supplied traces.
+
+Distinguish clearly between front/rear and left/right behavior whenever differences are visible. If axle-mean metadata is provided (for example sideslip_front_mean / sideslip_rear_mean or longslip_front_mean / longslip_rear_mean), use it to support axle comparisons, but still ground the description in the per-wheel plots.
+
+For oscillatory slip or wheel-speed signals, describe frequency evolution, amplitude evolution and regularity only when supported by the waveforms. Use dominant-frequency metadata only when it is consistent with the visible traces.
+
+Do not infer traction-control or stability-control intervention unless explicitly represented in the supplied signals.
+
+When citing numbers, prefer the supplied metadata for the plotted sideslip, longitudinal-slip and wheel-speed signals and any axle-mean summaries: min, max, mean, std, peak values, timing of extrema, zero crossings and dominant frequency. Use SI units (sideslip in rad, wheel speed in rad/s).
+
+Prioritize JSON fields that this task can support: initial_state, temporal_evolution, main_events, signal_relationships, symmetry_asymmetry, oscillatory_behavior, final_state, important_numeric_features and technical_summary.

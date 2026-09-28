@@ -1,0 +1,26 @@
+Analyze the supplied trajectory and rotational/body-dynamics information.
+
+You receive three plots and the corresponding numerical metadata for the signals shown on them:
+
+1. Time-colored vx–vy relationship: scatter of lateral velocity vy versus longitudinal velocity vx, colored by time.
+2. Rotational dynamics (stacked time series): yaw, yaw rate, roll, roll rate, pitch and pitch rate.
+3. Time-colored XY trajectory: relative path in the ground plane (x − x₀, y − y₀), colored by time, with start and end markers.
+
+Focus on:
+trajectory geometry and how the path progresses in time;
+the relative scale of longitudinal versus lateral displacement;
+how the vx–vy cloud evolves over time;
+yaw and yaw-rate evolution;
+roll and roll-rate response;
+pitch and pitch-rate response;
+orientation changes implied by yaw;
+major transient phases and body-motion recovery when visible;
+relationships between the vx–vy motion, the XY path and the rotational response.
+
+For both time-colored plots, assume the viridis color progression represents increasing time from dark purple/blue at the beginning toward green/yellow at the end. Explicitly use that progression to recover the sequence of motion; do not treat either plot as an unordered scatter.
+
+For oscillatory rotational signals, describe frequency evolution, amplitude evolution and regularity only when supported by the waveforms. Use dominant-frequency metadata only when it is consistent with the visible traces.
+
+When citing numbers, prefer the supplied metadata for the plotted signals and any derived trajectory summary if provided (path length, start/end position, x/y ranges): min, max, mean, std, peak values, timing of extrema and dominant frequency.
+
+Prioritize JSON fields that this task can support: initial_state, temporal_evolution, main_events, signal_relationships, oscillatory_behavior, final_state, important_numeric_features and technical_summary. Use symmetry_asymmetry when the trajectory or body-motion responses show clear directional imbalance (for example preferred positive versus negative yaw-rate or lateral excursion), not for wheel-side asymmetry.

@@ -1,0 +1,29 @@
+Analyze the supplied vehicle control and global response information.
+
+You receive four synchronized stacked time-series plots and the corresponding numerical metadata for the signals shown on them:
+
+1. Vehicle velocity: longitudinal velocity vx and lateral velocity vy.
+2. Translational accelerations: ax, ay and az.
+3. Longitudinal control → response: gas, brake, vx and ax.
+4. Lateral control → response: steering angle, yaw rate, vy and ay.
+
+Focus on:
+the presence or absence of throttle and braking excitation;
+steering-angle excitation and its temporal pattern;
+how vx and ax evolve relative to gas and brake;
+how yaw rate, vy and ay evolve relative to steering angle;
+acceleration versus deceleration phases;
+lateral response phases;
+transient versus sustained responses;
+return toward steady-state or continuing excitation when visible;
+vertical acceleration az only when it shows a meaningful dynamic contribution beyond noise.
+
+Explicitly describe the temporal relationships that these plots support:
+gas/brake ↔ vx/ax;
+steering angle ↔ yaw rate ↔ vy ↔ ay.
+
+For oscillatory steering or lateral-response signals, describe frequency evolution, amplitude evolution and regularity only when supported by the waveforms. Use dominant-frequency metadata only when it is consistent with the visible traces.
+
+When citing numbers, prefer the supplied metadata for the plotted signals (and derived speed/acceleration magnitudes if provided): min, max, mean, std, peak values, timing of extrema and dominant frequency.
+
+Prioritize JSON fields that this task can support: initial_state, temporal_evolution, main_events, signal_relationships, oscillatory_behavior, final_state, important_numeric_features and technical_summary. Use symmetry_asymmetry only for clear directional imbalance between positive/negative lateral response (for example vy, ay or yaw rate), not for wheel-side asymmetry.
