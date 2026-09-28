@@ -38,6 +38,9 @@ WHEEL_COLORS = {
     "RR": "#d62728",
 }
 
+# Lane-change maneuvers settle early; drop the long idle tail.
+SAVVALTAS_MAX_DURATION_S = 11.0
+
 # Units used on plot axes (best-effort CarMaker / dataset convention).
 SIGNAL_UNITS: dict[str, str] = {
     "steeringangel": "deg",
@@ -139,6 +142,28 @@ def load_series(
     series = {col: kept[:, i] for i, col in enumerate(columns)}
     time_s = np.arange(kept.shape[0], dtype=np.float64) * dt
     return time_s, series
+
+
+def is_savvaltas(maneuver: str) -> bool:
+    return "savvaltas" in maneuver
+
+
+def truncate_to_duration(
+    time_s: np.ndarray,
+    series: dict[str, np.ndarray],
+    max_duration_s: float,
+) -> tuple[np.ndarray, dict[str, np.ndarray]]:
+    """Keep samples with time <= max_duration_s (inclusive)."""
+    if max_duration_s <= 0:
+        raise ValueError("max_duration_s must be > 0")
+    mask = time_s <= max_duration_s + 1e-12
+    if not np.any(mask):
+        raise ValueError(
+            f"truncate_to_duration({max_duration_s}s) leaves no samples "
+            f"(time starts at {float(time_s[0]) if time_s.size else 'n/a'} s)"
+        )
+    n_keep = int(np.count_nonzero(mask))
+    return time_s[:n_keep], {k: v[:n_keep] for k, v in series.items()}
 
 
 def require(series: dict[str, np.ndarray], names: Iterable[str]) -> list[str]:
@@ -668,6 +693,13 @@ def list_maneuvers_in_group(data_dir: Path, prefix: str) -> list[str]:
     return names
 
 
+def list_all_maneuvers(data_dir: Path) -> list[str]:
+    return sorted(
+        path.name.replace("_combined.csv", "")
+        for path in data_dir.glob("*_combined.csv")
+    )
+
+
 def choose_one_per_group(data_dir: Path) -> list[tuple[str, str]]:
     """Return [(group_prefix, maneuver_stem), ...] for all groups that exist."""
     chosen: list[tuple[str, str]] = []
@@ -698,12 +730,20 @@ def process_maneuver(
 
     csv_path = resolve_csv_path(data_dir, maneuver)
     time_s, series = load_series(csv_path, skip_rows=skip_rows, dt=dt)
+    n_loaded = int(time_s.size)
+    truncate_after_s: float | None = None
+    if is_savvaltas(maneuver):
+        truncate_after_s = SAVVALTAS_MAX_DURATION_S
+        time_s, series = truncate_to_duration(time_s, series, truncate_after_s)
 
     removed = cleanup_obsolete(out_dir)
     written = generate_all_figures(
         time_s, series, maneuver=maneuver, out_dir=out_dir, dpi=dpi
     )
     features = extract_features(time_s, series, dt=dt, maneuver=maneuver)
+    if truncate_after_s is not None:
+        features["truncate_after_s"] = truncate_after_s
+        features["n_samples_before_truncate"] = n_loaded
     features_path = out_dir / "features.json"
     with features_path.open("w", encoding="utf-8") as handle:
         json.dump(features, handle, indent=2)
@@ -719,12 +759,23 @@ def process_maneuver(
         "removed_obsolete": removed,
         "features_file": features_path.name,
     }
+    if truncate_after_s is not None:
+        manifest["truncate_after_s"] = truncate_after_s
+        manifest["n_samples_before_truncate"] = n_loaded
     with (out_dir / "manifest.json").open("w", encoding="utf-8") as handle:
         json.dump(manifest, handle, indent=2)
 
     print(f"maneuver={maneuver}")
     print(f"csv={csv_path}")
-    print(f"rows_plotted={time_s.size} dt={dt} time=[0.00, {time_s[-1]:.2f}] s")
+    trunc_note = (
+        f" truncated_from={n_loaded} @ {truncate_after_s:.2f}s"
+        if truncate_after_s is not None
+        else ""
+    )
+    print(
+        f"rows_plotted={time_s.size} dt={dt} "
+        f"time=[0.00, {time_s[-1]:.2f}] s{trunc_note}"
+    )
     print(f"n_figures={len(written)}")
     if removed:
         print(f"removed_obsolete={len(removed)}")
@@ -747,12 +798,17 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--maneuver",
         default="allando_v_chirp_a5_v100",
-        help="Single maneuver stem (ignored if --one-per-group is set).",
+        help="Single maneuver stem (ignored if --one-per-group or --all is set).",
     )
     p.add_argument(
         "--one-per-group",
         action="store_true",
         help="Run one representative maneuver from each of the 7 maneuver groups.",
+    )
+    p.add_argument(
+        "--all",
+        action="store_true",
+        help="Run every *_combined.csv under --data-dir (plots + features).",
     )
     p.add_argument(
         "--out-root",
@@ -774,6 +830,38 @@ def main() -> None:
     args = build_parser().parse_args()
     data_dir = Path(args.data_dir)
     out_root = Path(args.out_root)
+
+    if args.one_per_group and args.all:
+        raise SystemExit("Use either --one-per-group or --all, not both.")
+
+    if args.all:
+        maneuvers = list_all_maneuvers(data_dir)
+        if not maneuvers:
+            raise SystemExit(f"No *_combined.csv found under {data_dir}")
+        print(f"Running all {len(maneuvers)} maneuvers from {data_dir}")
+        print("")
+        out_root.mkdir(parents=True, exist_ok=True)
+        for i, maneuver in enumerate(maneuvers, start=1):
+            print(f"=== [{i}/{len(maneuvers)}] {maneuver} ===")
+            process_maneuver(
+                data_dir=data_dir,
+                maneuver=maneuver,
+                out_dir=out_root / maneuver,
+                skip_rows=args.skip_rows,
+                dt=args.dt,
+                dpi=args.dpi,
+            )
+        summary = {
+            "data_dir": str(data_dir),
+            "n_maneuvers": len(maneuvers),
+            "maneuvers": maneuvers,
+        }
+        summary_path = out_root / "all_maneuvers_summary.json"
+        with summary_path.open("w", encoding="utf-8") as handle:
+            json.dump(summary, handle, indent=2)
+        print(f"Done. Processed {len(maneuvers)} maneuvers.")
+        print(f"summary={summary_path.resolve()}")
+        return
 
     if args.one_per_group:
         selected = choose_one_per_group(data_dir)
