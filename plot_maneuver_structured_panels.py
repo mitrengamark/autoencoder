@@ -440,7 +440,6 @@ def generate_all_figures(
     time_s: np.ndarray,
     series: dict[str, np.ndarray],
     *,
-    maneuver: str,
     out_dir: Path,
     dpi: int,
 ) -> list[str]:
@@ -455,7 +454,7 @@ def generate_all_figures(
         time_s,
         series,
         require(series, ["vx", "vy"]),
-        title=f"{maneuver} — 2. Vehicle velocity",
+        title="2. Vehicle velocity",
         out_path=path,
         dpi=dpi,
     )
@@ -466,7 +465,7 @@ def generate_all_figures(
         {"vy_vs_vx": series["vx"]},
         {"vy_vs_vx": series["vy"]},
         time_s,
-        title=f"{maneuver} — 2c. vy vs vx (time-colored)",
+        title="2c. vy vs vx (time-colored)",
         xlabel="vx [m/s]",
         ylabel="vy [m/s]",
         out_path=path,
@@ -481,7 +480,7 @@ def generate_all_figures(
         time_s,
         series,
         require(series, ["ax", "ay", "az"]),
-        title=f"{maneuver} — 3. Translational accelerations",
+        title="3. Translational accelerations",
         out_path=path,
         dpi=dpi,
     )
@@ -493,7 +492,7 @@ def generate_all_figures(
         time_s,
         series,
         require(series, ["yaw", "yawrate", "roll", "rollrate", "pitch", "pitchrate"]),
-        title=f"{maneuver} — 4. Rotational dynamics",
+        title="4. Rotational dynamics",
         out_path=path,
         dpi=dpi,
     )
@@ -506,7 +505,7 @@ def generate_all_figures(
         time_s,
         series["x"],
         series["y"],
-        title=f"{maneuver} — 5. XY trajectory (relative, time-colored)",
+        title="5. XY trajectory (relative, time-colored)",
         out_path=path,
         dpi=dpi,
     )
@@ -518,7 +517,7 @@ def generate_all_figures(
         time_s,
         series,
         require(series, [f"sideslip{w}" for w in WHEEL_ORDER]),
-        title=f"{maneuver} — 6. Tire sideslip",
+        title="6. Tire sideslip",
         out_path=path,
         dpi=dpi,
     )
@@ -530,7 +529,7 @@ def generate_all_figures(
         time_s,
         series,
         require(series, [f"longslip{w}" for w in WHEEL_ORDER]),
-        title=f"{maneuver} — 7. Longitudinal slip",
+        title="7. Longitudinal slip",
         out_path=path,
         dpi=dpi,
     )
@@ -542,7 +541,7 @@ def generate_all_figures(
         time_s,
         series,
         require(series, [f"Fx{w}" for w in WHEEL_ORDER]),
-        title=f"{maneuver} — 8. Longitudinal tire forces Fx",
+        title="8. Longitudinal tire forces Fx",
         out_path=path,
         dpi=dpi,
     )
@@ -553,7 +552,7 @@ def generate_all_figures(
         time_s,
         series,
         require(series, [f"Fy{w}" for w in WHEEL_ORDER]),
-        title=f"{maneuver} — 8b. Lateral tire forces Fy",
+        title="8b. Lateral tire forces Fy",
         out_path=path,
         dpi=dpi,
     )
@@ -564,7 +563,7 @@ def generate_all_figures(
         {w: series[f"Fx{w}"] for w in WHEEL_ORDER},
         {w: series[f"Fy{w}"] for w in WHEEL_ORDER},
         time_s,
-        title=f"{maneuver} — 8d. Fx–Fy per wheel (time-colored)",
+        title="8d. Fx–Fy per wheel (time-colored)",
         xlabel="Fx [N]",
         ylabel="Fy [N]",
         out_path=path,
@@ -578,7 +577,7 @@ def generate_all_figures(
         {w: series[f"sideslip{w}"] for w in WHEEL_ORDER},
         {w: series[f"Fy{w}"] for w in WHEEL_ORDER},
         time_s,
-        title=f"{maneuver} — 8e. sideslip–Fy per wheel (time-colored)",
+        title="8e. sideslip–Fy per wheel (time-colored)",
         xlabel="sideslip [rad]",
         ylabel="Fy [N]",
         out_path=path,
@@ -593,7 +592,7 @@ def generate_all_figures(
         time_s,
         series,
         require(series, list(WHEEL_ORDER)),
-        title=f"{maneuver} — 9. Wheel channels FL/FR/RL/RR",
+        title="9. Wheel channels FL/FR/RL/RR",
         out_path=path,
         dpi=dpi,
         colors=WHEEL_COLORS,
@@ -605,7 +604,7 @@ def generate_all_figures(
         time_s,
         series,
         require(series, ["gas", "brake", "vx", "ax"]),
-        title=f"{maneuver} — 10b. Longitudinal control → response",
+        title="10b. Longitudinal control → response",
         out_path=path,
         dpi=dpi,
     )
@@ -616,7 +615,7 @@ def generate_all_figures(
         time_s,
         series,
         require(series, ["steeringangel", "yawrate", "vy", "ay"]),
-        title=f"{maneuver} — 10c. Lateral control → response",
+        title="10c. Lateral control → response",
         out_path=path,
         dpi=dpi,
     )
@@ -738,7 +737,7 @@ def process_maneuver(
 
     removed = cleanup_obsolete(out_dir)
     written = generate_all_figures(
-        time_s, series, maneuver=maneuver, out_dir=out_dir, dpi=dpi
+        time_s, series, out_dir=out_dir, dpi=dpi
     )
     features = extract_features(time_s, series, dt=dt, maneuver=maneuver)
     if truncate_after_s is not None:
