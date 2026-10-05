@@ -42,15 +42,21 @@ def short_label(maneuver: str, group: str) -> str:
     return maneuver
 
 
+def assign_group(name: str) -> str | None:
+    for prefix in GROUP_PREFIXES:
+        if name.startswith(prefix + "_") or name == prefix:
+            return prefix
+    return None
+
+
 def load_grouped_vectors(average_dir: Path) -> dict[str, tuple[list[str], np.ndarray]]:
     """Return {group: (names, vectors[N,D])} for non-empty groups."""
     groups: dict[str, list[str]] = {p: [] for p in GROUP_PREFIXES}
     for path in sorted(average_dir.glob("*.npy")):
         name = path.stem
-        for prefix in GROUP_PREFIXES:
-            if name.startswith(prefix + "_") or name == prefix:
-                groups[prefix].append(name)
-                break
+        group = assign_group(name)
+        if group is not None:
+            groups[group].append(name)
 
     out: dict[str, tuple[list[str], np.ndarray]] = {}
     for prefix, names in groups.items():
@@ -58,6 +64,44 @@ def load_grouped_vectors(average_dir: Path) -> dict[str, tuple[list[str], np.nda
             continue
         vectors = np.stack([np.load(average_dir / f"{n}.npy") for n in names])
         out[prefix] = (names, vectors)
+    return out
+
+
+def load_grouped_vectors_from_chroma(
+    chroma_path: Path,
+    collection_name: str,
+) -> dict[str, tuple[list[str], np.ndarray]]:
+    """Load embeddings from a Chroma collection and group by maneuver prefix."""
+    import chromadb
+
+    client = chromadb.PersistentClient(path=str(chroma_path))
+    collection = client.get_collection(collection_name)
+    result = collection.get(include=["embeddings"])
+    ids = list(result.get("ids") or [])
+    embeddings = result.get("embeddings")
+    if embeddings is None or len(ids) == 0:
+        raise SystemExit(f"No embeddings in collection {collection_name!r}")
+
+    emb = np.asarray(embeddings, dtype=np.float64)
+    groups: dict[str, list[tuple[str, np.ndarray]]] = {p: [] for p in GROUP_PREFIXES}
+    skipped = 0
+    for name, vec in zip(ids, emb):
+        group = assign_group(str(name))
+        if group is None:
+            skipped += 1
+            continue
+        groups[group].append((str(name), vec))
+
+    out: dict[str, tuple[list[str], np.ndarray]] = {}
+    for prefix, pairs in groups.items():
+        if not pairs:
+            continue
+        pairs = sorted(pairs, key=lambda x: x[0])
+        names = [n for n, _ in pairs]
+        vectors = np.stack([v for _, v in pairs])
+        out[prefix] = (names, vectors)
+    if skipped:
+        print(f"Skipped {skipped} ids with unknown group prefix")
     return out
 
 
@@ -276,13 +320,28 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--average-dir",
-        default="data_bottleneck/text_embed_tesla/averaged_manoeuvres",
-        help="Directory with {maneuver}.npy averages.",
+        default=None,
+        help="Directory with {maneuver}.npy averages (ignored if --chroma-path is set).",
+    )
+    parser.add_argument(
+        "--chroma-path",
+        default=None,
+        help="Chroma persistent path (e.g. chroma_db/tesla_vlm).",
+    )
+    parser.add_argument(
+        "--collection",
+        default="tesla_vlm_descriptions",
+        help="Chroma collection name when using --chroma-path.",
     )
     parser.add_argument(
         "--out-dir",
         default="Results/text_embed_tesla_viz",
         help="Output directory for PNG figures.",
+    )
+    parser.add_argument(
+        "--overview-only",
+        action="store_true",
+        help="Only write the 4 all-groups overview plots (PCA/t-SNE × 2D/3D).",
     )
     parser.add_argument(
         "--methods",
@@ -325,17 +384,27 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     args = build_parser().parse_args()
     root = Path(args.root).resolve()
-    average_dir = Path(args.average_dir)
-    if not average_dir.is_absolute():
-        average_dir = root / average_dir
     out_dir = Path(args.out_dir)
     if not out_dir.is_absolute():
         out_dir = root / out_dir
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    grouped = load_grouped_vectors(average_dir)
-    if not grouped:
-        raise SystemExit(f"No averaged .npy files found under {average_dir}")
+    if args.chroma_path:
+        chroma_path = Path(args.chroma_path)
+        if not chroma_path.is_absolute():
+            chroma_path = root / chroma_path
+        grouped = load_grouped_vectors_from_chroma(chroma_path, args.collection)
+        source = f"chroma:{chroma_path} / {args.collection}"
+    else:
+        average_dir = Path(
+            args.average_dir or "data_bottleneck/text_embed_tesla/averaged_manoeuvres"
+        )
+        if not average_dir.is_absolute():
+            average_dir = root / average_dir
+        grouped = load_grouped_vectors(average_dir)
+        source = str(average_dir)
+        if not grouped:
+            raise SystemExit(f"No averaged .npy files found under {average_dir}")
 
     if args.groups:
         wanted = set(args.groups)
@@ -343,21 +412,22 @@ def main() -> None:
         if not grouped:
             raise SystemExit(f"No matching groups for {args.groups}")
 
-    print(f"Loaded groups from {average_dir}:")
+    print(f"Loaded groups from {source}:")
     for g, (names, vecs) in grouped.items():
         print(f"  {g}: n={len(names)}, dim={vecs.shape[1]}")
 
-    for group, (names, vectors) in grouped.items():
-        plot_group(
-            group=group,
-            names=names,
-            vectors=vectors,
-            out_dir=out_dir,
-            methods=list(args.methods),
-            random_state=args.random_state,
-            perplexity=args.perplexity,
-            annotate=not args.no_annotate,
-        )
+    if not args.overview_only:
+        for group, (names, vectors) in grouped.items():
+            plot_group(
+                group=group,
+                names=names,
+                vectors=vectors,
+                out_dir=out_dir,
+                methods=list(args.methods),
+                random_state=args.random_state,
+                perplexity=args.perplexity,
+                annotate=not args.no_annotate,
+            )
 
     if not args.no_overview:
         plot_all_groups_overview(
