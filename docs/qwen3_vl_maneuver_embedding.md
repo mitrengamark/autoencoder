@@ -10,8 +10,8 @@ Joint multimodal embedding of each Tesla maneuver’s 14 structured panels with
 | `pyproject.toml` / `uv.lock` / `.venv/` | Single project env (includes VL-embedding deps) |
 | `Qwen3-VL-Embedding/` | Upstream code + weights only (gitignored; no own venv/lock) |
 | `Qwen3-VL-Embedding/models/Qwen3-VL-Embedding-2B/` | Local HF weights (~4 GB) |
-| `embed_maneuver_plots_qwen3vl.py` | Batch embedder for `Results/maneuver_structured_plots_tesla` |
-| `Results/qwen3_vl_maneuver_embeddings/` | `<maneuver>.npy` + `.json` + `summary.json` |
+| `embed_maneuver_plots_qwen3vl.py` | 14 panels → 1 vector → Chroma |
+| `chroma_db/image_embedding_2b/` | Persist dir; collection `image_embedding_2b` |
 
 ## Setup
 
@@ -28,18 +28,22 @@ hf download Qwen/Qwen3-VL-Embedding-2B \
 `decord` is intentionally omitted (no aarch64 wheel); image-only embedding does not need it.
 `flash-attn` is optional — SDPA works on GB10.
 
-## Smoke test (14 images → one vector)
+## Smoke / batch → Chroma
 
 ```bash
 source .venv/bin/activate
 python embed_maneuver_plots_qwen3vl.py --smoke
+python embed_maneuver_plots_qwen3vl.py --all   # ~458 vectors, resume-safe
 ```
 
-## Batch all maneuvers
+Screen:
 
 ```bash
+mkdir -p logs
+screen -S image_embed_2b
 source .venv/bin/activate
-python embed_maneuver_plots_qwen3vl.py --all
+python -u embed_maneuver_plots_qwen3vl.py --all 2>&1 | tee logs/image_embedding_2b_$(date +%Y%m%d_%H%M%S).log
+# Ctrl-A D to detach
 ```
 
 ## API shape

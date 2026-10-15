@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """
-Embed each maneuver's 14 structured plots into one 2048-d vector via
-Qwen3-VL-Embedding-2B (multi-image joint encoding).
-
-Uses the project root .venv (see pyproject.toml). Activate and run:
+Embed each Tesla maneuver's 14 structured plots into one 2048-d vector
+(Qwen3-VL-Embedding-2B) and store them in ChromaDB.
 
   source .venv/bin/activate
   python embed_maneuver_plots_qwen3vl.py --smoke
@@ -25,9 +23,10 @@ ROOT = Path(__file__).resolve().parent
 QWEN_ROOT = ROOT / "Qwen3-VL-Embedding"
 DEFAULT_MODEL_DIR = QWEN_ROOT / "models" / "Qwen3-VL-Embedding-2B"
 DEFAULT_PLOT_ROOT = ROOT / "Results" / "maneuver_structured_plots_tesla"
-DEFAULT_OUT_ROOT = ROOT / "Results" / "qwen3_vl_maneuver_embeddings"
+DEFAULT_CHROMA_PATH = ROOT / "chroma_db" / "image_embedding_2b"
+DEFAULT_COLLECTION = "image_embedding_2b"
+DEFAULT_NPY_ROOT = ROOT / "Results" / "qwen3_vl_maneuver_embeddings"
 
-# Same panel order as the Tesla VLM A–D fusion inputs (14 figures → 1 vector).
 PANEL_NAMES: tuple[str, ...] = (
     "02_velocity_stacked.png",
     "03_translational_accel_stacked.png",
@@ -44,6 +43,23 @@ PANEL_NAMES: tuple[str, ...] = (
     "08d_Fx_vs_Fy_timecolor.png",
     "08e_sideslip_vs_Fy_timecolor.png",
 )
+
+GROUP_PREFIXES: tuple[str, ...] = (
+    "allando_v_savvaltas",
+    "allando_v_chirp",
+    "allando_v_sin",
+    "valtozo_v_savvaltas_gas",
+    "valtozo_v_savvaltas_fek",
+    "valtozo_v_sin_gas",
+    "valtozo_v_sin_fek",
+)
+
+
+def maneuver_group(maneuver: str) -> str:
+    for prefix in GROUP_PREFIXES:
+        if maneuver.startswith(prefix + "_") or maneuver == prefix:
+            return prefix
+    return "unknown"
 
 
 def _ensure_qwen_on_path() -> None:
@@ -120,33 +136,40 @@ def embed_maneuver(model, plot_dir: Path) -> np.ndarray:
     return vector
 
 
-def write_embedding(
-    out_dir: Path,
-    maneuver: str,
-    vector: np.ndarray,
-    meta: dict[str, Any],
-) -> None:
-    out_dir.mkdir(parents=True, exist_ok=True)
-    np.save(out_dir / f"{maneuver}.npy", vector)
-    (out_dir / f"{maneuver}.json").write_text(
-        json.dumps(meta, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
+def open_collection(chroma_path: Path, collection_name: str):
+    import chromadb
+
+    chroma_path.mkdir(parents=True, exist_ok=True)
+    client = chromadb.PersistentClient(path=str(chroma_path))
+    return client.get_or_create_collection(
+        name=collection_name,
+        metadata={"hnsw:space": "cosine"},
     )
+
+
+def chroma_has_id(collection, maneuver: str) -> bool:
+    got = collection.get(ids=[maneuver], include=[])
+    return bool(got.get("ids"))
 
 
 def run_batch(
     model,
     maneuvers: list[Path],
-    out_root: Path,
     *,
+    collection,
     resume: bool,
     model_dir: Path,
     max_length: int,
     max_pixels: int,
+    save_npy: bool,
+    npy_root: Path,
+    chroma_path: Path,
+    collection_name: str,
 ) -> dict[str, Any]:
-    out_root.mkdir(parents=True, exist_ok=True)
     summary: dict[str, Any] = {
         "model": str(model_dir),
+        "chroma_path": str(chroma_path),
+        "collection": collection_name,
         "dim": None,
         "n_panels": len(PANEL_NAMES),
         "panels": list(PANEL_NAMES),
@@ -156,12 +179,14 @@ def run_batch(
         "skipped": [],
         "failed": [],
     }
+    if save_npy:
+        npy_root.mkdir(parents=True, exist_ok=True)
 
+    t_batch = time.time()
     for i, plot_dir in enumerate(maneuvers, 1):
         name = plot_dir.name
-        npy_path = out_root / f"{name}.npy"
-        if resume and npy_path.is_file():
-            print(f"[{i}/{len(maneuvers)}] skip (exists): {name}", flush=True)
+        if resume and chroma_has_id(collection, name):
+            print(f"[{i}/{len(maneuvers)}] skip (chroma): {name}", flush=True)
             summary["skipped"].append(name)
             continue
 
@@ -170,30 +195,42 @@ def run_batch(
         try:
             vector = embed_maneuver(model, plot_dir)
             dt = time.time() - t0
-            meta = {
-                "maneuver": name,
-                "plot_dir": str(plot_dir.resolve()),
-                "n_panels": len(PANEL_NAMES),
-                "panels": list(PANEL_NAMES),
-                "dim": int(vector.shape[0]),
-                "l2_norm": float(np.linalg.norm(vector)),
-                "elapsed_s": round(dt, 3),
-                "model": str(model_dir),
-            }
-            write_embedding(out_root, name, vector, meta)
+            group = maneuver_group(name)
+            collection.upsert(
+                ids=[name],
+                embeddings=[vector.tolist()],
+                documents=[f"{name} | 14 structured panels | {group}"],
+                metadatas=[
+                    {
+                        "maneuver": name,
+                        "group": group,
+                        "n_panels": len(PANEL_NAMES),
+                        "dim": int(vector.shape[0]),
+                        "model": "Qwen3-VL-Embedding-2B",
+                        "plot_dir": str(plot_dir.resolve()),
+                    }
+                ],
+            )
+            if save_npy:
+                np.save(npy_root / f"{name}.npy", vector)
             summary["dim"] = int(vector.shape[0])
             summary["processed"].append(
                 {"maneuver": name, "dim": int(vector.shape[0]), "elapsed_s": round(dt, 3)}
             )
             print(
-                f"  → dim={vector.shape[0]}  norm={meta['l2_norm']:.4f}  {dt:.1f}s",
+                f"  → chroma upsert  dim={vector.shape[0]}  "
+                f"norm={float(np.linalg.norm(vector)):.4f}  {dt:.1f}s",
                 flush=True,
             )
         except Exception as exc:  # noqa: BLE001 — batch continues
             print(f"  FAIL: {exc}", flush=True)
             summary["failed"].append({"maneuver": name, "error": str(exc)})
 
-    (out_root / "summary.json").write_text(
+    summary["elapsed_s"] = round(time.time() - t_batch, 1)
+    summary["collection_count"] = collection.count()
+    out_summary = chroma_path / "embed_summary.json"
+    chroma_path.mkdir(parents=True, exist_ok=True)
+    out_summary.write_text(
         json.dumps(summary, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
@@ -202,63 +239,34 @@ def run_batch(
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
-        description="Joint-embed 14 maneuver plot panels with Qwen3-VL-Embedding-2B."
+        description=(
+            "Joint-embed 14 maneuver plot panels → ChromaDB "
+            f"({DEFAULT_COLLECTION})."
+        )
     )
-    p.add_argument(
-        "--plot-root",
-        type=Path,
-        default=DEFAULT_PLOT_ROOT,
-        help="Root with one subdirectory per maneuver (default: Tesla structured plots).",
-    )
-    p.add_argument(
-        "--out-root",
-        type=Path,
-        default=DEFAULT_OUT_ROOT,
-        help="Where to write <maneuver>.npy + .json + summary.json.",
-    )
-    p.add_argument(
-        "--model-dir",
-        type=Path,
-        default=DEFAULT_MODEL_DIR,
-        help="Local HF snapshot of Qwen/Qwen3-VL-Embedding-2B.",
-    )
+    p.add_argument("--plot-root", type=Path, default=DEFAULT_PLOT_ROOT)
+    p.add_argument("--chroma-path", type=Path, default=DEFAULT_CHROMA_PATH)
+    p.add_argument("--collection", default=DEFAULT_COLLECTION)
+    p.add_argument("--model-dir", type=Path, default=DEFAULT_MODEL_DIR)
     p.add_argument("--max-length", type=int, default=16384)
     p.add_argument("--max-pixels", type=int, default=768 * 768)
-    p.add_argument(
-        "--dtype",
-        choices=("bf16", "fp16", "fp32"),
-        default="bf16",
-    )
-    p.add_argument(
-        "--maneuver",
-        action="append",
-        default=[],
-        help="Maneuver folder name under --plot-root (repeatable).",
-    )
-    p.add_argument("--all", action="store_true", help="Process every complete maneuver.")
+    p.add_argument("--dtype", choices=("bf16", "fp16", "fp32"), default="bf16")
+    p.add_argument("--maneuver", action="append", default=[])
+    p.add_argument("--all", action="store_true", help="All complete maneuvers (~458).")
     p.add_argument(
         "--smoke",
         action="store_true",
-        help="Only allando_v_chirp_a1_v10 (14-image capability check).",
+        help="Only allando_v_chirp_a1_v10.",
     )
+    p.add_argument("--resume", action="store_true", default=True)
+    p.add_argument("--no-resume", action="store_false", dest="resume")
+    p.add_argument("--limit", type=int, default=0)
     p.add_argument(
-        "--resume",
+        "--save-npy",
         action="store_true",
-        default=True,
-        help="Skip maneuvers that already have a .npy (default: on).",
+        help=f"Also write .npy under {DEFAULT_NPY_ROOT}.",
     )
-    p.add_argument(
-        "--no-resume",
-        action="store_false",
-        dest="resume",
-        help="Overwrite existing embeddings.",
-    )
-    p.add_argument(
-        "--limit",
-        type=int,
-        default=0,
-        help="Process at most N maneuvers (0 = no limit).",
-    )
+    p.add_argument("--npy-root", type=Path, default=DEFAULT_NPY_ROOT)
     return p.parse_args()
 
 
@@ -269,12 +277,7 @@ def main() -> int:
         print(f"Missing {QWEN_ROOT}", file=sys.stderr)
         return 1
     if not args.model_dir.is_dir():
-        print(
-            f"Missing model dir {args.model_dir}\n"
-            "  cd Qwen3-VL-Embedding && hf download Qwen/Qwen3-VL-Embedding-2B "
-            "--local-dir ./models/Qwen3-VL-Embedding-2B",
-            file=sys.stderr,
-        )
+        print(f"Missing model dir {args.model_dir}", file=sys.stderr)
         return 1
     if not args.plot_root.is_dir():
         print(f"Missing plot root {args.plot_root}", file=sys.stderr)
@@ -301,10 +304,11 @@ def main() -> int:
 
     print(
         f"maneuvers={len(selected)}  panels={len(PANEL_NAMES)}  "
-        f"out={args.out_root}",
+        f"chroma={args.chroma_path}  collection={args.collection}",
         flush=True,
     )
 
+    collection = open_collection(args.chroma_path, args.collection)
     model = load_embedder(
         args.model_dir,
         max_length=args.max_length,
@@ -314,15 +318,20 @@ def main() -> int:
     summary = run_batch(
         model,
         selected,
-        args.out_root,
+        collection=collection,
         resume=args.resume,
         model_dir=args.model_dir,
         max_length=args.max_length,
         max_pixels=args.max_pixels,
+        save_npy=args.save_npy,
+        npy_root=args.npy_root,
+        chroma_path=args.chroma_path,
+        collection_name=args.collection,
     )
     print(
         f"Done. processed={len(summary['processed'])} "
-        f"skipped={len(summary['skipped'])} failed={len(summary['failed'])}",
+        f"skipped={len(summary['skipped'])} failed={len(summary['failed'])} "
+        f"collection_count={summary['collection_count']}",
         flush=True,
     )
     return 0 if not summary["failed"] else 1
