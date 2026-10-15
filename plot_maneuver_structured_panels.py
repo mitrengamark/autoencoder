@@ -38,8 +38,13 @@ WHEEL_COLORS = {
     "RR": "#d62728",
 }
 
-# Lane-change maneuvers settle early; drop the long idle tail.
-SAVVALTAS_MAX_DURATION_S = 11.0
+# Maneuver-type time windows (applied after skip_rows; plotted time always starts at 0).
+# - allando_v_sin: drop the first N seconds, then renumber t from 0
+# - valtozo_v_sin_*: keep only [0, N] s
+# - *savvaltas*: keep only [0, N] s (lane change settles early)
+ALLANDO_SIN_DROP_INITIAL_S = 15.0
+VALTOZO_SIN_MAX_DURATION_S = 20.0
+SAVVALTAS_MAX_DURATION_S = 5.0
 
 # Units used on plot axes (best-effort CarMaker / dataset convention).
 SIGNAL_UNITS: dict[str, str] = {
@@ -148,6 +153,14 @@ def is_savvaltas(maneuver: str) -> bool:
     return "savvaltas" in maneuver
 
 
+def is_allando_sin(maneuver: str) -> bool:
+    return maneuver.startswith("allando_v_sin")
+
+
+def is_valtozo_sin(maneuver: str) -> bool:
+    return maneuver.startswith("valtozo_v_sin")
+
+
 def truncate_to_duration(
     time_s: np.ndarray,
     series: dict[str, np.ndarray],
@@ -164,6 +177,57 @@ def truncate_to_duration(
         )
     n_keep = int(np.count_nonzero(mask))
     return time_s[:n_keep], {k: v[:n_keep] for k, v in series.items()}
+
+
+def drop_initial_and_renumber(
+    time_s: np.ndarray,
+    series: dict[str, np.ndarray],
+    drop_s: float,
+    dt: float,
+) -> tuple[np.ndarray, dict[str, np.ndarray]]:
+    """Drop samples with t < drop_s, then rebuild time axis from 0 with step dt."""
+    if drop_s <= 0:
+        raise ValueError("drop_s must be > 0")
+    start = int(np.searchsorted(time_s, drop_s, side="left"))
+    if start >= time_s.size:
+        raise ValueError(
+            f"drop_initial_and_renumber({drop_s}s) leaves no samples "
+            f"(time ends at {float(time_s[-1]) if time_s.size else 'n/a'} s)"
+        )
+    trimmed = {k: v[start:] for k, v in series.items()}
+    n = next(iter(trimmed.values())).shape[0]
+    new_time = np.arange(n, dtype=np.float64) * dt
+    return new_time, trimmed
+
+
+def apply_maneuver_time_window(
+    maneuver: str,
+    time_s: np.ndarray,
+    series: dict[str, np.ndarray],
+    dt: float,
+) -> tuple[np.ndarray, dict[str, np.ndarray], dict[str, float]]:
+    """
+    Apply type-specific time window. Returns (time, series, window_meta).
+
+    window_meta may include drop_initial_s and/or truncate_after_s.
+    """
+    meta: dict[str, float] = {}
+    if is_allando_sin(maneuver):
+        meta["drop_initial_s"] = ALLANDO_SIN_DROP_INITIAL_S
+        time_s, series = drop_initial_and_renumber(
+            time_s, series, ALLANDO_SIN_DROP_INITIAL_S, dt
+        )
+    elif is_valtozo_sin(maneuver):
+        meta["truncate_after_s"] = VALTOZO_SIN_MAX_DURATION_S
+        time_s, series = truncate_to_duration(
+            time_s, series, VALTOZO_SIN_MAX_DURATION_S
+        )
+    elif is_savvaltas(maneuver):
+        meta["truncate_after_s"] = SAVVALTAS_MAX_DURATION_S
+        time_s, series = truncate_to_duration(
+            time_s, series, SAVVALTAS_MAX_DURATION_S
+        )
+    return time_s, series, meta
 
 
 def require(series: dict[str, np.ndarray], names: Iterable[str]) -> list[str]:
@@ -730,19 +794,18 @@ def process_maneuver(
     csv_path = resolve_csv_path(data_dir, maneuver)
     time_s, series = load_series(csv_path, skip_rows=skip_rows, dt=dt)
     n_loaded = int(time_s.size)
-    truncate_after_s: float | None = None
-    if is_savvaltas(maneuver):
-        truncate_after_s = SAVVALTAS_MAX_DURATION_S
-        time_s, series = truncate_to_duration(time_s, series, truncate_after_s)
+    time_s, series, window_meta = apply_maneuver_time_window(
+        maneuver, time_s, series, dt
+    )
 
     removed = cleanup_obsolete(out_dir)
     written = generate_all_figures(
         time_s, series, out_dir=out_dir, dpi=dpi
     )
     features = extract_features(time_s, series, dt=dt, maneuver=maneuver)
-    if truncate_after_s is not None:
-        features["truncate_after_s"] = truncate_after_s
-        features["n_samples_before_truncate"] = n_loaded
+    if window_meta:
+        features.update(window_meta)
+        features["n_samples_before_window"] = n_loaded
     features_path = out_dir / "features.json"
     with features_path.open("w", encoding="utf-8") as handle:
         json.dump(features, handle, indent=2)
@@ -758,17 +821,22 @@ def process_maneuver(
         "removed_obsolete": removed,
         "features_file": features_path.name,
     }
-    if truncate_after_s is not None:
-        manifest["truncate_after_s"] = truncate_after_s
-        manifest["n_samples_before_truncate"] = n_loaded
+    if window_meta:
+        manifest.update(window_meta)
+        manifest["n_samples_before_window"] = n_loaded
     with (out_dir / "manifest.json").open("w", encoding="utf-8") as handle:
         json.dump(manifest, handle, indent=2)
 
     print(f"maneuver={maneuver}")
     print(f"csv={csv_path}")
+    window_bits = []
+    if "drop_initial_s" in window_meta:
+        window_bits.append(f"drop_first={window_meta['drop_initial_s']:.2f}s→renorm")
+    if "truncate_after_s" in window_meta:
+        window_bits.append(f"truncate_after={window_meta['truncate_after_s']:.2f}s")
     trunc_note = (
-        f" truncated_from={n_loaded} @ {truncate_after_s:.2f}s"
-        if truncate_after_s is not None
+        f" window=[{', '.join(window_bits)}] from_n={n_loaded}"
+        if window_bits
         else ""
     )
     print(
@@ -810,6 +878,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run every *_combined.csv under --data-dir (plots + features).",
     )
     p.add_argument(
+        "--prefixes",
+        nargs="+",
+        default=None,
+        help=(
+            "With --all: only maneuvers whose name starts with one of these "
+            "prefixes (e.g. allando_v_sin valtozo_v_sin allando_v_savvaltas)."
+        ),
+    )
+    p.add_argument(
+        "--name-contains",
+        nargs="+",
+        default=None,
+        help="With --all: only maneuvers whose name contains one of these substrings.",
+    )
+    p.add_argument(
         "--out-root",
         default="Results/maneuver_structured_plots",
         help="Root output directory (each maneuver gets its own subfolder).",
@@ -835,9 +918,19 @@ def main() -> None:
 
     if args.all:
         maneuvers = list_all_maneuvers(data_dir)
+        if args.prefixes:
+            prefixes = tuple(args.prefixes)
+            maneuvers = [
+                m for m in maneuvers if any(m.startswith(p) for p in prefixes)
+            ]
+        if args.name_contains:
+            needles = tuple(args.name_contains)
+            maneuvers = [
+                m for m in maneuvers if any(n in m for n in needles)
+            ]
         if not maneuvers:
-            raise SystemExit(f"No *_combined.csv found under {data_dir}")
-        print(f"Running all {len(maneuvers)} maneuvers from {data_dir}")
+            raise SystemExit(f"No matching *_combined.csv found under {data_dir}")
+        print(f"Running {len(maneuvers)} maneuvers from {data_dir}")
         print("")
         out_root.mkdir(parents=True, exist_ok=True)
         for i, maneuver in enumerate(maneuvers, start=1):
@@ -854,6 +947,8 @@ def main() -> None:
             "data_dir": str(data_dir),
             "n_maneuvers": len(maneuvers),
             "maneuvers": maneuvers,
+            "prefixes": args.prefixes,
+            "name_contains": args.name_contains,
         }
         summary_path = out_root / "all_maneuvers_summary.json"
         with summary_path.open("w", encoding="utf-8") as handle:
