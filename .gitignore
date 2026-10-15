@@ -30,3 +30,6 @@ data_tesla/
 /.venv-embeddings/
 .venv-embeddings/
 .cursor/
+*.egg-info/
+# Vendored upstream code + weights (deps live in root pyproject.toml / .venv)
+/Qwen3-VL-Embedding/

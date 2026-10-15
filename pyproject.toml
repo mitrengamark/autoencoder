@@ -1,0 +1,39 @@
+[project]
+name = "autoencoder"
+version = "0.1.0"
+description = "Vehicle-maneuver autoencoder / embedding / redundancy pipelines"
+requires-python = ">=3.11"
+dependencies = [
+    # Core analysis / training stack (from requirements.txt)
+    "configobj",
+    "matplotlib",
+    "numpy",
+    "optuna",
+    "pandas",
+    "psutil",
+    "python-dotenv",
+    "scikit-learn",
+    "scipy",
+    "seaborn",
+    "torch>=2.8",
+    "wandb",
+    # Ollama text-embedding / Chroma pipelines
+    "chromadb>=0.4.0",
+    "openai>=1.0.0",
+    # Qwen3-VL-Embedding (image joint embed; no decord — aarch64 has no wheels)
+    "accelerate>=1.12.0",
+    "datasets>=4.4.2",
+    "huggingface-hub>=0.30.0",
+    "opencv-python-headless>=4.12.0.88",
+    "qwen-vl-utils>=0.0.14",
+    "torchvision>=0.23.0",
+    "transformers>=4.57.3",
+]
+
+[tool.uv]
+package = false
+
+[[tool.uv.index]]
+url = "https://pypi.org/simple"
+name = "pypi"
+default = true
