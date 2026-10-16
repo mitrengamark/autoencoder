@@ -460,7 +460,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--mat-source", default="data_tesla")
     p.add_argument("--mat-out-root", default="data_filtered_mat")
     p.add_argument("--ollama-host", default=v1.DEFAULT_OLLAMA_HOST)
-    p.add_argument("--vlm-model", default=v1.DEFAULT_VLM_MODEL)
+    p.add_argument(
+        "--vlm-model",
+        default="qwen3-vl:8b",
+        help="Ollama VLM for A–D (default: qwen3-vl:8b; 8b-instruct tag not on this host).",
+    )
     p.add_argument("--vlm-timeout", type=float, default=1800.0)
     p.add_argument("--num-ctx", type=int, default=v1.DEFAULT_NUM_CTX)
     p.add_argument("--num-predict", type=int, default=v1.DEFAULT_NUM_PREDICT)

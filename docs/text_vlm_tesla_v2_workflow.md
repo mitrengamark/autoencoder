@@ -51,7 +51,7 @@ Results/maneuver_structured_plots_tesla/<maneuver>/  (read-only)
 ## Előfeltételek
 
 - Projekt `.venv` + `uv sync`
-- Ollama + `qwen3-vl:32b` (text stage)
+- Ollama + `qwen3-vl:8b` (text stage; override with `--vlm-model`)
 - `Qwen3-VL-Embedding/models/Qwen3-VL-Embedding-8B` (embed stage)
 - CUDA (8B embed)
 
