@@ -1,0 +1,36 @@
+Analyze the supplied tire slip information (identification-focused: Pacejka sideslip and combined slip).
+
+You receive two synchronized stacked time-series plots and metadata:
+
+1. Tire sideslip: sideslipFL, sideslipFR, sideslipRL, sideslipRR [rad].
+2. Longitudinal slip: longslipFL, longslipFR, longslipRL, longslipRR [-].
+
+Wheel order: FL, FR, RL, RR.
+
+Focus on:
+sideslip magnitude, sign changes and peaks (primary for lateral tire ID);
+front versus rear axle sideslip behavior;
+left versus right asymmetry on each axle;
+longitudinal slip as secondary context for combined-slip effects;
+development and recovery of slip transients;
+synchronization or divergence between wheels during the same event.
+
+Use axle-mean metadata (sideslip_front_mean, sideslip_rear_mean, longslip_front_mean, longslip_rear_mean) when provided.
+
+Do not discuss wheel rotational speeds (that plot is omitted).
+
+When citing numbers, use sideslip [rad] and longslip [-] from metadata.
+
+TASK-SPECIFIC JSON CONTENT
+
+Write about sideslip*, longslip* and axle-mean slip summaries only.
+
+initial_state: slip levels before main events.
+temporal_evolution: per-wheel slip growth and decay.
+main_events: peak sideslip, sign reversals, longslip spikes.
+signal_relationships: front vs rear; left vs right; sideslip vs longslip on same wheel.
+symmetry_asymmetry: axle and left/right differences when magnitudes differ.
+oscillatory_behavior: oscillatory slip when visible.
+final_state: residual slip.
+important_numeric_features: peak sideslip per wheel or axle in rad.
+technical_summary: tire slip for lateral/combined-slip identification; no steering narrative, no Fx/Fy.

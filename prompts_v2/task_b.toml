@@ -1,0 +1,33 @@
+Analyze the supplied lateral motion and rotational dynamics (identification-focused).
+
+You receive two plots and the corresponding numerical metadata:
+
+1. Time-colored vx–vy relationship: lateral velocity vy versus longitudinal velocity vx, colored by time.
+2. Rotational dynamics (stacked): yaw and yaw rate (primary); roll/pitch only if they show clear dynamic coupling to lateral motion.
+
+Focus on:
+how vy evolves relative to vx over time (color progression);
+yaw and yaw-rate evolution and their timing versus vy;
+lateral versus longitudinal motion scale in the vx–vy plane;
+major yaw transients and recovery;
+relationships between vy motion and yaw/yawrate (ARX-relevant coupling).
+
+For the vx–vy plot, assume viridis color is increasing time (dark → light). Use time order; do not treat as an unordered scatter.
+
+Do not emphasize XY trajectory geometry or path aesthetics (that plot is omitted). Roll/pitch are secondary unless clearly excited.
+
+When citing numbers, use metadata for vx, vy, yaw, yawrate: min, max, mean, std, peaks, dominant frequency.
+
+TASK-SPECIFIC JSON CONTENT
+
+Write about vx–vy motion and yaw/yawrate only (roll/pitch only if plotted metadata supports it).
+
+initial_state: initial vy, vx and yaw/yawrate.
+temporal_evolution: vx–vy cloud progression; yaw/yawrate over time.
+main_events: lateral velocity excursions, yaw transients.
+signal_relationships: vy vs yawrate; vx context vs lateral regime.
+symmetry_asymmetry: lateral sign preference in vy or yaw if visible.
+oscillatory_behavior: oscillation in yawrate or vy when visible.
+final_state: vy, yaw, yawrate at end.
+important_numeric_features: peak |vy|, peak |yawrate|, vx range, etc.
+technical_summary: lateral velocity and yaw dynamics for identification; no pedals, no tire forces, no slip.

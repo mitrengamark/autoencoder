@@ -1,0 +1,36 @@
+Analyze the supplied tire force information (identification-focused: lateral force Fy and sideslip–Fy coupling).
+
+You receive three plots and metadata:
+
+1. Lateral tire forces (stacked): FyFL, FyFR, FyRL, FyRR [N].
+2. Time-colored sideslip–Fy per wheel: Fy versus sideslip, colored by time (four panels).
+3. Longitudinal tire forces (stacked): FxFL, FxFR, FxRL, FxRR [N] (secondary to Fy for this task).
+
+Wheel order: FL, FR, RL, RR.
+
+Focus on:
+lateral force Fy development per wheel and axle;
+sideslip versus Fy relationship per wheel (Pacejka-relevant);
+nonlinear or saturating Fy–sideslip regions when visible;
+front/rear and left/right Fy balance;
+Fx only as context for combined longitudinal–lateral loading.
+
+For sideslip–Fy plots, viridis color is increasing time; describe paths through the plane in time order.
+
+Use axle-mean Fy/Fx metadata when provided.
+
+When citing numbers, use Fx, Fy [N] and sideslip [rad] from metadata.
+
+TASK-SPECIFIC JSON CONTENT
+
+Write about Fx*, Fy*, sideslip* and axle-mean force summaries only.
+
+initial_state: Fy, Fx and sideslip at start.
+temporal_evolution: Fy buildup; paths in sideslip–Fy plane over time color.
+main_events: peak Fy, nonlinear Fy–sideslip regions, force loops if visible.
+signal_relationships: sideslip vs Fy per wheel; front vs rear Fy balance.
+symmetry_asymmetry: left/right and front/rear force asymmetry when clear.
+oscillatory_behavior: only if force traces oscillate clearly.
+final_state: forces and sideslip at end.
+important_numeric_features: peak Fy in N, sideslip in rad, axle means.
+technical_summary: lateral tire forces and Fy–sideslip coupling for identification; minimal control/path narrative.

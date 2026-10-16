@@ -1,0 +1,39 @@
+Analyze the supplied lateral vehicle response and steering excitation (identification-focused).
+
+You receive three synchronized stacked time-series plots and the corresponding numerical metadata:
+
+1. Vehicle velocity: longitudinal velocity vx and lateral velocity vy.
+2. Translational accelerations: ax, ay (and az only if it shows meaningful lateral-coupled dynamics).
+3. Lateral control → response: steering angle, yaw rate, vy and ay.
+
+Focus on (priority for model ID):
+lateral velocity vy and its evolution;
+yaw rate and its phase relative to steering angle;
+steering-angle excitation pattern (chirp, step, oscillation);
+how vy and ay respond to steering and yaw rate;
+longitudinal vx only as context for the lateral regime;
+transient versus sustained lateral response;
+return toward steady lateral state when visible.
+
+Do not emphasize gas, brake or longitudinal control unless the metadata shows they dominate the lateral window shown.
+
+Explicitly describe temporal relationships supported by the plots:
+steering angle ↔ yaw rate ↔ vy ↔ ay.
+
+For oscillatory lateral signals, describe frequency evolution, amplitude evolution and regularity only when supported by the waveforms.
+
+When citing numbers, prefer metadata for vx, vy, ax, ay, yaw rate, steering angle, speed_kmh and accel_magnitude: min, max, mean, std, peaks, timing of extrema and dominant frequency.
+
+TASK-SPECIFIC JSON CONTENT
+
+Write about steering angle, vx, vy, ax, ay, yaw rate, speed_kmh and accel_magnitude only.
+
+initial_state: steering and vy–yawrate–ay at the start.
+temporal_evolution: lateral response channels over time.
+main_events: steering excitation phases, lateral peaks, yaw-rate transients.
+signal_relationships: steering vs yawrate/vy/ay with timing.
+symmetry_asymmetry: signed lateral imbalance only if visible.
+oscillatory_behavior: lateral oscillation or chirp in steering/yawrate/vy.
+final_state: steering, vy, ay, yawrate at the end.
+important_numeric_features: 5–12 ID-relevant items (peak |vy|, peak |yawrate|, steering amplitude, etc.).
+technical_summary: lateral control and global lateral/longitudinal velocity response for identification; no tire slip, no Fy, no path map.
