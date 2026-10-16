@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """
-Redundancy filter + kept table + latent-space plots for image_embedding_2b.
+Redundancy filter + kept table + latent-space plots for image_embedding_{2b,8b}.
 
 Steps:
-  1. Load 2048-d vectors from chroma_db/image_embedding_2b
+  1. Load vectors from chroma_db/image_embedding_*
   2. Within-group cosine matrices + greedy removal at thresholds 90..99
   3. Write kept-count table (CSV + PNG)
   4. PCA / t-SNE 2D+3D overview (one color per maneuver group)
 
   source .venv/bin/activate
-  python run_image_embedding_2b_redundancy.py
+  python run_image_embedding_2b_redundancy.py --preset 2b
+  python run_image_embedding_2b_redundancy.py --preset 8b
 """
 
 from __future__ import annotations
@@ -30,13 +31,10 @@ from plot_text_embed_maneuvers import (
     plot_all_groups_overview,
 )
 
-MODEL_NAME = "image_embedding_2b"
-DEFAULT_CHROMA = Path("chroma_db/image_embedding_2b")
-DEFAULT_COLLECTION = "image_embedding_2b"
-DEFAULT_MATRICES = Path("cosine_similarity_matrices/image_embedding_2b")
-DEFAULT_VIZ = Path("Results/image_embedding_2b_viz")
-DEFAULT_TABLE_CSV = Path("Results/image_embedding_2b_kept_vs_threshold.csv")
-DEFAULT_TABLE_PNG = Path("Results/image_embedding_2b_kept_vs_threshold.png")
+PRESETS = {
+    "2b": "image_embedding_2b",
+    "8b": "image_embedding_8b",
+}
 
 
 def maneuver_group(maneuver: str) -> str:
@@ -77,6 +75,7 @@ def run_cosine(
     id_to_emb: dict[str, np.ndarray],
     matrices_dir: Path,
     *,
+    model_name: str,
     plot: bool,
     thresholds: range | list[int],
 ) -> list[dict]:
@@ -97,7 +96,7 @@ def run_cosine(
     matrices_dir.mkdir(parents=True, exist_ok=True)
     if plot:
         plotter = CosineSimilarity(
-            "", str(matrices_dir), threshold=90, model_name=MODEL_NAME
+            "", str(matrices_dir), threshold=90, model_name=model_name
         )
         for _idx, (names, matrix) in similarity_matrices.items():
             plotter.plot_confusion_matrix(names, matrix)
@@ -106,7 +105,7 @@ def run_cosine(
     rows: list[dict] = []
     for threshold in thresholds:
         cos_sim = CosineSimilarity(
-            "", str(matrices_dir), threshold=int(threshold), model_name=MODEL_NAME
+            "", str(matrices_dir), threshold=int(threshold), model_name=model_name
         )
         cos_sim.similarity_matrices = similarity_matrices
         redundant = cos_sim.detect_redundancy()
@@ -132,6 +131,8 @@ def write_kept_table(
     rows: list[dict],
     csv_path: Path,
     png_path: Path,
+    *,
+    model_name: str,
 ) -> None:
     csv_path.parent.mkdir(parents=True, exist_ok=True)
     with csv_path.open("w", encoding="utf-8", newline="") as handle:
@@ -168,7 +169,7 @@ def write_kept_table(
     ax.set_xlabel("Cosine threshold (%)")
     ax.set_ylabel("Maneuver count")
     ax.set_title(
-        f"{MODEL_NAME}: kept / removed vs threshold  "
+        f"{model_name}: kept / removed vs threshold  "
         f"(universe={rows[0]['n_universe']})"
     )
     ax.grid(True, alpha=0.3)
@@ -193,7 +194,7 @@ def write_kept_table(
     table.auto_set_font_size(False)
     table.set_fontsize(11)
     table.scale(1.2, 1.4)
-    ax.set_title(f"{MODEL_NAME} redundancy filter", pad=12)
+    ax.set_title(f"{model_name} redundancy filter", pad=12)
     fig.tight_layout()
     fig.savefig(table_png, dpi=160, bbox_inches="tight")
     plt.close(fig)
@@ -224,12 +225,18 @@ def run_viz(
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--chroma-path", type=Path, default=DEFAULT_CHROMA)
-    p.add_argument("--collection", default=DEFAULT_COLLECTION)
-    p.add_argument("--matrices-dir", type=Path, default=DEFAULT_MATRICES)
-    p.add_argument("--viz-dir", type=Path, default=DEFAULT_VIZ)
-    p.add_argument("--table-csv", type=Path, default=DEFAULT_TABLE_CSV)
-    p.add_argument("--table-png", type=Path, default=DEFAULT_TABLE_PNG)
+    p.add_argument(
+        "--preset",
+        choices=sorted(PRESETS),
+        default="2b",
+        help="2b → image_embedding_2b; 8b → image_embedding_8b.",
+    )
+    p.add_argument("--chroma-path", type=Path, default=None)
+    p.add_argument("--collection", default=None)
+    p.add_argument("--matrices-dir", type=Path, default=None)
+    p.add_argument("--viz-dir", type=Path, default=None)
+    p.add_argument("--table-csv", type=Path, default=None)
+    p.add_argument("--table-png", type=Path, default=None)
     p.add_argument("--no-plot-matrices", action="store_true")
     p.add_argument("--no-viz", action="store_true")
     p.add_argument(
@@ -249,6 +256,20 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    model_name = PRESETS[args.preset]
+    if args.chroma_path is None:
+        args.chroma_path = Path("chroma_db") / model_name
+    if args.collection is None:
+        args.collection = model_name
+    if args.matrices_dir is None:
+        args.matrices_dir = Path("cosine_similarity_matrices") / model_name
+    if args.viz_dir is None:
+        args.viz_dir = Path("Results") / f"{model_name}_viz"
+    if args.table_csv is None:
+        args.table_csv = Path("Results") / f"{model_name}_kept_vs_threshold.csv"
+    if args.table_png is None:
+        args.table_png = Path("Results") / f"{model_name}_kept_vs_threshold.png"
+
     print(f"Loading {args.chroma_path} / {args.collection}")
     id_to_emb = load_all_embeddings(args.chroma_path, args.collection)
     print(f"n={len(id_to_emb)}  dim={next(iter(id_to_emb.values())).shape[0]}")
@@ -256,13 +277,16 @@ def main() -> int:
     rows = run_cosine(
         id_to_emb,
         args.matrices_dir,
+        model_name=model_name,
         plot=not args.no_plot_matrices,
         thresholds=args.thresholds,
     )
-    write_kept_table(rows, args.table_csv, args.table_png)
+    write_kept_table(
+        rows, args.table_csv, args.table_png, model_name=model_name
+    )
 
     summary = {
-        "model": MODEL_NAME,
+        "model": model_name,
         "chroma_path": str(args.chroma_path),
         "collection": args.collection,
         "rows": rows,

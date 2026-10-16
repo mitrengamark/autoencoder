@@ -1,0 +1,77 @@
+{
+  "model": "image_embedding_8b",
+  "chroma_path": "chroma_db/image_embedding_8b",
+  "collection": "image_embedding_8b",
+  "rows": [
+    {
+      "threshold": 90,
+      "n_universe": 458,
+      "n_removed": 451,
+      "n_kept": 7,
+      "groups_with_pairs": 7
+    },
+    {
+      "threshold": 91,
+      "n_universe": 458,
+      "n_removed": 451,
+      "n_kept": 7,
+      "groups_with_pairs": 7
+    },
+    {
+      "threshold": 92,
+      "n_universe": 458,
+      "n_removed": 451,
+      "n_kept": 7,
+      "groups_with_pairs": 7
+    },
+    {
+      "threshold": 93,
+      "n_universe": 458,
+      "n_removed": 450,
+      "n_kept": 8,
+      "groups_with_pairs": 7
+    },
+    {
+      "threshold": 94,
+      "n_universe": 458,
+      "n_removed": 450,
+      "n_kept": 8,
+      "groups_with_pairs": 7
+    },
+    {
+      "threshold": 95,
+      "n_universe": 458,
+      "n_removed": 450,
+      "n_kept": 8,
+      "groups_with_pairs": 7
+    },
+    {
+      "threshold": 96,
+      "n_universe": 458,
+      "n_removed": 448,
+      "n_kept": 10,
+      "groups_with_pairs": 7
+    },
+    {
+      "threshold": 97,
+      "n_universe": 458,
+      "n_removed": 444,
+      "n_kept": 14,
+      "groups_with_pairs": 7
+    },
+    {
+      "threshold": 98,
+      "n_universe": 458,
+      "n_removed": 436,
+      "n_kept": 22,
+      "groups_with_pairs": 7
+    },
+    {
+      "threshold": 99,
+      "n_universe": 458,
+      "n_removed": 315,
+      "n_kept": 143,
+      "groups_with_pairs": 7
+    }
+  ]
+}

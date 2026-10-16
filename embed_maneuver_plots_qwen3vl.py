@@ -27,6 +27,19 @@ DEFAULT_CHROMA_PATH = ROOT / "chroma_db" / "image_embedding_2b"
 DEFAULT_COLLECTION = "image_embedding_2b"
 DEFAULT_NPY_ROOT = ROOT / "Results" / "qwen3_vl_maneuver_embeddings"
 
+PRESETS: dict[str, dict[str, Path | str]] = {
+    "2b": {
+        "model_dir": QWEN_ROOT / "models" / "Qwen3-VL-Embedding-2B",
+        "chroma_path": ROOT / "chroma_db" / "image_embedding_2b",
+        "collection": "image_embedding_2b",
+    },
+    "8b": {
+        "model_dir": QWEN_ROOT / "models" / "Qwen3-VL-Embedding-8B",
+        "chroma_path": ROOT / "chroma_db" / "image_embedding_8b",
+        "collection": "image_embedding_8b",
+    },
+}
+
 PANEL_NAMES: tuple[str, ...] = (
     "02_velocity_stacked.png",
     "03_translational_accel_stacked.png",
@@ -110,7 +123,7 @@ def load_embedder(
     }[dtype]
 
     if not torch.cuda.is_available():
-        raise RuntimeError("CUDA is required for Qwen3-VL-Embedding-2B")
+        raise RuntimeError(f"CUDA is required for {model_dir.name}")
 
     print(
         f"Loading {model_dir}  dtype={dtype}  device={torch.cuda.get_device_name(0)}",
@@ -206,7 +219,7 @@ def run_batch(
                         "group": group,
                         "n_panels": len(PANEL_NAMES),
                         "dim": int(vector.shape[0]),
-                        "model": "Qwen3-VL-Embedding-2B",
+                        "model": model_dir.name,
                         "plot_dir": str(plot_dir.resolve()),
                     }
                 ],
@@ -244,10 +257,16 @@ def parse_args() -> argparse.Namespace:
             f"({DEFAULT_COLLECTION})."
         )
     )
+    p.add_argument(
+        "--preset",
+        choices=sorted(PRESETS),
+        default=None,
+        help="Shortcut: 2b → image_embedding_2b; 8b → image_embedding_8b.",
+    )
     p.add_argument("--plot-root", type=Path, default=DEFAULT_PLOT_ROOT)
-    p.add_argument("--chroma-path", type=Path, default=DEFAULT_CHROMA_PATH)
-    p.add_argument("--collection", default=DEFAULT_COLLECTION)
-    p.add_argument("--model-dir", type=Path, default=DEFAULT_MODEL_DIR)
+    p.add_argument("--chroma-path", type=Path, default=None)
+    p.add_argument("--collection", default=None)
+    p.add_argument("--model-dir", type=Path, default=None)
     p.add_argument("--max-length", type=int, default=16384)
     p.add_argument("--max-pixels", type=int, default=768 * 768)
     p.add_argument("--dtype", choices=("bf16", "fp16", "fp32"), default="bf16")
@@ -273,11 +292,25 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
 
+    preset_key = args.preset or "2b"
+    preset = PRESETS[preset_key]
+    if args.model_dir is None:
+        args.model_dir = Path(preset["model_dir"])
+    if args.chroma_path is None:
+        args.chroma_path = Path(preset["chroma_path"])
+    if args.collection is None:
+        args.collection = str(preset["collection"])
+
     if not QWEN_ROOT.is_dir():
         print(f"Missing {QWEN_ROOT}", file=sys.stderr)
         return 1
     if not args.model_dir.is_dir():
-        print(f"Missing model dir {args.model_dir}", file=sys.stderr)
+        print(
+            f"Missing model dir {args.model_dir}\n"
+            f"  hf download Qwen/{args.model_dir.name} "
+            f"--local-dir {args.model_dir}",
+            file=sys.stderr,
+        )
         return 1
     if not args.plot_root.is_dir():
         print(f"Missing plot root {args.plot_root}", file=sys.stderr)
