@@ -38,9 +38,10 @@ DEFAULT_VLM_MODEL = "qwen3-vl:32b"
 DEFAULT_EMBED_MODEL = "qwen3-embedding:latest"
 # qwen3-vl ships with 262k context + thinking; both make /api/chat glacial.
 DEFAULT_NUM_CTX = 16384
-DEFAULT_NUM_PREDICT = 4096
-# Fusion prose is ~200-300 words; avoid burning the full 4096 budget on CoT.
-DEFAULT_FUSION_NUM_PREDICT = 1024
+# qwen3-vl often burns thousands of tokens on <think> before JSON; leave headroom.
+DEFAULT_NUM_PREDICT = 16384
+# Fusion prose is ~200-300 words; keep fusion budget modest when used.
+DEFAULT_FUSION_NUM_PREDICT = 2048
 # qwen3-vl ignores think=False unless the chat template sees /no_think.
 NO_THINK_PREFIX = "/no_think\n"
 MODEL_NAME = "text_vlm_tesla"
@@ -281,6 +282,8 @@ def _looks_like_cot(text: str) -> bool:
         "step 1",
         "now, we must write",
         "conceptual order",
+        "got it, let's tackle",
+        "let's tackle this",
     )
     return any(m in head for m in markers)
 
@@ -292,9 +295,141 @@ def _ensure_no_think(system: str) -> str:
     return NO_THINK_PREFIX + system
 
 
+def _extract_json_object(text: str) -> str | None:
+    """Return the first parseable {...} JSON object substring, if any."""
+    raw = text.strip()
+    if not raw:
+        return None
+    # Prefer content after </think> (Qwen thinking block closed).
+    lower = raw.lower()
+    end_tag = "</" + "think>"
+    idx = lower.rfind(end_tag)
+    if idx >= 0:
+        raw = raw[idx + len(end_tag) :].strip()
+    # Strip markdown fences.
+    if raw.startswith("```"):
+        raw = re.sub(r"^```(?:json)?\s*", "", raw, count=1, flags=re.IGNORECASE)
+        raw = re.sub(r"\s*```$", "", raw, count=1)
+        raw = raw.strip()
+    try:
+        obj = json.loads(raw)
+        if isinstance(obj, dict):
+            return json.dumps(obj, ensure_ascii=False)
+    except json.JSONDecodeError:
+        pass
+    # Scan for balanced {...} that parses.
+    start = raw.find("{")
+    while start >= 0:
+        depth = 0
+        in_str = False
+        esc = False
+        for i in range(start, len(raw)):
+            ch = raw[i]
+            if in_str:
+                if esc:
+                    esc = False
+                elif ch == "\\":
+                    esc = True
+                elif ch == '"':
+                    in_str = False
+                continue
+            if ch == '"':
+                in_str = True
+            elif ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    candidate = raw[start : i + 1]
+                    try:
+                        obj = json.loads(candidate)
+                        if isinstance(obj, dict):
+                            return candidate
+                    except json.JSONDecodeError:
+                        break
+        start = raw.find("{", start + 1)
+    return None
+
+
+def _normalize_model_answer(
+    content: str,
+    thinking: str,
+    *,
+    json_format: bool,
+    label: str,
+) -> tuple[str, dict[str, Any]]:
+    """
+    Prefer message.content. If empty, try to recover JSON / prose from thinking
+    after </think>, never return raw CoT as the answer.
+    """
+    meta: dict[str, Any] = {
+        "source": "content",
+        "extracted_json": False,
+        "stripped_think": False,
+    }
+    primary = (content or "").strip()
+    secondary = (thinking or "").strip()
+
+    def _from_blob(blob: str, source: str) -> str | None:
+        if not blob:
+            return None
+        if json_format:
+            extracted = _extract_json_object(blob)
+            if extracted:
+                meta["source"] = source
+                meta["extracted_json"] = True
+                if _looks_like_cot(blob):
+                    meta["stripped_think"] = True
+                return extracted
+            # Whole blob is JSON?
+            try:
+                obj = json.loads(blob)
+                if isinstance(obj, dict):
+                    meta["source"] = source
+                    return blob
+            except json.JSONDecodeError:
+                return None
+            return None
+        # Non-JSON (e.g. fusion prose): take text after </think> if present.
+        out = blob
+        end_tag = "</" + "think>"
+        idx = out.lower().rfind(end_tag)
+        if idx >= 0:
+            out = out[idx + len(end_tag) :].strip()
+            meta["stripped_think"] = True
+        if _looks_like_cot(out):
+            return None
+        meta["source"] = source
+        return out
+
+    if primary:
+        got = _from_blob(primary, "content")
+        if got:
+            return got, meta
+        if not _looks_like_cot(primary):
+            return primary, meta
+
+    if secondary:
+        log(
+            f"  empty/unusable content; recovering answer from thinking "
+            f"({len(secondary)} chars)  ({label})"
+        )
+        got = _from_blob(secondary, "thinking")
+        if got:
+            return got, meta
+
+    # Last resort: return primary for caller to reject / retry.
+    fallback = primary or secondary
+    meta["source"] = "fallback_raw"
+    return fallback, meta
+
+
 def _unwrap_fusion_description(text: str) -> str:
     """If fusion returned JSON {\"description\": \"...\"}, unwrap to prose."""
     raw = text.strip()
+    extracted = _extract_json_object(raw)
+    if extracted:
+        raw = extracted
     if not raw.startswith("{"):
         return raw
     try:
@@ -372,23 +507,16 @@ def ollama_chat(
     # endregion
     body = ollama_post(host, "/api/chat", payload, timeout, label=label)
     msg = body.get("message") or {}
-    content = (msg.get("content") or "").strip()
+    raw_content = (msg.get("content") or "").strip()
     thinking = (msg.get("thinking") or body.get("thinking") or "").strip()
     eval_count = body.get("eval_count")
     prompt_eval_count = body.get("prompt_eval_count")
-    used_thinking_fallback = False
-    # qwen3-vl often leaves content empty and puts the answer in "thinking"
-    # even when think=False; with /no_think that field is usually the answer
-    # itself (not a multi-page CoT plan).
-    if not content and thinking:
-        log(
-            f"  WARNING: empty content, using thinking field "
-            f"({len(thinking)} chars)  ({label})"
-        )
-        content = thinking
-        used_thinking_fallback = True
-    elif thinking:
-        log(f"  (model also returned thinking={len(thinking)} chars)")
+    content, recover_meta = _normalize_model_answer(
+        raw_content,
+        thinking,
+        json_format=json_format,
+        label=label,
+    )
     if not content:
         raise RuntimeError(f"Empty Ollama response: {body!r}")
     cot_like = _looks_like_cot(content)
@@ -400,9 +528,9 @@ def ollama_chat(
         "ollama chat response shape",
         {
             "label": label,
-            "content_len": len(msg.get("content") or ""),
+            "content_len": len(raw_content),
             "thinking_len": len(thinking),
-            "used_thinking_fallback": used_thinking_fallback,
+            "recover_meta": recover_meta,
             "cot_like": cot_like,
             "digit_count": digit_count,
             "eval_count": eval_count,
@@ -414,12 +542,17 @@ def ollama_chat(
         },
     )
     # endregion
+    if thinking and not recover_meta.get("extracted_json"):
+        log(f"  (model also returned thinking={len(thinking)} chars)")
     if cot_like:
         log(
             f"  WARNING: reply looks like chain-of-thought, not final answer "
             f"({label})"
         )
-    log(f"  reply length={len(content)} chars  ({label})")
+    log(
+        f"  reply length={len(content)} chars  source={recover_meta.get('source')} "
+        f"extracted_json={recover_meta.get('extracted_json')}  ({label})"
+    )
     return content
 
 

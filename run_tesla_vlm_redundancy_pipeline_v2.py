@@ -467,7 +467,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--vlm-timeout", type=float, default=1800.0)
     p.add_argument("--num-ctx", type=int, default=v1.DEFAULT_NUM_CTX)
-    p.add_argument("--num-predict", type=int, default=v1.DEFAULT_NUM_PREDICT)
+    p.add_argument(
+        "--num-predict",
+        type=int,
+        default=v1.DEFAULT_NUM_PREDICT,
+        help="Max generated tokens (default 16384 so CoT + JSON both fit).",
+    )
     p.add_argument("--max-attempts", type=int, default=3)
     p.add_argument("--limit", type=int, default=None)
     p.add_argument("--maneuvers", nargs="*", default=None)
