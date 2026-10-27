@@ -1,0 +1,1578 @@
+{
+  "threshold": 95,
+  "count": 259,
+  "by_group_index": {
+    "1": [
+      "allando_v_savvaltas_alacsony_v110",
+      "allando_v_savvaltas_alacsony_v115",
+      "allando_v_savvaltas_alacsony_v125",
+      "allando_v_savvaltas_alacsony_v130",
+      "allando_v_savvaltas_alacsony_v135",
+      "allando_v_savvaltas_alacsony_v140",
+      "allando_v_savvaltas_alacsony_v20",
+      "allando_v_savvaltas_alacsony_v30",
+      "allando_v_savvaltas_alacsony_v45",
+      "allando_v_savvaltas_alacsony_v55",
+      "allando_v_savvaltas_alacsony_v60",
+      "allando_v_savvaltas_alacsony_v65",
+      "allando_v_savvaltas_alacsony_v85",
+      "allando_v_savvaltas_alacsony_v90",
+      "allando_v_savvaltas_alacsony_v95",
+      "allando_v_savvaltas_kozepes_v100",
+      "allando_v_savvaltas_kozepes_v110",
+      "allando_v_savvaltas_kozepes_v115",
+      "allando_v_savvaltas_kozepes_v130",
+      "allando_v_savvaltas_kozepes_v135",
+      "allando_v_savvaltas_kozepes_v20",
+      "allando_v_savvaltas_kozepes_v35",
+      "allando_v_savvaltas_kozepes_v40",
+      "allando_v_savvaltas_kozepes_v45",
+      "allando_v_savvaltas_kozepes_v50",
+      "allando_v_savvaltas_kozepes_v60",
+      "allando_v_savvaltas_kozepes_v70",
+      "allando_v_savvaltas_kozepes_v80",
+      "allando_v_savvaltas_kozepes_v85",
+      "allando_v_savvaltas_kozepes_v95",
+      "allando_v_savvaltas_magas_v10",
+      "allando_v_savvaltas_magas_v105",
+      "allando_v_savvaltas_magas_v110",
+      "allando_v_savvaltas_magas_v115",
+      "allando_v_savvaltas_magas_v120",
+      "allando_v_savvaltas_magas_v125",
+      "allando_v_savvaltas_magas_v130",
+      "allando_v_savvaltas_magas_v140",
+      "allando_v_savvaltas_magas_v20",
+      "allando_v_savvaltas_magas_v25",
+      "allando_v_savvaltas_magas_v50",
+      "allando_v_savvaltas_magas_v65",
+      "allando_v_savvaltas_magas_v80",
+      "allando_v_savvaltas_magas_v85",
+      "allando_v_savvaltas_magas_v90"
+    ],
+    "2": [
+      "allando_v_chirp_a1_v125",
+      "allando_v_chirp_a1_v135",
+      "allando_v_chirp_a1_v140",
+      "allando_v_chirp_a1_v15",
+      "allando_v_chirp_a1_v20",
+      "allando_v_chirp_a1_v25",
+      "allando_v_chirp_a1_v30",
+      "allando_v_chirp_a1_v35",
+      "allando_v_chirp_a1_v5",
+      "allando_v_chirp_a1_v55",
+      "allando_v_chirp_a1_v60",
+      "allando_v_chirp_a1_v65",
+      "allando_v_chirp_a1_v75",
+      "allando_v_chirp_a1_v80",
+      "allando_v_chirp_a1_v85",
+      "allando_v_chirp_a1_v90",
+      "allando_v_chirp_a1_v95",
+      "allando_v_chirp_a3_v10",
+      "allando_v_chirp_a3_v105",
+      "allando_v_chirp_a3_v110",
+      "allando_v_chirp_a3_v115",
+      "allando_v_chirp_a3_v125",
+      "allando_v_chirp_a3_v130",
+      "allando_v_chirp_a3_v135",
+      "allando_v_chirp_a3_v15",
+      "allando_v_chirp_a3_v20",
+      "allando_v_chirp_a3_v30",
+      "allando_v_chirp_a3_v35",
+      "allando_v_chirp_a3_v40",
+      "allando_v_chirp_a3_v45",
+      "allando_v_chirp_a3_v50",
+      "allando_v_chirp_a3_v55",
+      "allando_v_chirp_a3_v60",
+      "allando_v_chirp_a3_v65",
+      "allando_v_chirp_a3_v70",
+      "allando_v_chirp_a3_v75",
+      "allando_v_chirp_a3_v85",
+      "allando_v_chirp_a3_v90",
+      "allando_v_chirp_a3_v95",
+      "allando_v_chirp_a5_v10",
+      "allando_v_chirp_a5_v105",
+      "allando_v_chirp_a5_v110",
+      "allando_v_chirp_a5_v115",
+      "allando_v_chirp_a5_v120",
+      "allando_v_chirp_a5_v125",
+      "allando_v_chirp_a5_v130",
+      "allando_v_chirp_a5_v135",
+      "allando_v_chirp_a5_v140",
+      "allando_v_chirp_a5_v15",
+      "allando_v_chirp_a5_v20",
+      "allando_v_chirp_a5_v25",
+      "allando_v_chirp_a5_v40",
+      "allando_v_chirp_a5_v5",
+      "allando_v_chirp_a5_v55",
+      "allando_v_chirp_a5_v60",
+      "allando_v_chirp_a5_v75",
+      "allando_v_chirp_a5_v80",
+      "allando_v_chirp_a5_v85",
+      "allando_v_chirp_a5_v90"
+    ],
+    "3": [
+      "allando_v_sin_a2_f1_v100",
+      "allando_v_sin_a2_f1_v105",
+      "allando_v_sin_a2_f1_v110",
+      "allando_v_sin_a2_f1_v115",
+      "allando_v_sin_a2_f1_v135",
+      "allando_v_sin_a2_f1_v140",
+      "allando_v_sin_a2_f1_v15",
+      "allando_v_sin_a2_f1_v20",
+      "allando_v_sin_a2_f1_v30",
+      "allando_v_sin_a2_f1_v35",
+      "allando_v_sin_a2_f1_v40",
+      "allando_v_sin_a2_f1_v45",
+      "allando_v_sin_a2_f1_v50",
+      "allando_v_sin_a2_f1_v60",
+      "allando_v_sin_a2_f1_v65",
+      "allando_v_sin_a2_f1_v70",
+      "allando_v_sin_a2_f3_v120",
+      "allando_v_sin_a2_f3_v125",
+      "allando_v_sin_a2_f3_v130",
+      "allando_v_sin_a2_f3_v135",
+      "allando_v_sin_a2_f3_v15",
+      "allando_v_sin_a2_f3_v25",
+      "allando_v_sin_a2_f3_v35",
+      "allando_v_sin_a2_f3_v40",
+      "allando_v_sin_a2_f3_v45",
+      "allando_v_sin_a2_f3_v5",
+      "allando_v_sin_a2_f3_v50",
+      "allando_v_sin_a2_f3_v65",
+      "allando_v_sin_a2_f3_v70",
+      "allando_v_sin_a2_f3_v75",
+      "allando_v_sin_a2_f3_v90",
+      "allando_v_sin_a2_f5_v10",
+      "allando_v_sin_a2_f5_v125",
+      "allando_v_sin_a2_f5_v20",
+      "allando_v_sin_a2_f5_v30",
+      "allando_v_sin_a2_f5_v35",
+      "allando_v_sin_a2_f5_v40",
+      "allando_v_sin_a2_f5_v45",
+      "allando_v_sin_a2_f5_v50",
+      "allando_v_sin_a2_f5_v55",
+      "allando_v_sin_a2_f5_v65",
+      "allando_v_sin_a2_f5_v85",
+      "allando_v_sin_a2_f5_v90",
+      "allando_v_sin_a2_f5_v95",
+      "allando_v_sin_a2_f7_v100",
+      "allando_v_sin_a2_f7_v105",
+      "allando_v_sin_a2_f7_v110",
+      "allando_v_sin_a2_f7_v115",
+      "allando_v_sin_a2_f7_v125",
+      "allando_v_sin_a2_f7_v140",
+      "allando_v_sin_a2_f7_v15",
+      "allando_v_sin_a2_f7_v25",
+      "allando_v_sin_a2_f7_v35",
+      "allando_v_sin_a2_f7_v5",
+      "allando_v_sin_a2_f7_v50",
+      "allando_v_sin_a2_f7_v55",
+      "allando_v_sin_a2_f7_v60",
+      "allando_v_sin_a2_f7_v65",
+      "allando_v_sin_a2_f7_v70",
+      "allando_v_sin_a2_f7_v75",
+      "allando_v_sin_a2_f7_v80",
+      "allando_v_sin_a2_f7_v85",
+      "allando_v_sin_a2_f7_v95",
+      "allando_v_sin_a8_f1_v105",
+      "allando_v_sin_a8_f1_v110",
+      "allando_v_sin_a8_f1_v120",
+      "allando_v_sin_a8_f1_v125",
+      "allando_v_sin_a8_f1_v130",
+      "allando_v_sin_a8_f1_v15",
+      "allando_v_sin_a8_f1_v20",
+      "allando_v_sin_a8_f1_v30",
+      "allando_v_sin_a8_f1_v40",
+      "allando_v_sin_a8_f1_v45",
+      "allando_v_sin_a8_f1_v50",
+      "allando_v_sin_a8_f1_v55",
+      "allando_v_sin_a8_f1_v60",
+      "allando_v_sin_a8_f1_v65",
+      "allando_v_sin_a8_f1_v75",
+      "allando_v_sin_a8_f1_v80",
+      "allando_v_sin_a8_f1_v90",
+      "allando_v_sin_a8_f1_v95",
+      "allando_v_sin_a8_f3_v10",
+      "allando_v_sin_a8_f3_v100",
+      "allando_v_sin_a8_f3_v115",
+      "allando_v_sin_a8_f3_v125",
+      "allando_v_sin_a8_f3_v135",
+      "allando_v_sin_a8_f3_v140",
+      "allando_v_sin_a8_f3_v20",
+      "allando_v_sin_a8_f3_v25",
+      "allando_v_sin_a8_f3_v30",
+      "allando_v_sin_a8_f3_v40",
+      "allando_v_sin_a8_f3_v5",
+      "allando_v_sin_a8_f3_v50",
+      "allando_v_sin_a8_f3_v55",
+      "allando_v_sin_a8_f3_v65",
+      "allando_v_sin_a8_f3_v70",
+      "allando_v_sin_a8_f3_v75",
+      "allando_v_sin_a8_f3_v80",
+      "allando_v_sin_a8_f3_v85",
+      "allando_v_sin_a8_f3_v90",
+      "allando_v_sin_a8_f3_v95",
+      "allando_v_sin_a8_f5_v10",
+      "allando_v_sin_a8_f5_v105",
+      "allando_v_sin_a8_f5_v110",
+      "allando_v_sin_a8_f5_v115",
+      "allando_v_sin_a8_f5_v120",
+      "allando_v_sin_a8_f5_v30",
+      "allando_v_sin_a8_f5_v40",
+      "allando_v_sin_a8_f5_v45",
+      "allando_v_sin_a8_f5_v5",
+      "allando_v_sin_a8_f5_v55",
+      "allando_v_sin_a8_f5_v60",
+      "allando_v_sin_a8_f5_v65",
+      "allando_v_sin_a8_f5_v75",
+      "allando_v_sin_a8_f5_v85",
+      "allando_v_sin_a8_f5_v90",
+      "allando_v_sin_a8_f5_v95",
+      "allando_v_sin_a8_f7_v10",
+      "allando_v_sin_a8_f7_v100",
+      "allando_v_sin_a8_f7_v105",
+      "allando_v_sin_a8_f7_v115",
+      "allando_v_sin_a8_f7_v120",
+      "allando_v_sin_a8_f7_v125",
+      "allando_v_sin_a8_f7_v130",
+      "allando_v_sin_a8_f7_v135",
+      "allando_v_sin_a8_f7_v140",
+      "allando_v_sin_a8_f7_v15",
+      "allando_v_sin_a8_f7_v30",
+      "allando_v_sin_a8_f7_v35",
+      "allando_v_sin_a8_f7_v40",
+      "allando_v_sin_a8_f7_v5",
+      "allando_v_sin_a8_f7_v50",
+      "allando_v_sin_a8_f7_v55",
+      "allando_v_sin_a8_f7_v60",
+      "allando_v_sin_a8_f7_v65",
+      "allando_v_sin_a8_f7_v70",
+      "allando_v_sin_a8_f7_v75",
+      "allando_v_sin_a8_f7_v80",
+      "allando_v_sin_a8_f7_v85",
+      "allando_v_sin_a8_f7_v95"
+    ],
+    "4": [
+      "valtozo_v_savvaltas_gas_kozepes_pedal0_2",
+      "valtozo_v_savvaltas_gas_kozepes_pedal0_5",
+      "valtozo_v_savvaltas_gas_kozepes_pedal1_0"
+    ],
+    "5": [
+      "valtozo_v_savvaltas_fek_magas_pedal1_0"
+    ],
+    "6": [
+      "valtozo_v_sin_gas_a2_f3_pedal0_2",
+      "valtozo_v_sin_gas_a2_f3_pedal1_0",
+      "valtozo_v_sin_gas_a2_f5_pedal0_5",
+      "valtozo_v_sin_gas_a2_f7_pedal1_0",
+      "valtozo_v_sin_gas_a8_f1_pedal1_0",
+      "valtozo_v_sin_gas_a8_f3_pedal0_2",
+      "valtozo_v_sin_gas_a8_f5_pedal1_0",
+      "valtozo_v_sin_gas_a8_f7_pedal0_5",
+      "valtozo_v_sin_gas_a8_f7_pedal1_0"
+    ],
+    "7": [
+      "valtozo_v_sin_fek_a8_f5_pedal0_5",
+      "valtozo_v_sin_fek_a8_f7_pedal0_5"
+    ]
+  },
+  "assignments": {
+    "allando_v_savvaltas_alacsony_v110": {
+      "representative": "allando_v_savvaltas_alacsony_v105",
+      "similarity": 0.9578900337219238
+    },
+    "allando_v_savvaltas_alacsony_v115": {
+      "representative": "allando_v_savvaltas_kozepes_v120",
+      "similarity": 0.9702154397964478
+    },
+    "allando_v_savvaltas_alacsony_v125": {
+      "representative": "allando_v_savvaltas_kozepes_v140",
+      "similarity": 0.952017068862915
+    },
+    "allando_v_savvaltas_alacsony_v130": {
+      "representative": "allando_v_savvaltas_magas_v100",
+      "similarity": 0.9602259993553162
+    },
+    "allando_v_savvaltas_alacsony_v135": {
+      "representative": "allando_v_savvaltas_alacsony_v105",
+      "similarity": 0.9562751650810242
+    },
+    "allando_v_savvaltas_alacsony_v140": {
+      "representative": "allando_v_savvaltas_magas_v75",
+      "similarity": 0.9555252194404602
+    },
+    "allando_v_savvaltas_alacsony_v20": {
+      "representative": "allando_v_savvaltas_kozepes_v15",
+      "similarity": 0.9510285258293152
+    },
+    "allando_v_savvaltas_alacsony_v30": {
+      "representative": "allando_v_savvaltas_magas_v15",
+      "similarity": 0.9506669640541077
+    },
+    "allando_v_savvaltas_alacsony_v45": {
+      "representative": "allando_v_savvaltas_kozepes_v120",
+      "similarity": 0.950180172920227
+    },
+    "allando_v_savvaltas_alacsony_v55": {
+      "representative": "allando_v_savvaltas_magas_v75",
+      "similarity": 0.9550799131393433
+    },
+    "allando_v_savvaltas_alacsony_v60": {
+      "representative": "allando_v_savvaltas_magas_v135",
+      "similarity": 0.9608260989189148
+    },
+    "allando_v_savvaltas_alacsony_v65": {
+      "representative": "allando_v_savvaltas_kozepes_v65",
+      "similarity": 0.9677322506904602
+    },
+    "allando_v_savvaltas_alacsony_v85": {
+      "representative": "allando_v_savvaltas_alacsony_v105",
+      "similarity": 0.9588170647621155
+    },
+    "allando_v_savvaltas_alacsony_v90": {
+      "representative": "allando_v_savvaltas_alacsony_v105",
+      "similarity": 0.9577723145484924
+    },
+    "allando_v_savvaltas_alacsony_v95": {
+      "representative": "allando_v_savvaltas_kozepes_v120",
+      "similarity": 0.9574913382530212
+    },
+    "allando_v_savvaltas_kozepes_v100": {
+      "representative": "allando_v_savvaltas_alacsony_v105",
+      "similarity": 0.953791081905365
+    },
+    "allando_v_savvaltas_kozepes_v110": {
+      "representative": "allando_v_savvaltas_alacsony_v105",
+      "similarity": 0.9689474701881409
+    },
+    "allando_v_savvaltas_kozepes_v115": {
+      "representative": "allando_v_savvaltas_kozepes_v120",
+      "similarity": 0.9712632894515991
+    },
+    "allando_v_savvaltas_kozepes_v130": {
+      "representative": "allando_v_savvaltas_kozepes_v140",
+      "similarity": 0.9529383182525635
+    },
+    "allando_v_savvaltas_kozepes_v135": {
+      "representative": "allando_v_savvaltas_kozepes_v140",
+      "similarity": 0.9650278091430664
+    },
+    "allando_v_savvaltas_kozepes_v20": {
+      "representative": "allando_v_savvaltas_kozepes_v15",
+      "similarity": 0.9523813128471375
+    },
+    "allando_v_savvaltas_kozepes_v35": {
+      "representative": "allando_v_savvaltas_magas_v55",
+      "similarity": 0.9541725516319275
+    },
+    "allando_v_savvaltas_kozepes_v40": {
+      "representative": "allando_v_savvaltas_magas_v40",
+      "similarity": 0.9573261141777039
+    },
+    "allando_v_savvaltas_kozepes_v45": {
+      "representative": "allando_v_savvaltas_kozepes_v65",
+      "similarity": 0.9589405655860901
+    },
+    "allando_v_savvaltas_kozepes_v50": {
+      "representative": "allando_v_savvaltas_alacsony_v70",
+      "similarity": 0.9590105414390564
+    },
+    "allando_v_savvaltas_kozepes_v60": {
+      "representative": "allando_v_savvaltas_alacsony_v70",
+      "similarity": 0.9592317342758179
+    },
+    "allando_v_savvaltas_kozepes_v70": {
+      "representative": "allando_v_savvaltas_magas_v135",
+      "similarity": 0.9572616815567017
+    },
+    "allando_v_savvaltas_kozepes_v80": {
+      "representative": "allando_v_savvaltas_alacsony_v105",
+      "similarity": 0.9542213082313538
+    },
+    "allando_v_savvaltas_kozepes_v85": {
+      "representative": "allando_v_savvaltas_alacsony_v105",
+      "similarity": 0.9562773108482361
+    },
+    "allando_v_savvaltas_kozepes_v95": {
+      "representative": "allando_v_savvaltas_kozepes_v120",
+      "similarity": 0.9620800614356995
+    },
+    "allando_v_savvaltas_magas_v10": {
+      "representative": "allando_v_savvaltas_kozepes_v10",
+      "similarity": 0.9518909454345703
+    },
+    "allando_v_savvaltas_magas_v105": {
+      "representative": "allando_v_savvaltas_magas_v75",
+      "similarity": 0.9588125348091125
+    },
+    "allando_v_savvaltas_magas_v110": {
+      "representative": "allando_v_savvaltas_magas_v100",
+      "similarity": 0.9609529972076416
+    },
+    "allando_v_savvaltas_magas_v115": {
+      "representative": "allando_v_savvaltas_alacsony_v40",
+      "similarity": 0.9561043977737427
+    },
+    "allando_v_savvaltas_magas_v120": {
+      "representative": "allando_v_savvaltas_magas_v100",
+      "similarity": 0.9555070400238037
+    },
+    "allando_v_savvaltas_magas_v125": {
+      "representative": "allando_v_savvaltas_magas_v100",
+      "similarity": 0.9567272663116455
+    },
+    "allando_v_savvaltas_magas_v130": {
+      "representative": "allando_v_savvaltas_kozepes_v120",
+      "similarity": 0.9567506313323975
+    },
+    "allando_v_savvaltas_magas_v140": {
+      "representative": "allando_v_savvaltas_kozepes_v120",
+      "similarity": 0.9565641283988953
+    },
+    "allando_v_savvaltas_magas_v20": {
+      "representative": "allando_v_savvaltas_magas_v135",
+      "similarity": 0.9505731463432312
+    },
+    "allando_v_savvaltas_magas_v25": {
+      "representative": "allando_v_savvaltas_magas_v40",
+      "similarity": 0.952180027961731
+    },
+    "allando_v_savvaltas_magas_v50": {
+      "representative": "allando_v_savvaltas_magas_v135",
+      "similarity": 0.9554967880249023
+    },
+    "allando_v_savvaltas_magas_v65": {
+      "representative": "allando_v_savvaltas_alacsony_v105",
+      "similarity": 0.9580578207969666
+    },
+    "allando_v_savvaltas_magas_v80": {
+      "representative": "allando_v_savvaltas_magas_v135",
+      "similarity": 0.9629275798797607
+    },
+    "allando_v_savvaltas_magas_v85": {
+      "representative": "allando_v_savvaltas_alacsony_v100",
+      "similarity": 0.9626112580299377
+    },
+    "allando_v_savvaltas_magas_v90": {
+      "representative": "allando_v_savvaltas_magas_v100",
+      "similarity": 0.9652799367904663
+    },
+    "allando_v_chirp_a1_v125": {
+      "representative": "allando_v_chirp_a1_v45",
+      "similarity": 0.9576323628425598
+    },
+    "allando_v_chirp_a1_v135": {
+      "representative": "allando_v_chirp_a1_v115",
+      "similarity": 0.9649062752723694
+    },
+    "allando_v_chirp_a1_v140": {
+      "representative": "allando_v_chirp_a5_v65",
+      "similarity": 0.9508401155471802
+    },
+    "allando_v_chirp_a1_v15": {
+      "representative": "allando_v_chirp_a1_v100",
+      "similarity": 0.9521943926811218
+    },
+    "allando_v_chirp_a1_v20": {
+      "representative": "allando_v_chirp_a1_v120",
+      "similarity": 0.956362247467041
+    },
+    "allando_v_chirp_a1_v25": {
+      "representative": "allando_v_chirp_a5_v65",
+      "similarity": 0.9567107558250427
+    },
+    "allando_v_chirp_a1_v30": {
+      "representative": "allando_v_chirp_a1_v100",
+      "similarity": 0.9533838033676147
+    },
+    "allando_v_chirp_a1_v35": {
+      "representative": "allando_v_chirp_a1_v120",
+      "similarity": 0.9589146375656128
+    },
+    "allando_v_chirp_a1_v5": {
+      "representative": "allando_v_chirp_a3_v5",
+      "similarity": 0.9534868597984314
+    },
+    "allando_v_chirp_a1_v55": {
+      "representative": "allando_v_chirp_a1_v115",
+      "similarity": 0.9512105584144592
+    },
+    "allando_v_chirp_a1_v60": {
+      "representative": "allando_v_chirp_a1_v100",
+      "similarity": 0.9516425728797913
+    },
+    "allando_v_chirp_a1_v65": {
+      "representative": "allando_v_chirp_a1_v70",
+      "similarity": 0.952674925327301
+    },
+    "allando_v_chirp_a1_v75": {
+      "representative": "allando_v_chirp_a1_v120",
+      "similarity": 0.9653658270835876
+    },
+    "allando_v_chirp_a1_v80": {
+      "representative": "allando_v_chirp_a1_v105",
+      "similarity": 0.9512078762054443
+    },
+    "allando_v_chirp_a1_v85": {
+      "representative": "allando_v_chirp_a1_v105",
+      "similarity": 0.9677042961120605
+    },
+    "allando_v_chirp_a1_v90": {
+      "representative": "allando_v_chirp_a1_v115",
+      "similarity": 0.9617442488670349
+    },
+    "allando_v_chirp_a1_v95": {
+      "representative": "allando_v_chirp_a1_v100",
+      "similarity": 0.9584780335426331
+    },
+    "allando_v_chirp_a3_v10": {
+      "representative": "allando_v_chirp_a5_v65",
+      "similarity": 0.9593128561973572
+    },
+    "allando_v_chirp_a3_v105": {
+      "representative": "allando_v_chirp_a5_v70",
+      "similarity": 0.9579287767410278
+    },
+    "allando_v_chirp_a3_v110": {
+      "representative": "allando_v_chirp_a1_v105",
+      "similarity": 0.9593535661697388
+    },
+    "allando_v_chirp_a3_v115": {
+      "representative": "allando_v_chirp_a1_v115",
+      "similarity": 0.9632517099380493
+    },
+    "allando_v_chirp_a3_v125": {
+      "representative": "allando_v_chirp_a3_v5",
+      "similarity": 0.9533132910728455
+    },
+    "allando_v_chirp_a3_v130": {
+      "representative": "allando_v_chirp_a3_v120",
+      "similarity": 0.9509269595146179
+    },
+    "allando_v_chirp_a3_v135": {
+      "representative": "allando_v_chirp_a3_v140",
+      "similarity": 0.9566370248794556
+    },
+    "allando_v_chirp_a3_v15": {
+      "representative": "allando_v_chirp_a3_v5",
+      "similarity": 0.9601832032203674
+    },
+    "allando_v_chirp_a3_v20": {
+      "representative": "allando_v_chirp_a1_v115",
+      "similarity": 0.963374674320221
+    },
+    "allando_v_chirp_a3_v30": {
+      "representative": "allando_v_chirp_a1_v70",
+      "similarity": 0.9535154104232788
+    },
+    "allando_v_chirp_a3_v35": {
+      "representative": "allando_v_chirp_a5_v65",
+      "similarity": 0.9506511688232422
+    },
+    "allando_v_chirp_a3_v40": {
+      "representative": "allando_v_chirp_a5_v30",
+      "similarity": 0.9554229974746704
+    },
+    "allando_v_chirp_a3_v45": {
+      "representative": "allando_v_chirp_a1_v115",
+      "similarity": 0.9561064839363098
+    },
+    "allando_v_chirp_a3_v50": {
+      "representative": "allando_v_chirp_a5_v65",
+      "similarity": 0.9683332443237305
+    },
+    "allando_v_chirp_a3_v55": {
+      "representative": "allando_v_chirp_a5_v70",
+      "similarity": 0.9524431228637695
+    },
+    "allando_v_chirp_a3_v60": {
+      "representative": "allando_v_chirp_a5_v70",
+      "similarity": 0.9532442092895508
+    },
+    "allando_v_chirp_a3_v65": {
+      "representative": "allando_v_chirp_a5_v70",
+      "similarity": 0.967013955116272
+    },
+    "allando_v_chirp_a3_v70": {
+      "representative": "allando_v_chirp_a5_v70",
+      "similarity": 0.9624956846237183
+    },
+    "allando_v_chirp_a3_v75": {
+      "representative": "allando_v_chirp_a1_v70",
+      "similarity": 0.9621154069900513
+    },
+    "allando_v_chirp_a3_v85": {
+      "representative": "allando_v_chirp_a1_v45",
+      "similarity": 0.9720409512519836
+    },
+    "allando_v_chirp_a3_v90": {
+      "representative": "allando_v_chirp_a5_v100",
+      "similarity": 0.957531750202179
+    },
+    "allando_v_chirp_a3_v95": {
+      "representative": "allando_v_chirp_a5_v30",
+      "similarity": 0.9541155099868774
+    },
+    "allando_v_chirp_a5_v10": {
+      "representative": "allando_v_chirp_a3_v5",
+      "similarity": 0.9640939235687256
+    },
+    "allando_v_chirp_a5_v105": {
+      "representative": "allando_v_chirp_a5_v100",
+      "similarity": 0.9588771462440491
+    },
+    "allando_v_chirp_a5_v110": {
+      "representative": "allando_v_chirp_a5_v100",
+      "similarity": 0.95956951379776
+    },
+    "allando_v_chirp_a5_v115": {
+      "representative": "allando_v_chirp_a5_v100",
+      "similarity": 0.9584079384803772
+    },
+    "allando_v_chirp_a5_v120": {
+      "representative": "allando_v_chirp_a1_v115",
+      "similarity": 0.9619980454444885
+    },
+    "allando_v_chirp_a5_v125": {
+      "representative": "allando_v_chirp_a3_v140",
+      "similarity": 0.9719725251197815
+    },
+    "allando_v_chirp_a5_v130": {
+      "representative": "allando_v_chirp_a3_v120",
+      "similarity": 0.954562246799469
+    },
+    "allando_v_chirp_a5_v135": {
+      "representative": "allando_v_chirp_a3_v80",
+      "similarity": 0.9518487453460693
+    },
+    "allando_v_chirp_a5_v140": {
+      "representative": "allando_v_chirp_a5_v65",
+      "similarity": 0.9580166339874268
+    },
+    "allando_v_chirp_a5_v15": {
+      "representative": "allando_v_chirp_a1_v10",
+      "similarity": 0.9512202143669128
+    },
+    "allando_v_chirp_a5_v20": {
+      "representative": "allando_v_chirp_a1_v70",
+      "similarity": 0.9554123282432556
+    },
+    "allando_v_chirp_a5_v25": {
+      "representative": "allando_v_chirp_a1_v115",
+      "similarity": 0.9582658410072327
+    },
+    "allando_v_chirp_a5_v40": {
+      "representative": "allando_v_chirp_a1_v115",
+      "similarity": 0.9668200016021729
+    },
+    "allando_v_chirp_a5_v5": {
+      "representative": "allando_v_chirp_a1_v115",
+      "similarity": 0.9611061215400696
+    },
+    "allando_v_chirp_a5_v55": {
+      "representative": "allando_v_chirp_a5_v30",
+      "similarity": 0.95201575756073
+    },
+    "allando_v_chirp_a5_v60": {
+      "representative": "allando_v_chirp_a5_v65",
+      "similarity": 0.9564411640167236
+    },
+    "allando_v_chirp_a5_v75": {
+      "representative": "allando_v_chirp_a5_v100",
+      "similarity": 0.9601966142654419
+    },
+    "allando_v_chirp_a5_v80": {
+      "representative": "allando_v_chirp_a1_v70",
+      "similarity": 0.9524556398391724
+    },
+    "allando_v_chirp_a5_v85": {
+      "representative": "allando_v_chirp_a3_v140",
+      "similarity": 0.9532250761985779
+    },
+    "allando_v_chirp_a5_v90": {
+      "representative": "allando_v_chirp_a5_v30",
+      "similarity": 0.9624311327934265
+    },
+    "allando_v_sin_a2_f1_v100": {
+      "representative": "allando_v_sin_a2_f3_v100",
+      "similarity": 0.9596795439720154
+    },
+    "allando_v_sin_a2_f1_v105": {
+      "representative": "allando_v_sin_a2_f3_v115",
+      "similarity": 0.9573977589607239
+    },
+    "allando_v_sin_a2_f1_v110": {
+      "representative": "allando_v_sin_a8_f3_v130",
+      "similarity": 0.9551506638526917
+    },
+    "allando_v_sin_a2_f1_v115": {
+      "representative": "allando_v_sin_a2_f1_v120",
+      "similarity": 0.9588065147399902
+    },
+    "allando_v_sin_a2_f1_v135": {
+      "representative": "allando_v_sin_a2_f1_v130",
+      "similarity": 0.9530154466629028
+    },
+    "allando_v_sin_a2_f1_v140": {
+      "representative": "allando_v_sin_a2_f5_v140",
+      "similarity": 0.9532645344734192
+    },
+    "allando_v_sin_a2_f1_v15": {
+      "representative": "allando_v_sin_a2_f3_v30",
+      "similarity": 0.9587385654449463
+    },
+    "allando_v_sin_a2_f1_v20": {
+      "representative": "allando_v_sin_a2_f3_v30",
+      "similarity": 0.9576174020767212
+    },
+    "allando_v_sin_a2_f1_v30": {
+      "representative": "allando_v_sin_a2_f1_v10",
+      "similarity": 0.9575337171554565
+    },
+    "allando_v_sin_a2_f1_v35": {
+      "representative": "allando_v_sin_a2_f7_v30",
+      "similarity": 0.9595540761947632
+    },
+    "allando_v_sin_a2_f1_v40": {
+      "representative": "allando_v_sin_a2_f7_v30",
+      "similarity": 0.9660006761550903
+    },
+    "allando_v_sin_a2_f1_v45": {
+      "representative": "allando_v_sin_a2_f1_v55",
+      "similarity": 0.9597135782241821
+    },
+    "allando_v_sin_a2_f1_v50": {
+      "representative": "allando_v_sin_a8_f1_v5",
+      "similarity": 0.9569560885429382
+    },
+    "allando_v_sin_a2_f1_v60": {
+      "representative": "allando_v_sin_a8_f1_v5",
+      "similarity": 0.9647331237792969
+    },
+    "allando_v_sin_a2_f1_v65": {
+      "representative": "allando_v_sin_a8_f5_v80",
+      "similarity": 0.951762318611145
+    },
+    "allando_v_sin_a2_f1_v70": {
+      "representative": "allando_v_sin_a8_f5_v80",
+      "similarity": 0.9565591216087341
+    },
+    "allando_v_sin_a2_f3_v120": {
+      "representative": "allando_v_sin_a2_f3_v110",
+      "similarity": 0.9658123850822449
+    },
+    "allando_v_sin_a2_f3_v125": {
+      "representative": "allando_v_sin_a2_f3_v110",
+      "similarity": 0.9591274261474609
+    },
+    "allando_v_sin_a2_f3_v130": {
+      "representative": "allando_v_sin_a2_f3_v115",
+      "similarity": 0.962077796459198
+    },
+    "allando_v_sin_a2_f3_v135": {
+      "representative": "allando_v_sin_a2_f3_v115",
+      "similarity": 0.9595776796340942
+    },
+    "allando_v_sin_a2_f3_v15": {
+      "representative": "allando_v_sin_a8_f1_v5",
+      "similarity": 0.9708729982376099
+    },
+    "allando_v_sin_a2_f3_v25": {
+      "representative": "allando_v_sin_a2_f3_v10",
+      "similarity": 0.9529002904891968
+    },
+    "allando_v_sin_a2_f3_v35": {
+      "representative": "allando_v_sin_a2_f3_v30",
+      "similarity": 0.9609978199005127
+    },
+    "allando_v_sin_a2_f3_v40": {
+      "representative": "allando_v_sin_a2_f1_v55",
+      "similarity": 0.955292284488678
+    },
+    "allando_v_sin_a2_f3_v45": {
+      "representative": "allando_v_sin_a2_f3_v30",
+      "similarity": 0.9531952142715454
+    },
+    "allando_v_sin_a2_f3_v5": {
+      "representative": "allando_v_sin_a2_f1_v25",
+      "similarity": 0.9503225088119507
+    },
+    "allando_v_sin_a2_f3_v50": {
+      "representative": "allando_v_sin_a2_f7_v30",
+      "similarity": 0.9659624695777893
+    },
+    "allando_v_sin_a2_f3_v65": {
+      "representative": "allando_v_sin_a8_f1_v5",
+      "similarity": 0.9543570876121521
+    },
+    "allando_v_sin_a2_f3_v70": {
+      "representative": "allando_v_sin_a8_f5_v80",
+      "similarity": 0.9633723497390747
+    },
+    "allando_v_sin_a2_f3_v75": {
+      "representative": "allando_v_sin_a8_f5_v80",
+      "similarity": 0.956751823425293
+    },
+    "allando_v_sin_a2_f3_v90": {
+      "representative": "allando_v_sin_a2_f3_v105",
+      "similarity": 0.9501734375953674
+    },
+    "allando_v_sin_a2_f5_v10": {
+      "representative": "allando_v_sin_a8_f3_v35",
+      "similarity": 0.9582129716873169
+    },
+    "allando_v_sin_a2_f5_v125": {
+      "representative": "allando_v_sin_a2_f3_v100",
+      "similarity": 0.9587374925613403
+    },
+    "allando_v_sin_a2_f5_v20": {
+      "representative": "allando_v_sin_a8_f3_v35",
+      "similarity": 0.9585217237472534
+    },
+    "allando_v_sin_a2_f5_v30": {
+      "representative": "allando_v_sin_a2_f3_v30",
+      "similarity": 0.965774416923523
+    },
+    "allando_v_sin_a2_f5_v35": {
+      "representative": "allando_v_sin_a2_f7_v30",
+      "similarity": 0.9690649509429932
+    },
+    "allando_v_sin_a2_f5_v40": {
+      "representative": "allando_v_sin_a8_f1_v5",
+      "similarity": 0.9595935344696045
+    },
+    "allando_v_sin_a2_f5_v45": {
+      "representative": "allando_v_sin_a8_f5_v80",
+      "similarity": 0.9534381628036499
+    },
+    "allando_v_sin_a2_f5_v50": {
+      "representative": "allando_v_sin_a8_f5_v80",
+      "similarity": 0.9641849398612976
+    },
+    "allando_v_sin_a2_f5_v55": {
+      "representative": "allando_v_sin_a8_f5_v80",
+      "similarity": 0.9527193903923035
+    },
+    "allando_v_sin_a2_f5_v65": {
+      "representative": "allando_v_sin_a8_f5_v25",
+      "similarity": 0.9530410170555115
+    },
+    "allando_v_sin_a2_f5_v85": {
+      "representative": "allando_v_sin_a8_f5_v35",
+      "similarity": 0.9544403553009033
+    },
+    "allando_v_sin_a2_f5_v90": {
+      "representative": "allando_v_sin_a2_f5_v105",
+      "similarity": 0.9533146023750305
+    },
+    "allando_v_sin_a2_f5_v95": {
+      "representative": "allando_v_sin_a8_f5_v80",
+      "similarity": 0.9594649076461792
+    },
+    "allando_v_sin_a2_f7_v100": {
+      "representative": "allando_v_sin_a2_f1_v55",
+      "similarity": 0.9637579321861267
+    },
+    "allando_v_sin_a2_f7_v105": {
+      "representative": "allando_v_sin_a2_f7_v30",
+      "similarity": 0.9558554291725159
+    },
+    "allando_v_sin_a2_f7_v110": {
+      "representative": "allando_v_sin_a8_f7_v20",
+      "similarity": 0.9559164643287659
+    },
+    "allando_v_sin_a2_f7_v115": {
+      "representative": "allando_v_sin_a8_f3_v35",
+      "similarity": 0.9570461511611938
+    },
+    "allando_v_sin_a2_f7_v125": {
+      "representative": "allando_v_sin_a2_f7_v120",
+      "similarity": 0.955664873123169
+    },
+    "allando_v_sin_a2_f7_v140": {
+      "representative": "allando_v_sin_a2_f7_v135",
+      "similarity": 0.9534884691238403
+    },
+    "allando_v_sin_a2_f7_v15": {
+      "representative": "allando_v_sin_a2_f5_v80",
+      "similarity": 0.9512476325035095
+    },
+    "allando_v_sin_a2_f7_v25": {
+      "representative": "allando_v_sin_a8_f5_v25",
+      "similarity": 0.9515500664710999
+    },
+    "allando_v_sin_a2_f7_v35": {
+      "representative": "allando_v_sin_a8_f5_v80",
+      "similarity": 0.9609991908073425
+    },
+    "allando_v_sin_a2_f7_v5": {
+      "representative": "allando_v_sin_a2_f1_v25",
+      "similarity": 0.9510706067085266
+    },
+    "allando_v_sin_a2_f7_v50": {
+      "representative": "allando_v_sin_a8_f7_v20",
+      "similarity": 0.9506129026412964
+    },
+    "allando_v_sin_a2_f7_v55": {
+      "representative": "allando_v_sin_a2_f1_v55",
+      "similarity": 0.9603679180145264
+    },
+    "allando_v_sin_a2_f7_v60": {
+      "representative": "allando_v_sin_a2_f5_v60",
+      "similarity": 0.9576688408851624
+    },
+    "allando_v_sin_a2_f7_v65": {
+      "representative": "allando_v_sin_a8_f5_v35",
+      "similarity": 0.9534896016120911
+    },
+    "allando_v_sin_a2_f7_v70": {
+      "representative": "allando_v_sin_a8_f7_v20",
+      "similarity": 0.9583204388618469
+    },
+    "allando_v_sin_a2_f7_v75": {
+      "representative": "allando_v_sin_a8_f7_v110",
+      "similarity": 0.9501500129699707
+    },
+    "allando_v_sin_a2_f7_v80": {
+      "representative": "allando_v_sin_a2_f5_v75",
+      "similarity": 0.9553232789039612
+    },
+    "allando_v_sin_a2_f7_v85": {
+      "representative": "allando_v_sin_a8_f5_v80",
+      "similarity": 0.951924204826355
+    },
+    "allando_v_sin_a2_f7_v95": {
+      "representative": "allando_v_sin_a8_f5_v35",
+      "similarity": 0.9609055519104004
+    },
+    "allando_v_sin_a8_f1_v105": {
+      "representative": "allando_v_sin_a2_f1_v120",
+      "similarity": 0.9512666463851929
+    },
+    "allando_v_sin_a8_f1_v110": {
+      "representative": "allando_v_sin_a2_f3_v100",
+      "similarity": 0.9589270949363708
+    },
+    "allando_v_sin_a8_f1_v120": {
+      "representative": "allando_v_sin_a8_f5_v35",
+      "similarity": 0.9521939754486084
+    },
+    "allando_v_sin_a8_f1_v125": {
+      "representative": "allando_v_sin_a2_f3_v105",
+      "similarity": 0.9520770907402039
+    },
+    "allando_v_sin_a8_f1_v130": {
+      "representative": "allando_v_sin_a8_f3_v130",
+      "similarity": 0.9593000411987305
+    },
+    "allando_v_sin_a8_f1_v15": {
+      "representative": "allando_v_sin_a8_f1_v5",
+      "similarity": 0.961231529712677
+    },
+    "allando_v_sin_a8_f1_v20": {
+      "representative": "allando_v_sin_a8_f1_v35",
+      "similarity": 0.951673150062561
+    },
+    "allando_v_sin_a8_f1_v30": {
+      "representative": "allando_v_sin_a8_f1_v35",
+      "similarity": 0.9646078944206238
+    },
+    "allando_v_sin_a8_f1_v40": {
+      "representative": "allando_v_sin_a8_f1_v35",
+      "similarity": 0.9520779848098755
+    },
+    "allando_v_sin_a8_f1_v45": {
+      "representative": "allando_v_sin_a8_f1_v35",
+      "similarity": 0.9584682583808899
+    },
+    "allando_v_sin_a8_f1_v50": {
+      "representative": "allando_v_sin_a8_f1_v35",
+      "similarity": 0.9535359740257263
+    },
+    "allando_v_sin_a8_f1_v55": {
+      "representative": "allando_v_sin_a2_f1_v55",
+      "similarity": 0.9513704180717468
+    },
+    "allando_v_sin_a8_f1_v60": {
+      "representative": "allando_v_sin_a2_f7_v30",
+      "similarity": 0.9645237922668457
+    },
+    "allando_v_sin_a8_f1_v65": {
+      "representative": "allando_v_sin_a8_f5_v25",
+      "similarity": 0.9622349739074707
+    },
+    "allando_v_sin_a8_f1_v75": {
+      "representative": "allando_v_sin_a2_f1_v55",
+      "similarity": 0.9613531827926636
+    },
+    "allando_v_sin_a8_f1_v80": {
+      "representative": "allando_v_sin_a8_f5_v80",
+      "similarity": 0.9553295969963074
+    },
+    "allando_v_sin_a8_f1_v90": {
+      "representative": "allando_v_sin_a2_f7_v30",
+      "similarity": 0.9526239037513733
+    },
+    "allando_v_sin_a8_f1_v95": {
+      "representative": "allando_v_sin_a8_f3_v130",
+      "similarity": 0.9564539790153503
+    },
+    "allando_v_sin_a8_f3_v10": {
+      "representative": "allando_v_sin_a8_f1_v5",
+      "similarity": 0.951606035232544
+    },
+    "allando_v_sin_a8_f3_v100": {
+      "representative": "allando_v_sin_a2_f3_v105",
+      "similarity": 0.9549168348312378
+    },
+    "allando_v_sin_a8_f3_v115": {
+      "representative": "allando_v_sin_a8_f3_v110",
+      "similarity": 0.9557894468307495
+    },
+    "allando_v_sin_a8_f3_v125": {
+      "representative": "allando_v_sin_a2_f3_v105",
+      "similarity": 0.9520745873451233
+    },
+    "allando_v_sin_a8_f3_v135": {
+      "representative": "allando_v_sin_a2_f3_v100",
+      "similarity": 0.9528852701187134
+    },
+    "allando_v_sin_a8_f3_v140": {
+      "representative": "allando_v_sin_a8_f3_v130",
+      "similarity": 0.9554950594902039
+    },
+    "allando_v_sin_a8_f3_v20": {
+      "representative": "allando_v_sin_a2_f7_v30",
+      "similarity": 0.9594889879226685
+    },
+    "allando_v_sin_a8_f3_v25": {
+      "representative": "allando_v_sin_a2_f3_v30",
+      "similarity": 0.9517908096313477
+    },
+    "allando_v_sin_a8_f3_v30": {
+      "representative": "allando_v_sin_a2_f7_v30",
+      "similarity": 0.9719712138175964
+    },
+    "allando_v_sin_a8_f3_v40": {
+      "representative": "allando_v_sin_a8_f5_v25",
+      "similarity": 0.9534122943878174
+    },
+    "allando_v_sin_a8_f3_v5": {
+      "representative": "allando_v_sin_a8_f1_v5",
+      "similarity": 0.9636771082878113
+    },
+    "allando_v_sin_a8_f3_v50": {
+      "representative": "allando_v_sin_a8_f3_v60",
+      "similarity": 0.950718104839325
+    },
+    "allando_v_sin_a8_f3_v55": {
+      "representative": "allando_v_sin_a2_f1_v55",
+      "similarity": 0.9603217840194702
+    },
+    "allando_v_sin_a8_f3_v65": {
+      "representative": "allando_v_sin_a2_f7_v30",
+      "similarity": 0.9581793546676636
+    },
+    "allando_v_sin_a8_f3_v70": {
+      "representative": "allando_v_sin_a2_f1_v130",
+      "similarity": 0.9534909725189209
+    },
+    "allando_v_sin_a8_f3_v75": {
+      "representative": "allando_v_sin_a8_f3_v130",
+      "similarity": 0.9627987146377563
+    },
+    "allando_v_sin_a8_f3_v80": {
+      "representative": "allando_v_sin_a8_f3_v110",
+      "similarity": 0.9556001424789429
+    },
+    "allando_v_sin_a8_f3_v85": {
+      "representative": "allando_v_sin_a8_f3_v110",
+      "similarity": 0.9634649157524109
+    },
+    "allando_v_sin_a8_f3_v90": {
+      "representative": "allando_v_sin_a8_f3_v130",
+      "similarity": 0.9562802314758301
+    },
+    "allando_v_sin_a8_f3_v95": {
+      "representative": "allando_v_sin_a8_f3_v110",
+      "similarity": 0.9528493881225586
+    },
+    "allando_v_sin_a8_f5_v10": {
+      "representative": "allando_v_sin_a2_f3_v30",
+      "similarity": 0.9595117568969727
+    },
+    "allando_v_sin_a8_f5_v105": {
+      "representative": "allando_v_sin_a2_f5_v105",
+      "similarity": 0.9506698846817017
+    },
+    "allando_v_sin_a8_f5_v110": {
+      "representative": "allando_v_sin_a2_f7_v135",
+      "similarity": 0.9558337926864624
+    },
+    "allando_v_sin_a8_f5_v115": {
+      "representative": "allando_v_sin_a2_f7_v135",
+      "similarity": 0.950839102268219
+    },
+    "allando_v_sin_a8_f5_v120": {
+      "representative": "allando_v_sin_a8_f3_v35",
+      "similarity": 0.9501978754997253
+    },
+    "allando_v_sin_a8_f5_v30": {
+      "representative": "allando_v_sin_a8_f7_v25",
+      "similarity": 0.9639483690261841
+    },
+    "allando_v_sin_a8_f5_v40": {
+      "representative": "allando_v_sin_a2_f7_v30",
+      "similarity": 0.9638533592224121
+    },
+    "allando_v_sin_a8_f5_v45": {
+      "representative": "allando_v_sin_a2_f3_v55",
+      "similarity": 0.953123927116394
+    },
+    "allando_v_sin_a8_f5_v5": {
+      "representative": "allando_v_sin_a2_f5_v15",
+      "similarity": 0.9530448913574219
+    },
+    "allando_v_sin_a8_f5_v55": {
+      "representative": "allando_v_sin_a2_f7_v30",
+      "similarity": 0.9589753150939941
+    },
+    "allando_v_sin_a8_f5_v60": {
+      "representative": "allando_v_sin_a2_f5_v60",
+      "similarity": 0.9511934518814087
+    },
+    "allando_v_sin_a8_f5_v65": {
+      "representative": "allando_v_sin_a8_f5_v35",
+      "similarity": 0.9555419683456421
+    },
+    "allando_v_sin_a8_f5_v75": {
+      "representative": "allando_v_sin_a8_f5_v80",
+      "similarity": 0.9511021375656128
+    },
+    "allando_v_sin_a8_f5_v85": {
+      "representative": "allando_v_sin_a8_f3_v130",
+      "similarity": 0.9553624391555786
+    },
+    "allando_v_sin_a8_f5_v90": {
+      "representative": "allando_v_sin_a2_f1_v55",
+      "similarity": 0.9504873156547546
+    },
+    "allando_v_sin_a8_f5_v95": {
+      "representative": "allando_v_sin_a2_f7_v30",
+      "similarity": 0.950378954410553
+    },
+    "allando_v_sin_a8_f7_v10": {
+      "representative": "allando_v_sin_a8_f1_v5",
+      "similarity": 0.9652064442634583
+    },
+    "allando_v_sin_a8_f7_v100": {
+      "representative": "allando_v_sin_a8_f7_v20",
+      "similarity": 0.9566462635993958
+    },
+    "allando_v_sin_a8_f7_v105": {
+      "representative": "allando_v_sin_a8_f7_v90",
+      "similarity": 0.9500110149383545
+    },
+    "allando_v_sin_a8_f7_v115": {
+      "representative": "allando_v_sin_a8_f5_v35",
+      "similarity": 0.9548605680465698
+    },
+    "allando_v_sin_a8_f7_v120": {
+      "representative": "allando_v_sin_a8_f7_v20",
+      "similarity": 0.9507489800453186
+    },
+    "allando_v_sin_a8_f7_v125": {
+      "representative": "allando_v_sin_a2_f7_v30",
+      "similarity": 0.956295907497406
+    },
+    "allando_v_sin_a8_f7_v130": {
+      "representative": "allando_v_sin_a8_f5_v80",
+      "similarity": 0.9527786374092102
+    },
+    "allando_v_sin_a8_f7_v135": {
+      "representative": "allando_v_sin_a2_f5_v80",
+      "similarity": 0.9542804956436157
+    },
+    "allando_v_sin_a8_f7_v140": {
+      "representative": "allando_v_sin_a8_f5_v80",
+      "similarity": 0.9554373621940613
+    },
+    "allando_v_sin_a8_f7_v15": {
+      "representative": "allando_v_sin_a2_f7_v30",
+      "similarity": 0.9549028277397156
+    },
+    "allando_v_sin_a8_f7_v30": {
+      "representative": "allando_v_sin_a8_f5_v35",
+      "similarity": 0.9632760286331177
+    },
+    "allando_v_sin_a8_f7_v35": {
+      "representative": "allando_v_sin_a8_f5_v50",
+      "similarity": 0.9566989541053772
+    },
+    "allando_v_sin_a8_f7_v40": {
+      "representative": "allando_v_sin_a8_f3_v35",
+      "similarity": 0.9596800804138184
+    },
+    "allando_v_sin_a8_f7_v5": {
+      "representative": "allando_v_sin_a2_f5_v15",
+      "similarity": 0.9504150748252869
+    },
+    "allando_v_sin_a8_f7_v50": {
+      "representative": "allando_v_sin_a8_f3_v60",
+      "similarity": 0.9560337662696838
+    },
+    "allando_v_sin_a8_f7_v55": {
+      "representative": "allando_v_sin_a8_f5_v35",
+      "similarity": 0.9603400826454163
+    },
+    "allando_v_sin_a8_f7_v60": {
+      "representative": "allando_v_sin_a8_f5_v35",
+      "similarity": 0.9526419043540955
+    },
+    "allando_v_sin_a8_f7_v65": {
+      "representative": "allando_v_sin_a8_f7_v20",
+      "similarity": 0.9589366316795349
+    },
+    "allando_v_sin_a8_f7_v70": {
+      "representative": "allando_v_sin_a2_f1_v55",
+      "similarity": 0.9599894881248474
+    },
+    "allando_v_sin_a8_f7_v75": {
+      "representative": "allando_v_sin_a8_f3_v35",
+      "similarity": 0.9542050361633301
+    },
+    "allando_v_sin_a8_f7_v80": {
+      "representative": "allando_v_sin_a8_f7_v90",
+      "similarity": 0.9628885984420776
+    },
+    "allando_v_sin_a8_f7_v85": {
+      "representative": "allando_v_sin_a8_f7_v25",
+      "similarity": 0.9560255408287048
+    },
+    "allando_v_sin_a8_f7_v95": {
+      "representative": "allando_v_sin_a8_f7_v20",
+      "similarity": 0.9629486799240112
+    },
+    "valtozo_v_savvaltas_gas_kozepes_pedal0_2": {
+      "representative": "valtozo_v_savvaltas_gas_alacsony_pedal0_5",
+      "similarity": 0.9575197100639343
+    },
+    "valtozo_v_savvaltas_gas_kozepes_pedal0_5": {
+      "representative": "valtozo_v_savvaltas_gas_alacsony_pedal0_5",
+      "similarity": 0.9537674188613892
+    },
+    "valtozo_v_savvaltas_gas_kozepes_pedal1_0": {
+      "representative": "valtozo_v_savvaltas_gas_alacsony_pedal0_5",
+      "similarity": 0.9614987969398499
+    },
+    "valtozo_v_savvaltas_fek_magas_pedal1_0": {
+      "representative": "valtozo_v_savvaltas_fek_magas_pedal0_2",
+      "similarity": 0.9525379538536072
+    },
+    "valtozo_v_sin_gas_a2_f3_pedal0_2": {
+      "representative": "valtozo_v_sin_gas_a2_f5_pedal0_2",
+      "similarity": 0.9801245331764221
+    },
+    "valtozo_v_sin_gas_a2_f3_pedal1_0": {
+      "representative": "valtozo_v_sin_gas_a2_f3_pedal0_5",
+      "similarity": 0.9669050574302673
+    },
+    "valtozo_v_sin_gas_a2_f5_pedal0_5": {
+      "representative": "valtozo_v_sin_gas_a2_f5_pedal0_2",
+      "similarity": 0.9538260102272034
+    },
+    "valtozo_v_sin_gas_a2_f7_pedal1_0": {
+      "representative": "valtozo_v_sin_gas_a2_f3_pedal0_5",
+      "similarity": 0.9535273313522339
+    },
+    "valtozo_v_sin_gas_a8_f1_pedal1_0": {
+      "representative": "valtozo_v_sin_gas_a2_f5_pedal1_0",
+      "similarity": 0.9547481536865234
+    },
+    "valtozo_v_sin_gas_a8_f3_pedal0_2": {
+      "representative": "valtozo_v_sin_gas_a2_f3_pedal0_5",
+      "similarity": 0.9625140428543091
+    },
+    "valtozo_v_sin_gas_a8_f5_pedal1_0": {
+      "representative": "valtozo_v_sin_gas_a2_f3_pedal0_5",
+      "similarity": 0.9501899480819702
+    },
+    "valtozo_v_sin_gas_a8_f7_pedal0_5": {
+      "representative": "valtozo_v_sin_gas_a2_f5_pedal0_2",
+      "similarity": 0.9679349660873413
+    },
+    "valtozo_v_sin_gas_a8_f7_pedal1_0": {
+      "representative": "valtozo_v_sin_gas_a2_f3_pedal0_5",
+      "similarity": 0.9599724411964417
+    },
+    "valtozo_v_sin_fek_a8_f5_pedal0_5": {
+      "representative": "valtozo_v_sin_fek_a2_f1_pedal0_5",
+      "similarity": 0.9630089998245239
+    },
+    "valtozo_v_sin_fek_a8_f7_pedal0_5": {
+      "representative": "valtozo_v_sin_fek_a8_f3_pedal0_5",
+      "similarity": 0.9596187472343445
+    }
+  },
+  "all": [
+    "allando_v_chirp_a1_v125",
+    "allando_v_chirp_a1_v135",
+    "allando_v_chirp_a1_v140",
+    "allando_v_chirp_a1_v15",
+    "allando_v_chirp_a1_v20",
+    "allando_v_chirp_a1_v25",
+    "allando_v_chirp_a1_v30",
+    "allando_v_chirp_a1_v35",
+    "allando_v_chirp_a1_v5",
+    "allando_v_chirp_a1_v55",
+    "allando_v_chirp_a1_v60",
+    "allando_v_chirp_a1_v65",
+    "allando_v_chirp_a1_v75",
+    "allando_v_chirp_a1_v80",
+    "allando_v_chirp_a1_v85",
+    "allando_v_chirp_a1_v90",
+    "allando_v_chirp_a1_v95",
+    "allando_v_chirp_a3_v10",
+    "allando_v_chirp_a3_v105",
+    "allando_v_chirp_a3_v110",
+    "allando_v_chirp_a3_v115",
+    "allando_v_chirp_a3_v125",
+    "allando_v_chirp_a3_v130",
+    "allando_v_chirp_a3_v135",
+    "allando_v_chirp_a3_v15",
+    "allando_v_chirp_a3_v20",
+    "allando_v_chirp_a3_v30",
+    "allando_v_chirp_a3_v35",
+    "allando_v_chirp_a3_v40",
+    "allando_v_chirp_a3_v45",
+    "allando_v_chirp_a3_v50",
+    "allando_v_chirp_a3_v55",
+    "allando_v_chirp_a3_v60",
+    "allando_v_chirp_a3_v65",
+    "allando_v_chirp_a3_v70",
+    "allando_v_chirp_a3_v75",
+    "allando_v_chirp_a3_v85",
+    "allando_v_chirp_a3_v90",
+    "allando_v_chirp_a3_v95",
+    "allando_v_chirp_a5_v10",
+    "allando_v_chirp_a5_v105",
+    "allando_v_chirp_a5_v110",
+    "allando_v_chirp_a5_v115",
+    "allando_v_chirp_a5_v120",
+    "allando_v_chirp_a5_v125",
+    "allando_v_chirp_a5_v130",
+    "allando_v_chirp_a5_v135",
+    "allando_v_chirp_a5_v140",
+    "allando_v_chirp_a5_v15",
+    "allando_v_chirp_a5_v20",
+    "allando_v_chirp_a5_v25",
+    "allando_v_chirp_a5_v40",
+    "allando_v_chirp_a5_v5",
+    "allando_v_chirp_a5_v55",
+    "allando_v_chirp_a5_v60",
+    "allando_v_chirp_a5_v75",
+    "allando_v_chirp_a5_v80",
+    "allando_v_chirp_a5_v85",
+    "allando_v_chirp_a5_v90",
+    "allando_v_savvaltas_alacsony_v110",
+    "allando_v_savvaltas_alacsony_v115",
+    "allando_v_savvaltas_alacsony_v125",
+    "allando_v_savvaltas_alacsony_v130",
+    "allando_v_savvaltas_alacsony_v135",
+    "allando_v_savvaltas_alacsony_v140",
+    "allando_v_savvaltas_alacsony_v20",
+    "allando_v_savvaltas_alacsony_v30",
+    "allando_v_savvaltas_alacsony_v45",
+    "allando_v_savvaltas_alacsony_v55",
+    "allando_v_savvaltas_alacsony_v60",
+    "allando_v_savvaltas_alacsony_v65",
+    "allando_v_savvaltas_alacsony_v85",
+    "allando_v_savvaltas_alacsony_v90",
+    "allando_v_savvaltas_alacsony_v95",
+    "allando_v_savvaltas_kozepes_v100",
+    "allando_v_savvaltas_kozepes_v110",
+    "allando_v_savvaltas_kozepes_v115",
+    "allando_v_savvaltas_kozepes_v130",
+    "allando_v_savvaltas_kozepes_v135",
+    "allando_v_savvaltas_kozepes_v20",
+    "allando_v_savvaltas_kozepes_v35",
+    "allando_v_savvaltas_kozepes_v40",
+    "allando_v_savvaltas_kozepes_v45",
+    "allando_v_savvaltas_kozepes_v50",
+    "allando_v_savvaltas_kozepes_v60",
+    "allando_v_savvaltas_kozepes_v70",
+    "allando_v_savvaltas_kozepes_v80",
+    "allando_v_savvaltas_kozepes_v85",
+    "allando_v_savvaltas_kozepes_v95",
+    "allando_v_savvaltas_magas_v10",
+    "allando_v_savvaltas_magas_v105",
+    "allando_v_savvaltas_magas_v110",
+    "allando_v_savvaltas_magas_v115",
+    "allando_v_savvaltas_magas_v120",
+    "allando_v_savvaltas_magas_v125",
+    "allando_v_savvaltas_magas_v130",
+    "allando_v_savvaltas_magas_v140",
+    "allando_v_savvaltas_magas_v20",
+    "allando_v_savvaltas_magas_v25",
+    "allando_v_savvaltas_magas_v50",
+    "allando_v_savvaltas_magas_v65",
+    "allando_v_savvaltas_magas_v80",
+    "allando_v_savvaltas_magas_v85",
+    "allando_v_savvaltas_magas_v90",
+    "allando_v_sin_a2_f1_v100",
+    "allando_v_sin_a2_f1_v105",
+    "allando_v_sin_a2_f1_v110",
+    "allando_v_sin_a2_f1_v115",
+    "allando_v_sin_a2_f1_v135",
+    "allando_v_sin_a2_f1_v140",
+    "allando_v_sin_a2_f1_v15",
+    "allando_v_sin_a2_f1_v20",
+    "allando_v_sin_a2_f1_v30",
+    "allando_v_sin_a2_f1_v35",
+    "allando_v_sin_a2_f1_v40",
+    "allando_v_sin_a2_f1_v45",
+    "allando_v_sin_a2_f1_v50",
+    "allando_v_sin_a2_f1_v60",
+    "allando_v_sin_a2_f1_v65",
+    "allando_v_sin_a2_f1_v70",
+    "allando_v_sin_a2_f3_v120",
+    "allando_v_sin_a2_f3_v125",
+    "allando_v_sin_a2_f3_v130",
+    "allando_v_sin_a2_f3_v135",
+    "allando_v_sin_a2_f3_v15",
+    "allando_v_sin_a2_f3_v25",
+    "allando_v_sin_a2_f3_v35",
+    "allando_v_sin_a2_f3_v40",
+    "allando_v_sin_a2_f3_v45",
+    "allando_v_sin_a2_f3_v5",
+    "allando_v_sin_a2_f3_v50",
+    "allando_v_sin_a2_f3_v65",
+    "allando_v_sin_a2_f3_v70",
+    "allando_v_sin_a2_f3_v75",
+    "allando_v_sin_a2_f3_v90",
+    "allando_v_sin_a2_f5_v10",
+    "allando_v_sin_a2_f5_v125",
+    "allando_v_sin_a2_f5_v20",
+    "allando_v_sin_a2_f5_v30",
+    "allando_v_sin_a2_f5_v35",
+    "allando_v_sin_a2_f5_v40",
+    "allando_v_sin_a2_f5_v45",
+    "allando_v_sin_a2_f5_v50",
+    "allando_v_sin_a2_f5_v55",
+    "allando_v_sin_a2_f5_v65",
+    "allando_v_sin_a2_f5_v85",
+    "allando_v_sin_a2_f5_v90",
+    "allando_v_sin_a2_f5_v95",
+    "allando_v_sin_a2_f7_v100",
+    "allando_v_sin_a2_f7_v105",
+    "allando_v_sin_a2_f7_v110",
+    "allando_v_sin_a2_f7_v115",
+    "allando_v_sin_a2_f7_v125",
+    "allando_v_sin_a2_f7_v140",
+    "allando_v_sin_a2_f7_v15",
+    "allando_v_sin_a2_f7_v25",
+    "allando_v_sin_a2_f7_v35",
+    "allando_v_sin_a2_f7_v5",
+    "allando_v_sin_a2_f7_v50",
+    "allando_v_sin_a2_f7_v55",
+    "allando_v_sin_a2_f7_v60",
+    "allando_v_sin_a2_f7_v65",
+    "allando_v_sin_a2_f7_v70",
+    "allando_v_sin_a2_f7_v75",
+    "allando_v_sin_a2_f7_v80",
+    "allando_v_sin_a2_f7_v85",
+    "allando_v_sin_a2_f7_v95",
+    "allando_v_sin_a8_f1_v105",
+    "allando_v_sin_a8_f1_v110",
+    "allando_v_sin_a8_f1_v120",
+    "allando_v_sin_a8_f1_v125",
+    "allando_v_sin_a8_f1_v130",
+    "allando_v_sin_a8_f1_v15",
+    "allando_v_sin_a8_f1_v20",
+    "allando_v_sin_a8_f1_v30",
+    "allando_v_sin_a8_f1_v40",
+    "allando_v_sin_a8_f1_v45",
+    "allando_v_sin_a8_f1_v50",
+    "allando_v_sin_a8_f1_v55",
+    "allando_v_sin_a8_f1_v60",
+    "allando_v_sin_a8_f1_v65",
+    "allando_v_sin_a8_f1_v75",
+    "allando_v_sin_a8_f1_v80",
+    "allando_v_sin_a8_f1_v90",
+    "allando_v_sin_a8_f1_v95",
+    "allando_v_sin_a8_f3_v10",
+    "allando_v_sin_a8_f3_v100",
+    "allando_v_sin_a8_f3_v115",
+    "allando_v_sin_a8_f3_v125",
+    "allando_v_sin_a8_f3_v135",
+    "allando_v_sin_a8_f3_v140",
+    "allando_v_sin_a8_f3_v20",
+    "allando_v_sin_a8_f3_v25",
+    "allando_v_sin_a8_f3_v30",
+    "allando_v_sin_a8_f3_v40",
+    "allando_v_sin_a8_f3_v5",
+    "allando_v_sin_a8_f3_v50",
+    "allando_v_sin_a8_f3_v55",
+    "allando_v_sin_a8_f3_v65",
+    "allando_v_sin_a8_f3_v70",
+    "allando_v_sin_a8_f3_v75",
+    "allando_v_sin_a8_f3_v80",
+    "allando_v_sin_a8_f3_v85",
+    "allando_v_sin_a8_f3_v90",
+    "allando_v_sin_a8_f3_v95",
+    "allando_v_sin_a8_f5_v10",
+    "allando_v_sin_a8_f5_v105",
+    "allando_v_sin_a8_f5_v110",
+    "allando_v_sin_a8_f5_v115",
+    "allando_v_sin_a8_f5_v120",
+    "allando_v_sin_a8_f5_v30",
+    "allando_v_sin_a8_f5_v40",
+    "allando_v_sin_a8_f5_v45",
+    "allando_v_sin_a8_f5_v5",
+    "allando_v_sin_a8_f5_v55",
+    "allando_v_sin_a8_f5_v60",
+    "allando_v_sin_a8_f5_v65",
+    "allando_v_sin_a8_f5_v75",
+    "allando_v_sin_a8_f5_v85",
+    "allando_v_sin_a8_f5_v90",
+    "allando_v_sin_a8_f5_v95",
+    "allando_v_sin_a8_f7_v10",
+    "allando_v_sin_a8_f7_v100",
+    "allando_v_sin_a8_f7_v105",
+    "allando_v_sin_a8_f7_v115",
+    "allando_v_sin_a8_f7_v120",
+    "allando_v_sin_a8_f7_v125",
+    "allando_v_sin_a8_f7_v130",
+    "allando_v_sin_a8_f7_v135",
+    "allando_v_sin_a8_f7_v140",
+    "allando_v_sin_a8_f7_v15",
+    "allando_v_sin_a8_f7_v30",
+    "allando_v_sin_a8_f7_v35",
+    "allando_v_sin_a8_f7_v40",
+    "allando_v_sin_a8_f7_v5",
+    "allando_v_sin_a8_f7_v50",
+    "allando_v_sin_a8_f7_v55",
+    "allando_v_sin_a8_f7_v60",
+    "allando_v_sin_a8_f7_v65",
+    "allando_v_sin_a8_f7_v70",
+    "allando_v_sin_a8_f7_v75",
+    "allando_v_sin_a8_f7_v80",
+    "allando_v_sin_a8_f7_v85",
+    "allando_v_sin_a8_f7_v95",
+    "valtozo_v_savvaltas_fek_magas_pedal1_0",
+    "valtozo_v_savvaltas_gas_kozepes_pedal0_2",
+    "valtozo_v_savvaltas_gas_kozepes_pedal0_5",
+    "valtozo_v_savvaltas_gas_kozepes_pedal1_0",
+    "valtozo_v_sin_fek_a8_f5_pedal0_5",
+    "valtozo_v_sin_fek_a8_f7_pedal0_5",
+    "valtozo_v_sin_gas_a2_f3_pedal0_2",
+    "valtozo_v_sin_gas_a2_f3_pedal1_0",
+    "valtozo_v_sin_gas_a2_f5_pedal0_5",
+    "valtozo_v_sin_gas_a2_f7_pedal1_0",
+    "valtozo_v_sin_gas_a8_f1_pedal1_0",
+    "valtozo_v_sin_gas_a8_f3_pedal0_2",
+    "valtozo_v_sin_gas_a8_f5_pedal1_0",
+    "valtozo_v_sin_gas_a8_f7_pedal0_5",
+    "valtozo_v_sin_gas_a8_f7_pedal1_0"
+  ]
+}

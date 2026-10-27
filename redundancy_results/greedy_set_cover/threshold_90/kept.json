@@ -1,0 +1,54 @@
+{
+  "threshold": 90,
+  "count": 16,
+  "by_group": {
+    "allando_v_savvaltas": [
+      "allando_v_savvaltas_alacsony_v10",
+      "allando_v_savvaltas_alacsony_v5",
+      "allando_v_savvaltas_kozepes_v75",
+      "allando_v_savvaltas_magas_v15"
+    ],
+    "allando_v_chirp": [
+      "allando_v_chirp_a1_v90",
+      "allando_v_chirp_a3_v80"
+    ],
+    "allando_v_sin": [
+      "allando_v_sin_a8_f3_v100",
+      "allando_v_sin_a8_f3_v35",
+      "allando_v_sin_a8_f5_v115",
+      "allando_v_sin_a8_f7_v25"
+    ],
+    "valtozo_v_savvaltas_gas": [
+      "valtozo_v_savvaltas_gas_alacsony_pedal0_5",
+      "valtozo_v_savvaltas_gas_alacsony_pedal1_0"
+    ],
+    "valtozo_v_savvaltas_fek": [
+      "valtozo_v_savvaltas_fek_alacsony_pedal0_2"
+    ],
+    "valtozo_v_sin_gas": [
+      "valtozo_v_sin_gas_a2_f1_pedal1_0",
+      "valtozo_v_sin_gas_a8_f1_pedal1_0"
+    ],
+    "valtozo_v_sin_fek": [
+      "valtozo_v_sin_fek_a8_f3_pedal0_5"
+    ]
+  },
+  "all": [
+    "allando_v_chirp_a1_v90",
+    "allando_v_chirp_a3_v80",
+    "allando_v_savvaltas_alacsony_v10",
+    "allando_v_savvaltas_alacsony_v5",
+    "allando_v_savvaltas_kozepes_v75",
+    "allando_v_savvaltas_magas_v15",
+    "allando_v_sin_a8_f3_v100",
+    "allando_v_sin_a8_f3_v35",
+    "allando_v_sin_a8_f5_v115",
+    "allando_v_sin_a8_f7_v25",
+    "valtozo_v_savvaltas_fek_alacsony_pedal0_2",
+    "valtozo_v_savvaltas_gas_alacsony_pedal0_5",
+    "valtozo_v_savvaltas_gas_alacsony_pedal1_0",
+    "valtozo_v_sin_fek_a8_f3_pedal0_5",
+    "valtozo_v_sin_gas_a2_f1_pedal1_0",
+    "valtozo_v_sin_gas_a8_f1_pedal1_0"
+  ]
+}
