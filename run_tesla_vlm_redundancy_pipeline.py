@@ -36,8 +36,10 @@ from pca_baseline import GROUP_PREFIXES, THRESHOLDS
 DEFAULT_OLLAMA_HOST = "127.0.0.1:11434"
 DEFAULT_VLM_MODEL = "qwen3-vl:32b"
 DEFAULT_EMBED_MODEL = "qwen3-embedding:latest"
-# qwen3-vl ships with 262k context + thinking; both make /api/chat glacial.
-DEFAULT_NUM_CTX = 16384
+# Multimodal prompts are ~6–7k tokens; if Qwen still emits <think>, a 16k ctx
+# fills with CoT (prompt+eval == num_ctx, done_reason=length) and never yields
+# JSON. 32k leaves room for thinking + the JSON answer without changing prompts.
+DEFAULT_NUM_CTX = 32768
 # qwen3-vl often burns thousands of tokens on <think> before JSON; leave headroom.
 DEFAULT_NUM_PREDICT = 16384
 # Fusion prose is ~200-300 words; keep fusion budget modest when used.
@@ -454,6 +456,7 @@ def ollama_chat(
     num_ctx: int = DEFAULT_NUM_CTX,
     num_predict: int = DEFAULT_NUM_PREDICT,
     think: bool = False,
+    temperature: float = 0.0,
 ) -> str:
     system = _ensure_no_think(system)
     log(
@@ -474,8 +477,8 @@ def ollama_chat(
         # /no_think in the system prompt is what actually suppresses CoT.
         "think": think,
         "options": {
-            "temperature": 0,
-            # Model default context is 262144 — keep this modest.
+            "temperature": float(temperature),
+            # Keep below the model max (262k); see DEFAULT_NUM_CTX rationale.
             "num_ctx": int(num_ctx),
             "num_predict": int(num_predict),
         },
@@ -484,7 +487,8 @@ def ollama_chat(
         payload["format"] = "json"
     log(
         f"  chat options: think={think} num_ctx={num_ctx} "
-        f"num_predict={num_predict} format_json={json_format} "
+        f"num_predict={num_predict} temperature={temperature} "
+        f"format_json={json_format} "
         f"no_think_prefix={system.lstrip().startswith('/no_think')}"
     )
     # region agent log
@@ -511,6 +515,7 @@ def ollama_chat(
     thinking = (msg.get("thinking") or body.get("thinking") or "").strip()
     eval_count = body.get("eval_count")
     prompt_eval_count = body.get("prompt_eval_count")
+    done_reason = body.get("done_reason")
     content, recover_meta = _normalize_model_answer(
         raw_content,
         thinking,
@@ -535,6 +540,7 @@ def ollama_chat(
             "digit_count": digit_count,
             "eval_count": eval_count,
             "prompt_eval_count": prompt_eval_count,
+            "done_reason": done_reason,
             "hit_num_predict": (
                 isinstance(eval_count, int) and eval_count >= int(num_predict)
             ),
@@ -551,7 +557,8 @@ def ollama_chat(
         )
     log(
         f"  reply length={len(content)} chars  source={recover_meta.get('source')} "
-        f"extracted_json={recover_meta.get('extracted_json')}  ({label})"
+        f"extracted_json={recover_meta.get('extracted_json')} "
+        f"done_reason={done_reason}  ({label})"
     )
     return content
 
@@ -653,7 +660,14 @@ def run_task_with_retry(
 ) -> dict:
     last_err: Exception | None = None
     for attempt in range(1, max_attempts + 1):
-        log(f"  Task {label}: attempt {attempt}/{max_attempts}")
+        # Attempt 1 stays greedy (temperature=0), matching the successful corpus.
+        # Later attempts nudge sampling so a deterministic CoT-until-length loop
+        # can escape without changing prompts or the model tag.
+        temperature = 0.0 if attempt == 1 else min(0.2 * (attempt - 1), 0.5)
+        log(
+            f"  Task {label}: attempt {attempt}/{max_attempts} "
+            f"(temperature={temperature})"
+        )
         try:
             raw = ollama_chat(
                 host,
@@ -667,6 +681,7 @@ def run_task_with_retry(
                 num_ctx=num_ctx,
                 num_predict=num_predict,
                 think=False,
+                temperature=temperature,
             )
             if _looks_like_cot(raw):
                 raise ValueError(

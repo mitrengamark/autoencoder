@@ -1,57 +1,96 @@
-# text_vlm_tesla — teljes workflow dokumentáció
+# text_vlm_tesla (v1) — teljes projekt-workflow
 
-Ez a dokumentum végigvezeti a **Tesla manőverek VLM-alapú szöveges leírás → embedding → koszinusz-redundancia → szűrt `.mat` export** folyamatát, az elejétől a végéig.
+Ez a dokumentum a **v1 embeddinges manőver-redundancia módszert** írja le end-to-end: a projektbeli szerepétől a plot-előállításon és a VLM szöveggeneráláson át az embeddingig, a koszinusz-szűrésig és a szűrt `.mat` identifikációs adathalmazig.
 
-A pipeline belépési pontja:
+| | |
+|--|--|
+| Belső név / kimeneti prefix | **`text_vlm_tesla`** |
+| Belépési pont | [`run_tesla_vlm_redundancy_pipeline.py`](../run_tesla_vlm_redundancy_pipeline.py) |
+| Verzió | **v1** (szöveg-only embedding; fusion bekezdés) |
+| Kapcsolódó | v2: [`docs/text_vlm_tesla_v2_workflow.md`](text_vlm_tesla_v2_workflow.md) |
+
+---
+
+## 1. Projektbeli szerep és motiváció
+
+### 1.1 Az identifikációs kontextus
+
+A járműmodell-identifikációhoz (pl. Pacejka / ARX, laterális `vy` / yaw rate) olyan mérési / szimulációs manőverek kellenek, amelyek a becsülni kívánt dinamikáról **érdemi információt** hordoznak. A Tesla szimulációs sorozatban (~458 manőver) sok felvétel hasonló gerjesztést és választ ad; a teljes sorozat feldolgozása felesleges lehet, ugyanakkor egy ritka, erősen gerjesztett manőver kevés másikhoz hasonlíthat, mégis fontos.
+
+A feladat: **utólagos manőver-szintű szűrés** — a kiválasztás egysége egy teljes manőver. A megtartott manőverek numerikus `.mat` adatai **változatlanul** mennek tovább; a nyelvi leírás és az embedding **csak a kiválasztáshoz** szolgál, nem helyettesíti a mérést.
+
+### 1.2 Miért természetes nyelv + embedding?
+
+Egy manőver több, összefüggő jelből áll (kormányzás, perdület, oldalgyorsulás, slip, abroncserő). A strukturált diagramok az időbeli lefutást, a `features.json` a pontos számokat adja. A vizuális nyelvi modell (VLM) e kettőből **összehasonlítható szakmai leírást** készít; a beágyazó modell ehhez sűrű vektort rendel. A koszinusz-hasonlóság a vektortérben jelöli a redundáns párokat.
+
+A módszertani kulcskérdés: *a nyelvi / beágyazott térbeli hasonlóság mennyiben felel meg az identifikáció szempontjából fontos dinamikai hasonlóságnak?*
+
+### 1.3 Hely a projekt módszercsaládjában
+
+| Vonal | Röviden | Tipikus kimenet |
+|-------|---------|-----------------|
+| **VAE / OG_remake** | Dinamikai bottleneck → csoporton belüli hasonlóság | `data_filtered_mat/…` (referencia / proposed) |
+| **PCA baseline** | Ugyanazok a `GROUP_PREFIXES` + küszöbök | Összehasonlító baseline |
+| **text_vlm_tesla (v1)** | Plot + metadata → VLM szöveg → **szöveg-embedding** → cosine | `data_filtered_mat/text_vlm_tesla_{90,95,98}` |
+| **text_vlm_tesla_v2** | ID-fókuszú promptok, nincs fusion, **multimodális** (szöveg+képek) embed | külön DB / mat (lásd v2 doc) |
+
+A v1 a VAE-szűrés **embeddelt / szemantikai** megfelelője: ugyanaz a csoportlogika és küszöbrács, más reprezentáció.
+
+---
+
+## 2. End-to-end áttekintés
 
 ```text
-run_tesla_vlm_redundancy_pipeline.py
+data_tesla/*.mat  (vagy CSV a plot scripthez)
+        │
+        ▼
+ plot_maneuver_structured_panels.py
+        │
+        ▼
+ Results/maneuver_structured_plots_tesla/<maneuver>/
+   ├── *.png  (strukturált panelek)
+   └── features.json
+        │
+        ▼
+┌──────────────────────────────────────────────────────────┐
+│  run_tesla_vlm_redundancy_pipeline.py                    │
+│                                                          │
+│  text  → A.json…D.json + description.txt (fusion)        │
+│  embed → qwen3-embedding → chroma_db/tesla_vlm           │
+│  cosine→ mátrixok + manoeuvres_for_removing_90…99        │
+│  mat   → data_filtered_mat/text_vlm_tesla_{90,95,98}     │
+└──────────────────────────────────────────────────────────┘
+        │
+        ▼
+ identifikáció / további modellezés (megtartott .mat)
 ```
 
-A módszer belső neve (kimeneti mappák / fájlnevek): **`text_vlm_tesla`**.
+A négy pipeline-stage (`text`, `embed`, `cosine`, `mat`) külön-külön is futtatható (`--stages`).
 
 ---
 
-## 1. Cél
+## 3. Előfeltételek
 
-A cél nem az, hogy „szép szöveget” írjon a modell, hanem hogy:
-
-1. minden manőverről **konzisztens, diszkriminatív természetes nyelvi leírás** készüljön (plotok + numerikus metadata alapján);
-2. ezeket **sűrű embeddinggé** alakítsuk;
-3. **manővercsoporton belül** koszinusz-hasonlósággal megtaláljuk a redundáns (túl hasonló) manővereket;
-4. a megtartott manőverek `.mat` fájljait külön mappába exportáljuk **identifikáció / további modellezés** céljára.
-
-Ez a VAE bottleneck-alapú (`OG_remake`) szűrés **embeddelt / szemantikai** megfelelője.
-
----
-
-## 2. Előfeltételek
-
-### 2.1 Adatok
+### 3.1 Adatok
 
 | Szükséges | Alapértelmezett útvonal | Megjegyzés |
 |-----------|-------------------------|------------|
-| Strukturált plotok + `features.json` manőverenként | `Results/maneuver_structured_plots_tesla/<maneuver>/` | A text stage bemenete |
-| Nyers / forrás `.mat` fájlok | `data_tesla/` | A mat stage innen másol |
+| Forrás mérések | `data_tesla/` | Mat stage innen másol |
+| Strukturált plotok + metadata | `Results/maneuver_structured_plots_tesla/<maneuver>/` | Text stage bemenete |
 | Promptok | `prompts/` | system + task A–D + fusion |
 
-A plot mappában típikusan megtalálható (többek között):
+### 3.2 Szoftver / szolgáltatások
 
-- `features.json` — időbeli / jelstatisztikai metadata
-- stacked / timecolor PNG-k (sebesség, gyorsulás, pálya, slip, erők, stb.)
-
-### 2.2 Szoftver / szolgáltatások
-
-- Python venv a projektben (`.venv`)
+- Projekt `.venv` (`uv sync` / pip a projekt szerint)
 - Futó **Ollama** (`127.0.0.1:11434`)
 - Modellek:
-  - **VLM:** `qwen3-vl:32b` (text stage: A–D + fusion)
-  - **Embedding:** `qwen3-embedding:latest` (embed stage)
-- Python csomagok: `chromadb`, `numpy`, `scikit-learn`, `Pillow` (kép-JPEG kódoláshoz), stb.
+  - **VLM (text):** default `qwen3-vl:32b` — gyakorlatban a CoT / sebesség miatt gyakran `qwen3-vl:8b` a megbízhatóbb választás (`--vlm-model`)
+  - **Embedding:** `qwen3-embedding:latest` (OpenAI-kompatibilis `/v1/embeddings`)
+- Python: `chromadb`, `numpy`, `scikit-learn`, `Pillow`, stb.
 
-### 2.3 Manővercsoportok
+### 3.3 Manővercsoportok
 
-A koszinusz-szűrés **csak csoporton belül** történik (ugyanaz a 7 prefix, mint a VAE/PCA baseline-nél):
+A koszinusz-szűrés **csak csoporton belül** fut (`pca_baseline.GROUP_PREFIXES` — ugyanaz, mint a VAE/PCA vonalon):
 
 1. `allando_v_savvaltas`
 2. `allando_v_chirp`
@@ -61,65 +100,38 @@ A koszinusz-szűrés **csak csoporton belül** történik (ugyanaz a 7 prefix, m
 6. `valtozo_v_sin_gas`
 7. `valtozo_v_sin_fek`
 
-Egy tipikus Tesla futásban kb. **458** manőver; a csoportméretek pl.: 84 + 84 + 224 + 9 + 9 + 24 + 24.
+Tipikus Tesla korpusz: **458** manőver (pl. 84 + 84 + 224 + 9 + 9 + 24 + 24).
 
 ---
 
-## 3. Áttekintő folyamatábra
+## 4. Upstream: strukturált plotok
 
-```text
-Results/maneuver_structured_plots_tesla/<maneuver>/
-        │  PNG plotok + features.json
-        ▼
-┌───────────────────────────────────────┐
-│  STAGE: text                          │
-│  qwen3-vl:32b                         │
-│  A.json → B.json → C.json → D.json    │
-│  → description.txt (fusion)           │
-└───────────────────────────────────────┘
-        │
-        ▼
- texts/tesla_vlm/<maneuver>/
-        │
-        ▼
-┌───────────────────────────────────────┐
-│  STAGE: embed                         │
-│  qwen3-embedding → Chroma upsert      │
-└───────────────────────────────────────┘
-        │
-        ▼
- chroma_db/tesla_vlm  (collection: tesla_vlm_descriptions)
-        │
-        ▼
-┌───────────────────────────────────────┐
-│  STAGE: cosine                        │
-│  csoporton belüli cosine mátrix       │
-│  + manoeuvres_for_removing_90..99     │
-└───────────────────────────────────────┘
-        │
-        ▼
- cosine_similarity_matrices/text_vlm_tesla/
-        │
-        ▼
-┌───────────────────────────────────────┐
-│  STAGE: mat                           │
-│  kept = universe − removed            │
-│  → data_filtered_mat/text_vlm_tesla_* │
-└───────────────────────────────────────┘
+A VLM nem a nyers idősorra néz, hanem előre generált, szinkronizált panelekre.
+
+**Script:** [`plot_maneuver_structured_panels.py`](../plot_maneuver_structured_panels.py)
+
+- Bemenet: manőver CSV / adatkönyvtár
+- Kimenet manőverenként: PNG panelek + `features.json` (determinisztikus jelstatisztika)
+- **Nem** hív LLM-et
+- Manővertípusonként időablak (pl. `allando_v_sin` első 15 s eldobása + renorm; `valtozo_v_sin_*` ≤20 s; sávváltás ≤5 s)
+
+Példa:
+
+```bash
+.venv/bin/python plot_maneuver_structured_panels.py \
+  --data-dir data_tesla \
+  --maneuver allando_v_chirp_a1_v10
 ```
 
-A négy stage külön-külön is futtatható (`--stages`).
+A text stage ezeket a PNG-ket és a `features.json` részhalmazát használja.
 
 ---
 
-## 4. Stage: text — plotokból szakértői JSON, majd fúzió
+## 5. Stage: text — négy specialista + fusion
 
-### 4.1 Bemenet / kimenet
+### 5.1 Bemenet / kimenet
 
-**Bemenet manőverenként:**
-
-- `Results/maneuver_structured_plots_tesla/<maneuver>/features.json`
-- task-specifikus PNG-k (lásd alább)
+**Bemenet:** `Results/maneuver_structured_plots_tesla/<maneuver>/` (PNG + `features.json`)
 
 **Kimenet:**
 
@@ -129,22 +141,26 @@ texts/tesla_vlm/<maneuver>/
   B.json
   C.json
   D.json
-  description.txt
-texts/tesla_vlm/errors.jsonl   # hibák naplója (nem törlődik automatikusan)
+  description.txt          # fusion eredménye — ez megy az embeddingbe
+texts/tesla_vlm/errors.jsonl
 ```
 
-Resume: ha a fájl már létezik és **nincs** `--overwrite`, a task / fusion **skippelődik**.
+Resume: létező fájl + **nincs** `--overwrite` → skip.
 
-### 4.2 Négy specialista task (A–D)
+### 5.2 Közös VLM-hívás szabályai
 
-Minden task:
+Minden A–D (és a fusion) hívásnál:
 
-1. betölti a **közös system promptot** (`prompts/systempromt.toml`);
-2. betölti a **task promptot** (`prompts/task_a.toml` … `task_d.toml`);
-3. a `features.json`-ból **csak a task jeleit / derived mezőit** adja át (a `maneuver` mező **nem** kerül az LLM-hez);
-4. a plotokat JPEG-re kódolja (lefelé skálázva, max oldal ~1280 px), base64-ként küldi az Ollama `/api/chat`-nek;
-5. `format=json` + `think=False` + system elején **`/no_think`** (a Qwen3-VL egyébként CoT-ot ír a `thinking` mezőbe);
-6. validálja a JSON kulcsokat, max 3 próbálkozás.
+1. system prompt: `prompts/systempromt.toml`, elején **`/no_think`**
+2. `think=False` az Ollama payloadban (önmagában nem elég Qwen3-VL-nél)
+3. plotok: JPEG-re skálázva (~max 1280 px), base64
+4. `features.json` **task-specifikus részhalmaza** (a manővernév **nem** megy az LLM-hez)
+5. A–D: `format=json`; fusion: JSON `description` mezővel
+6. max 3 retry; CoT-szerű válasz reject
+
+Gyakorlati defaultok a kódban: `num_ctx=16384`, `num_predict=16384` (fusionnél kisebb felső korlát, `DEFAULT_FUSION_NUM_PREDICT`).
+
+### 5.3 Task A–D (összesen 14 panel)
 
 #### Task A — control + globális válasz
 
@@ -155,7 +171,7 @@ Minden task:
 | Jelek | `vx`, `vy`, `ax`, `ay`, `az`, `gas`, `brake`, `steeringangel`, `yawrate` |
 | Derived | `speed_kmh`, `accel_magnitude` |
 
-#### Task B — pálya + rotációs / testdinamika
+#### Task B — pálya + rotációs dinamika
 
 | | |
 |--|--|
@@ -164,16 +180,16 @@ Minden task:
 | Jelek | `vx`, `vy`, `yaw`, `yawrate`, `roll`, `rollrate`, `pitch`, `pitchrate` |
 | Derived | `trajectory` |
 
-#### Task C — gumi slip + keréksebesség
+#### Task C — slip + keréksebesség
 
 | | |
 |--|--|
 | Prompt | `prompts/task_c.toml` |
 | Plotok | `06_sideslip_stacked.png`, `07_longslip_stacked.png`, `09_wheel_speeds_stacked.png` |
-| Jelek | `sideslip{FL,FR,RL,RR}`, `longslip{…}`, keréksebességek `FL`…`RR` [rad/s] |
+| Jelek | sideslip / longslip / keréksebesség FL…RR |
 | Derived | front/rear slip mean-ek |
 
-#### Task D — gumi hossz-/keresztirányú erők
+#### Task D — Fx / Fy
 
 | | |
 |--|--|
@@ -182,9 +198,7 @@ Minden task:
 | Jelek | `Fx*`, `Fy*`, `sideslip*` |
 | Derived | front/rear Fx/Fy mean-ek |
 
-### 4.3 Közös JSON séma (A–D)
-
-Minden task ugyanazt a mezőstruktúrát tölti, de **csak a saját hatókörében**:
+### 5.4 Közös JSON séma (A–D)
 
 ```json
 {
@@ -200,176 +214,148 @@ Minden task ugyanazt a mezőstruktúrát tölti, de **csak a saját hatóköréb
 }
 ```
 
-Fontos szabályok a system / task promptokban:
+Szabályok (system / task promptok): a számok forrása a metadata; a ploté az időbeli alak; ne inventáljon manővernevet; aszimmetria csak ha a számok indokolják.
 
-- a numerikus metadata a pontos értékek forrása; a plot a időbeli szerkezeté / alaké;
-- **ne** inventáljon manővernevet, file stemet, run ID-t;
-- aszimmetriát csak akkor állítson, ha a számok tényleg különböznek;
-- mezők legyenek egymással konzisztensek.
-
-### 4.4 Fusion → `description.txt`
-
-A négy JSON-t **kép nélkül** összeolvasztja a modell:
+### 5.5 Fusion → `description.txt`
 
 - Prompt: `prompts/description_fusion.toml`
-- Kimeneti forma: `{"description":"<egy folyó 200–300 szavas bekezdés>"}`
-- Kötelező: **minden szám és mértékegység szóval** (nincs digit a leírásban)
-- `num_predict` fusionnél max **1024** (hogy ne égjen el CoT-ra a 4096-os keret)
-- CoT-szerű válasz (`We are given…`, `Steps:` stb.) → reject / hiba
-- A pipeline kicsomagolja a `description` mezőt és `description.txt`-be írja
-
-Ez a fájl lesz az embedding bemenete.
-
-### 4.5 Ollama / Qwen3-VL sajátosságok (gyakorlati)
-
-- A `think=False` **önmagában nem elég**; a system elején kell a `/no_think`.
-- A válasz gyakran üres `content` + kitöltött `thinking` mező — a kód ilyenkor a `thinking`-et használja válaszként (ha az már a JSON / bekezdés).
-- Alap `num_ctx=16384` (a modell saját 262k kontextusa nagyon lassú lenne).
-- Timeout default: 1800 s / hívás.
+- Kép **nélkül**, a négy JSON alapján
+- Forma: `{"description":"<egy folyó ~200–300 szavas bekezdés>"}`
+- Kötelező: **minden szám szóval** (a leírásban ne legyen digit)
+- Kimenet: `description.txt` → ez az **egyedüli** embed bemenet v1-ben
 
 ---
 
-## 5. Stage: embed — leírás → vektor → Chroma
+## 6. Stage: embed — szöveg → vektor → Chroma
 
-### 5.1 Működés
+### 6.1 Működés
 
-Manőverenként:
+1. Beolvassa `texts/tesla_vlm/<maneuver>/description.txt`-et
+2. Ha nincs `--overwrite` és az ID már a Chromában van → skip
+3. `POST /v1/embeddings`, modell: `qwen3-embedding:latest`
+4. Upsert: `id=maneuver`, embedding, `document=description`, metadata `{maneuver, group}`
 
-1. beolvassa `texts/tesla_vlm/<maneuver>/description.txt`-et;
-2. ha nincs `--overwrite` és az ID már létezik Chroma-ban → **skip**;
-3. Ollama OpenAI-kompatibilis endpoint: `POST /v1/embeddings` modellel `qwen3-embedding:latest`;
-4. `collection.upsert(id=maneuver, embedding=…, document=description, metadata={maneuver, group})`.
-
-### 5.2 Tárolás
+### 6.2 Tárolás
 
 | | |
 |--|--|
 | Path | `chroma_db/tesla_vlm` |
 | Collection | `tesla_vlm_descriptions` |
-| Tér | cosine (`hnsw:space=cosine`) |
-| Tipikus dim | 4096 |
+| Metric | cosine (`hnsw:space=cosine`) |
+| Dim | tipikusan **4096** |
 
-**Fontos:** az upsert ID-nként történik. Egy-egy manőver javításakor **nem kell** az összeset újraembeddelni — elég:
+**v1 sajátosság:** az embedding **csak szöveg**; a plotok a text stage-ben „beépülnek” a leírásba, de az embedder nem látja újra a képeket. (A v2 ezt multimodalissá teszi.)
+
+Részleges újraembed:
 
 ```bash
 .venv/bin/python -u run_tesla_vlm_redundancy_pipeline.py \
   --stages embed --overwrite \
-  --maneuvers <javított_manőver_1> <javított_manőver_2> ...
+  --maneuvers <manőver_1> <manőver_2>
 ```
 
 ---
 
-## 6. Stage: cosine — csoporton belüli hasonlóság és redundancia
-
-### 6.1 Működés
-
-1. A `texts/tesla_vlm` alatt **összes** `description.txt`-es manővert veszi (nem csak a CLI `--maneuvers` listát).
-2. Lekéri az embeddingeket Chromából.
-3. 7 csoportba rendezi a prefix alapján.
-4. Csoportonként koszinusz-hasonlósági mátrixot számol.
-5. (Opcionálisan) heatmap + `.npy` + `.csv` + label JSON:
-   - `cosine_similarity_matrices/text_vlm_tesla/text_vlm_tesla_cosine_similarity_matrix_<group>.*`
-6. Küszöbönként (`90` … `99`) lefuttatja a meglévő `CosineSimilarity.detect_redundancy` / `remove_redundancy` logikát.
-7. Kiírja:
-   - `manoeuvres_for_removing_<thr>_text_vlm_tesla.json`
-
-A JSON struktúra tipikusan csoport-index → eltávolítandó manővernevek listája.
-
-### 6.2 Küszöb értelmezése
-
-- Magasabb küszöb (pl. **98–99%**) → csak a **nagyon** hasonló párok számítanak redundánsnak → kevés eltávolítás.
-- Alacsonyabb küszöb (pl. **90%**) → agresszívebb szűrés → kevesebb megtartott manőver.
-
-A VLM embeddingeknél a hasonlóságok gyakran magasak, ezért:
-
-| Küszöb | Tipikus removed (≈458-ból) | Tipikus kept |
-|--------|----------------------------|--------------|
-| 90% | ~423 | ~35 |
-| 95% | ~193 | ~265 |
-| 98% | ~1 | ~457 |
-| 99% | 0 | mind |
-
-**Identifikációra ajánlott (projekt döntés):** **`text_vlm_tesla` @ 95%**.
-
----
-
-## 7. Stage: mat — megtartott `.mat` export
+## 7. Stage: cosine — csoporton belüli redundancia
 
 ### 7.1 Működés
 
-1. Indexeli a forrás `.mat` fájlokat: `data_tesla/`.
-2. Küszöbönként (alapból **90, 95, 98**) betölti a `manoeuvres_for_removing_*_text_vlm_tesla.json`-t.
-3. `kept = összes_forrás − removed`.
-4. Újraépíti a kimeneti mappát, másolja (vagy linkeli) a megtartott fájlokat, és ír egy `filter_manifest.json`-t.
+1. Minden `description.txt`-es manőver (a cosine **nem** szűkíti a `--maneuvers` listára)
+2. Embeddingek lekérése Chromából
+3. 7 csoport prefix szerint
+4. Csoportonként koszinusz-mátrix (`sklearn`)
+5. Heatmap / `.npy` / `.csv` / label JSON a matrices mappába
+6. Küszöbönként (`90`…`99`): `CosineSimilarity.detect_redundancy` → `remove_redundancy`
+7. `manoeuvres_for_removing_<thr>_text_vlm_tesla.json` (csoport-index → eltávolítandó nevek)
 
-### 7.2 Kimenet
+Logika: ha két manőver hasonlósága ≥ `threshold/100`, redundáns párnak számít; a remove lépés csoportszinten kiválasztja az eltávolítandókat (lásd [`cosine_similarity.py`](../cosine_similarity.py)).
+
+### 7.2 Küszöb értelmezése
+
+| Küszöb | Jelleg | Tipikus kept (458-ból, kész v1 korpusz) |
+|--------|--------|------------------------------------------|
+| 90% | agresszív | ~35 |
+| **95%** | **ajánlott ID-hez** | **~265** |
+| 98% | enyhe | ~457 |
+| 99% | gyakorlatilag semmi | mind |
+
+A VLM-szövegek embeddingjei gyakran magas koszinuszt adnak → a 90% nagyon szigorú, a 98%+ alig szűr.
+
+**Projekt döntés (v1):** identifikációra **`text_vlm_tesla` @ 95%** → `data_filtered_mat/text_vlm_tesla_95`.
+
+### 7.3 Kimeneti mappa
 
 ```text
-data_filtered_mat/text_vlm_tesla_90/   # agresszív szűrés
-data_filtered_mat/text_vlm_tesla_95/   # ajánlott identifikációhoz
-data_filtered_mat/text_vlm_tesla_98/   # enyhe / szinte semmi szűrés
+cosine_similarity_matrices/text_vlm_tesla/
+  text_vlm_tesla_cosine_similarity_matrix_<group>.{png,npy,csv,…}
+  manoeuvres_for_removing_{90…99}_text_vlm_tesla.json
 ```
-
-Minden mappában:
-
-- a megtartott `*.mat` fájlok;
-- `filter_manifest.json` (kept / removed listák, küszöb, forrás JSON).
 
 ---
 
-## 8. Futtatási parancsok
+## 8. Stage: mat — megtartott `.mat` export
 
-### 8.1 Teljes pipeline (458 manőver)
+1. Indexeli `data_tesla/` összes `.mat` fájlját (**univerzum**)
+2. Küszöbönként (default **90, 95, 98**) betölti a removing JSON-t
+3. `kept = univerzum − removed`
+4. Újraépíti a kimeneti mappát; másol / linkel; `filter_manifest.json`
+
+```text
+data_filtered_mat/text_vlm_tesla_90/
+data_filtered_mat/text_vlm_tesla_95/   ← ajánlott
+data_filtered_mat/text_vlm_tesla_98/
+```
+
+**Fontos előfeltétel:** a cosine / removing lista csak az **embedelt** manőverek közül tud törölni. Ha a Chroma hiányos, a nem embedelt manőverek automatikusan „kept” maradnak (mert nincsenek a remove listán). Teljes, megbízható mat-szűréshez: **458/458** description + Chroma.
+
+---
+
+## 9. Futtatási parancsok
+
+### 9.1 Teljes pipeline
 
 ```bash
 cd ~/codes/autoencoder
-# Ollama fusson, modellek legyenek letöltve
+source .venv/bin/activate
+mkdir -p logs
 
-.venv/bin/python -u run_tesla_vlm_redundancy_pipeline.py \
+screen -S text_vlm_v1
+python -u run_tesla_vlm_redundancy_pipeline.py \
   --stages text embed cosine mat \
-  --vlm-model qwen3-vl:32b
+  --vlm-model qwen3-vl:8b \
+  2>&1 | tee logs/text_vlm_tesla_full_$(date +%Y%m%d_%H%M%S).log
 ```
 
-Megjegyzések:
+- **Ne** használd az `--overwrite`-et resume-hoz (kész A–D / description / Chroma ID megmarad).
+- Text stage a lassú rész (manőverenként több VLM-hívás).
+- A default CLI VLM `qwen3-vl:32b`; a thinking / idő miatt a gyakorlatban gyakran **`qwen3-vl:8b`** a stabilabb.
 
-- **Ne** tedd rá az `--overwrite`-et az első / folytató futásra, ha resume-ot akarsz.
-- A text stage a lassú rész (manőverenként tipikusan ~8–15 perc A–D+fusion).
-- Screen / tmux ajánlott hosszú futáshoz.
-
-### 8.2 Stage-enként (ajánlott hosszú futásnál)
+### 9.2 Stage-enként
 
 ```bash
-# 1) Lassú rész
-.venv/bin/python -u run_tesla_vlm_redundancy_pipeline.py --stages text --vlm-model qwen3-vl:32b
-
-# 2) Gyors rész
-.venv/bin/python -u run_tesla_vlm_redundancy_pipeline.py --stages embed cosine mat
+python -u run_tesla_vlm_redundancy_pipeline.py --stages text --vlm-model qwen3-vl:8b
+python -u run_tesla_vlm_redundancy_pipeline.py --stages embed cosine mat
 ```
 
-### 8.3 Egy / néhány manőver javítása (resume-barát)
+### 9.3 Hibás manőverek javítása
 
 ```bash
-# Text újraírás csak a hibásokra
-.venv/bin/python -u run_tesla_vlm_redundancy_pipeline.py \
-  --stages text --overwrite --vlm-model qwen3-vl:32b \
+python -u run_tesla_vlm_redundancy_pipeline.py \
+  --stages text --overwrite --vlm-model qwen3-vl:8b \
   --maneuvers manouver_a manouver_b
 
-# Csak ezek upsertje Chromába
-.venv/bin/python -u run_tesla_vlm_redundancy_pipeline.py \
+python -u run_tesla_vlm_redundancy_pipeline.py \
   --stages embed --overwrite \
   --maneuvers manouver_a manouver_b
 
-# Teljes mátrix + mat újraszámolás (gyors; ne korlátozd --maneuvers-szel)
-.venv/bin/python -u run_tesla_vlm_redundancy_pipeline.py \
-  --stages cosine mat
+# Mátrix + mat mindig a teljes DB-re (ne korlátozd --maneuvers-szel)
+python -u run_tesla_vlm_redundancy_pipeline.py --stages cosine mat
 ```
 
-### 8.4 Embedding vizualizáció (opcionális)
-
-PCA / t-SNE 2D+3D, manővercsoportonként színezve:
+### 9.4 Embedding vizualizáció (opcionális)
 
 ```bash
-.venv/bin/python -u plot_text_embed_maneuvers.py \
+python -u plot_text_embed_maneuvers.py \
   --chroma-path chroma_db/tesla_vlm \
   --collection tesla_vlm_descriptions \
   --out-dir Results/text_vlm_tesla_viz \
@@ -377,81 +363,78 @@ PCA / t-SNE 2D+3D, manővercsoportonként színezve:
   --methods pca tsne
 ```
 
-Kimenet:
-
-- `Results/text_vlm_tesla_viz/ALL_groups_pca_2d.png`
-- `Results/text_vlm_tesla_viz/ALL_groups_pca_3d.png`
-- `Results/text_vlm_tesla_viz/ALL_groups_tsne_2d.png`
-- `Results/text_vlm_tesla_viz/ALL_groups_tsne_3d.png`
-
 ---
 
-## 9. Fontos CLI kapcsolók
+## 10. Fontos CLI kapcsolók
 
 | Kapcsoló | Default | Szerep |
 |----------|---------|--------|
-| `--stages` | `text embed cosine mat` | Melyik szakasz(ok) |
+| `--stages` | `text embed cosine mat` | Szakaszok |
 | `--plots-root` | `Results/maneuver_structured_plots_tesla` | Plot + features |
 | `--texts-root` | `texts/tesla_vlm` | A–D + description |
+| `--prompts-dir` | `prompts` | Promptok |
 | `--chroma-path` | `chroma_db/tesla_vlm` | Embedding DB |
-| `--collection` | `tesla_vlm_descriptions` | Chroma collection |
+| `--collection` | `tesla_vlm_descriptions` | Collection |
 | `--matrices-dir` | `cosine_similarity_matrices/text_vlm_tesla` | Cosine kimenet |
 | `--mat-source` | `data_tesla` | Forrás `.mat` |
-| `--mat-out-root` | `data_filtered_mat` | Szűrt `.mat` gyökér |
-| `--vlm-model` | `qwen3-vl:32b` | Vision-language modell |
-| `--embed-model` | `qwen3-embedding:latest` | Embedding modell |
-| `--overwrite` | off | Létező A–D / description / Chroma ID felülírása |
-| `--maneuvers` | mind | Csak megadott manőverek (text/embed) |
-| `--limit` | — | Első N manőver (smoke) |
-| `--num-ctx` | 16384 | Ollama kontextusméret |
-| `--num-predict` | 4096 | Max generált token (fusionnél ≤1024) |
-| `--no-plot` | off | Cosine heatmapek kikapcsolása |
+| `--mat-out-root` | `data_filtered_mat` | Szűrt gyökér |
+| `--vlm-model` | `qwen3-vl:32b` | Vision-language |
+| `--embed-model` | `qwen3-embedding:latest` | Szöveg-embedding |
+| `--overwrite` | off | Felülírás |
+| `--maneuvers` | mind | Text/embed szűkítés |
+| `--limit` | — | Első N (smoke) |
+| `--num-ctx` | 16384 | Ollama kontextus |
+| `--num-predict` | 16384 | Max generált token |
+| `--no-plot` | off | Heatmapek ki |
 
 ---
 
-## 10. Minőségellenőrzés (gyakorlati checklist)
+## 11. Minőségellenőrző checklist
 
-Egy kész korpusznál érdemes ellenőrizni:
+Kész v1 korpusznál:
 
-1. **458/458** (vagy a plot-számmal egyező) mappa `description.txt`-tel.
-2. A–D JSON mindenhol megvan.
-3. A `description.txt`-ekben **nincs számjegy** (`\d`).
-4. Nincs CoT-dump (nem „We are given… / Steps:” kezdetű szöveg).
-5. Chroma `count()` = descriptionök száma.
-6. `manoeuvres_for_removing_*.json` és `data_filtered_mat/text_vlm_tesla_{90,95,98}` friss.
-7. Hibák: `texts/tesla_vlm/errors.jsonl` (történelmi sorok maradhatnak; a javított manővereknél a kimenet számít).
+1. Plot-mappák száma = `description.txt` száma (cél: **458/458**)
+2. Minden manővernél megvan A–D JSON + `description.txt`
+3. `description.txt`-ben **nincs számjegy** (`\d`) — fusion szabály
+4. Nincs CoT-dump a leírásban
+5. Chroma `count()` = descriptionök száma
+6. Friss `manoeuvres_for_removing_*.json` és `data_filtered_mat/text_vlm_tesla_{90,95,98}`
+7. `texts/tesla_vlm/errors.jsonl` — történelmi hibák maradhatnak; a kimeneti fájlok számítanak
+
+**Aktuális kész állapot (referencia):** 458 description, 458 Chroma ID, mat kept ≈ 35 / 265 / 457 (90 / 95 / 98).
 
 ---
 
-## 11. Kapcsolódó fájlok (gyors index)
+## 12. Ismert korlátok (v1)
+
+1. **Szöveg-only embedding** — a plotinformáció csak annyira van jelen, amennyit a fusion bekezdés megőriz; numerikus részletek gyakran szóval íródnak, ami veszteséges lehet.
+2. **Fusion tartalom** — longitudinal control, pálya-narratíva stb. bekerülhet a vektorba; laterális ID (Pacejka/ARX vy/r) szempontjából ez zaj lehet → ez motiválta a **v2**-t.
+3. **Magas koszinuszok** — a küszöbérzékenység erős; 90% vs 95% vs 98% kept-számok erősen szórnak.
+4. **Hiányos Chroma** — a mat stage az egész `data_tesla` univerzumot használja; nem embedelt manőver ≠ eltávolított.
+5. **Qwen3-VL thinking** — `/no_think` + `think=False` kell; nagyobb VL modelleknél (pl. 32b) a thinking kikapcsolása nem mindig megbízható.
+
+---
+
+## 13. Fájlindex
 
 | Fájl / mappa | Szerep |
 |--------------|--------|
-| `run_tesla_vlm_redundancy_pipeline.py` | Teljes orkesztrátor |
-| `prompts/systempromt.toml` | Közös VLM system szabályok |
+| `plot_maneuver_structured_panels.py` | Plot + `features.json` |
+| `run_tesla_vlm_redundancy_pipeline.py` | v1 orkesztrátor |
+| `prompts/systempromt.toml` | Közös VLM szabályok |
 | `prompts/task_{a,b,c,d}.toml` | Specialista taskok |
 | `prompts/description_fusion.toml` | A–D → egy bekezdés |
-| `cosine_similarity.py` | Redundancia detektálás / eltávolítás |
-| `build_filtered_mat_from_removing_json.py` | Mat indexelés / másolás segédek |
+| `cosine_similarity.py` | Redundancia detektálás / remove |
+| `build_filtered_mat_from_removing_json.py` | Mat index / másolás |
 | `pca_baseline.py` | `GROUP_PREFIXES`, `THRESHOLDS` |
-| `plot_text_embed_maneuvers.py` | PCA/t-SNE viz |
+| `plot_text_embed_maneuvers.py` | PCA / t-SNE viz |
 | `texts/tesla_vlm/` | Szöveges korpusz |
 | `chroma_db/tesla_vlm/` | Embedding DB |
 | `cosine_similarity_matrices/text_vlm_tesla/` | Mátrixok + removing JSON |
-| `data_filtered_mat/text_vlm_tesla_*` | Szűrt identifikációs adathalmaz |
+| `data_filtered_mat/text_vlm_tesla_*` | Szűrt ID-adathalmaz |
 
 ---
 
-## 12. Döntési összefoglaló (projektállapot)
+## 14. Egy mondatos összefoglaló
 
-- A **VAE (`OG_remake`)** a dinamikai bottleneck-alapú szűrés referencia / „proposed” vonala.
-- A **`text_vlm_tesla`** az **embeddelt, szemantikai** szűrés: plot+metadata → természetes nyelv → embedding.
-- Identifikációra a VLM-vonalon a gyakorlatban elfogadott választás:
-  - **`data_filtered_mat/text_vlm_tesla_95`** (~265 manőver).
-- A 90%-os set nagyon kicsi (~35); a 98%-os gyakorlatilag alig szűr.
-
----
-
-## 13. Egy mondatos végigvezetés
-
-**Plotok + features → négy VLM-szakértő JSON (A–D) → szóval kiírt fúziós leírás → embedding Chroma-ba → csoporton belüli koszinusz-redundancia → a megtartott manőverek `.mat` fájljainak exportja identifikációhoz.**
+**Strukturált plotok + numerikus metadata → négy VLM-szakértő JSON (A–D) → számjegy nélküli fúziós bekezdés → szöveg-embedding Chroma-ba → csoporton belüli koszinusz-redundancia → a megtartott manőverek változatlan `.mat` exportja identifikációhoz (`text_vlm_tesla`, ajánlott küszöb 95%).**
