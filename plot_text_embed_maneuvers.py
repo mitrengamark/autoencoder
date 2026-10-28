@@ -276,11 +276,16 @@ def plot_all_groups_overview(
                 label=f"{group} (n={mask.sum()})",
                 alpha=0.9,
             )
-        ax.set_title(f"All Tesla groups — {subtitle} (2D)")
-        ax.set_xlabel("Component 1")
-        ax.set_ylabel("Component 2")
+        ax.set_xlabel("")
+        ax.set_ylabel("")
         ax.grid(True, alpha=0.25)
-        ax.legend(loc="best", fontsize=8, frameon=True)
+        ax.legend(
+            loc="center left",
+            bbox_to_anchor=(1.02, 0.5),
+            fontsize=18,
+            frameon=True,
+            markerscale=1.8,
+        )
         fig.tight_layout()
         out_2d = out_dir / f"ALL_groups_{method}_2d.png"
         fig.savefig(out_2d, dpi=160, bbox_inches="tight")

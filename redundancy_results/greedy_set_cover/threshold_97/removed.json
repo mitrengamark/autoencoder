@@ -1,0 +1,111 @@
+{
+  "threshold": 97,
+  "count": 15,
+  "by_group_index": {
+    "1": [
+      "allando_v_savvaltas_alacsony_v115",
+      "allando_v_savvaltas_kozepes_v115"
+    ],
+    "2": [
+      "allando_v_chirp_a3_v20",
+      "allando_v_chirp_a3_v40",
+      "allando_v_chirp_a3_v70",
+      "allando_v_chirp_a3_v85",
+      "allando_v_chirp_a5_v125",
+      "allando_v_chirp_a5_v70"
+    ],
+    "3": [
+      "allando_v_sin_a2_f1_v110",
+      "allando_v_sin_a2_f5_v35",
+      "allando_v_sin_a2_f5_v95",
+      "allando_v_sin_a8_f1_v5",
+      "allando_v_sin_a8_f3_v30",
+      "allando_v_sin_a8_f5_v35"
+    ],
+    "4": [],
+    "5": [],
+    "6": [
+      "valtozo_v_sin_gas_a2_f5_pedal0_2"
+    ],
+    "7": []
+  },
+  "assignments": {
+    "allando_v_savvaltas_alacsony_v115": {
+      "representative": "allando_v_savvaltas_kozepes_v120",
+      "similarity": 0.9702154397964478
+    },
+    "allando_v_savvaltas_kozepes_v115": {
+      "representative": "allando_v_savvaltas_kozepes_v120",
+      "similarity": 0.9712632894515991
+    },
+    "allando_v_chirp_a3_v20": {
+      "representative": "allando_v_chirp_a3_v10",
+      "similarity": 0.9713109731674194
+    },
+    "allando_v_chirp_a3_v40": {
+      "representative": "allando_v_chirp_a3_v65",
+      "similarity": 0.9722867608070374
+    },
+    "allando_v_chirp_a3_v70": {
+      "representative": "allando_v_chirp_a3_v65",
+      "similarity": 0.9731373190879822
+    },
+    "allando_v_chirp_a3_v85": {
+      "representative": "allando_v_chirp_a1_v45",
+      "similarity": 0.9720409512519836
+    },
+    "allando_v_chirp_a5_v125": {
+      "representative": "allando_v_chirp_a3_v140",
+      "similarity": 0.9719725251197815
+    },
+    "allando_v_chirp_a5_v70": {
+      "representative": "allando_v_chirp_a5_v30",
+      "similarity": 0.9718878269195557
+    },
+    "allando_v_sin_a2_f1_v110": {
+      "representative": "allando_v_sin_a2_f1_v100",
+      "similarity": 0.9715672731399536
+    },
+    "allando_v_sin_a2_f5_v35": {
+      "representative": "allando_v_sin_a2_f1_v35",
+      "similarity": 0.9716252684593201
+    },
+    "allando_v_sin_a2_f5_v95": {
+      "representative": "allando_v_sin_a2_f5_v90",
+      "similarity": 0.9753854274749756
+    },
+    "allando_v_sin_a8_f1_v5": {
+      "representative": "allando_v_sin_a2_f3_v15",
+      "similarity": 0.9708729982376099
+    },
+    "allando_v_sin_a8_f3_v30": {
+      "representative": "allando_v_sin_a2_f7_v30",
+      "similarity": 0.9719712138175964
+    },
+    "allando_v_sin_a8_f5_v35": {
+      "representative": "allando_v_sin_a8_f5_v25",
+      "similarity": 0.9726172685623169
+    },
+    "valtozo_v_sin_gas_a2_f5_pedal0_2": {
+      "representative": "valtozo_v_sin_gas_a2_f3_pedal0_2",
+      "similarity": 0.9801245331764221
+    }
+  },
+  "all": [
+    "allando_v_chirp_a3_v20",
+    "allando_v_chirp_a3_v40",
+    "allando_v_chirp_a3_v70",
+    "allando_v_chirp_a3_v85",
+    "allando_v_chirp_a5_v125",
+    "allando_v_chirp_a5_v70",
+    "allando_v_savvaltas_alacsony_v115",
+    "allando_v_savvaltas_kozepes_v115",
+    "allando_v_sin_a2_f1_v110",
+    "allando_v_sin_a2_f5_v35",
+    "allando_v_sin_a2_f5_v95",
+    "allando_v_sin_a8_f1_v5",
+    "allando_v_sin_a8_f3_v30",
+    "allando_v_sin_a8_f5_v35",
+    "valtozo_v_sin_gas_a2_f5_pedal0_2"
+  ]
+}
