@@ -3,6 +3,7 @@
   "manoeuvres": [
     "allando_v_chirp_a1_v10",
     "allando_v_chirp_a1_v100",
+    "allando_v_chirp_a1_v105",
     "allando_v_chirp_a1_v110",
     "allando_v_chirp_a1_v115",
     "allando_v_chirp_a1_v120",
@@ -24,7 +25,9 @@
     "allando_v_chirp_a1_v65",
     "allando_v_chirp_a1_v70",
     "allando_v_chirp_a1_v75",
+    "allando_v_chirp_a1_v80",
     "allando_v_chirp_a1_v85",
+    "allando_v_chirp_a1_v90",
     "allando_v_chirp_a1_v95",
     "allando_v_chirp_a3_v10",
     "allando_v_chirp_a3_v100",
@@ -34,6 +37,7 @@
     "allando_v_chirp_a3_v120",
     "allando_v_chirp_a3_v125",
     "allando_v_chirp_a3_v130",
+    "allando_v_chirp_a3_v135",
     "allando_v_chirp_a3_v140",
     "allando_v_chirp_a3_v15",
     "allando_v_chirp_a3_v20",
@@ -79,6 +83,7 @@
     "allando_v_chirp_a5_v75",
     "allando_v_chirp_a5_v80",
     "allando_v_chirp_a5_v85",
-    "allando_v_chirp_a5_v90"
+    "allando_v_chirp_a5_v90",
+    "allando_v_chirp_a5_v95"
   ]
 }

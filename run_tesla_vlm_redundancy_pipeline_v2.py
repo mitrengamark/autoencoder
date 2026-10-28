@@ -133,9 +133,18 @@ def stage_text_v2(
     num_predict: int,
 ) -> None:
     v1.log(f"text v2: loading prompts from {prompts_dir}")
+    # Load once into memory. Re-reading per task previously failed mid-run when
+    # prompts_v2/ was temporarily missing on disk (cascade FileNotFoundError).
     system = v1.read_prompt(prompts_dir / "systempromt.toml")
+    task_prompts: dict[str, str] = {}
+    for task_id, spec in TASK_SPECS.items():
+        path = prompts_dir / spec["prompt_file"]
+        if not path.is_file():
+            raise FileNotFoundError(f"Required prompt missing at start: {path}")
+        task_prompts[task_id] = v1.read_prompt(path)
     v1.log(
         f"text v2: model={vlm_model} maneuvers={len(maneuvers)} "
+        f"prompts_cached={sorted(task_prompts)} "
         f"(no fusion; concat A–D technical_summary)"
     )
 
@@ -158,7 +167,7 @@ def stage_text_v2(
                     task_outputs[task_id] = v1.load_json_file(out_path)
                     continue
 
-                task_prompt = v1.read_prompt(prompts_dir / spec["prompt_file"])
+                task_prompt = task_prompts[task_id]
                 images = [plot_dir / name for name in spec["images"]]
                 missing = [str(p) for p in images if not p.is_file()]
                 if missing:
