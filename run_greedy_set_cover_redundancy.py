@@ -238,6 +238,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Only compute filtering + comparison tables.",
     )
+    p.add_argument(
+        "--mat-prefix",
+        default="greedy_set_cover",
+        help="Prefix for filtered .mat folders under --mat-out-root "
+        "(e.g. greedy_set_cover_text_vlm_tesla_v2).",
+    )
     p.add_argument("--root", default=".")
     return p
 
@@ -295,7 +301,7 @@ def main() -> None:
                 print(f"Skip mat export for {thr}: not in --thresholds")
                 continue
             result = results_by_thr[thr]
-            out_dir = mat_out_root / f"greedy_set_cover_{thr}"
+            out_dir = mat_out_root / f"{args.mat_prefix}_{thr}"
             copied = export_mats(
                 kept=result.kept,
                 removed=result.removed,

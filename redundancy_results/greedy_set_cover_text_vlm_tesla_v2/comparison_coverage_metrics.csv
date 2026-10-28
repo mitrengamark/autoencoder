@@ -1,0 +1,21 @@
+Threshold,Method,Kept count,Reduction pct,Coverage pct,Mean assignment similarity,Min assignment similarity
+0.90,old_frequency,19,95.8515,100.0,0.932577,0.900221
+0.90,greedy_set_cover,7,98.4716,100.0,0.940351,0.900741
+0.91,old_frequency,27,94.1048,100.0,0.935915,0.911987
+0.91,greedy_set_cover,10,97.8166,100.0,0.941856,0.910699
+0.92,old_frequency,40,91.2664,99.7817,0.940136,0.922743
+0.92,greedy_set_cover,15,96.7249,100.0,0.943906,0.920585
+0.93,old_frequency,68,85.1528,100.0,0.945216,0.930174
+0.93,greedy_set_cover,23,94.9782,100.0,0.948406,0.930249
+0.94,old_frequency,118,74.2358,100.0,0.950522,0.94011
+0.94,greedy_set_cover,51,88.8646,100.0,0.952655,0.940042
+0.95,old_frequency,221,51.7467,100.0,0.956807,0.950085
+0.95,greedy_set_cover,141,69.214,100.0,0.957016,0.950046
+0.96,old_frequency,371,18.9956,99.7817,0.963659,0.960207
+0.96,greedy_set_cover,329,28.1659,100.0,0.963269,0.960137
+0.97,old_frequency,457,0.2183,100.0,0.97097,0.97097
+0.97,greedy_set_cover,457,0.2183,100.0,0.97097,0.97097
+0.98,old_frequency,458,0.0,100.0,,
+0.98,greedy_set_cover,458,0.0,100.0,,
+0.99,old_frequency,458,0.0,100.0,,
+0.99,greedy_set_cover,458,0.0,100.0,,

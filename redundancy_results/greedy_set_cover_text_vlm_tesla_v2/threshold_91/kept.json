@@ -1,0 +1,42 @@
+{
+  "threshold": 91,
+  "count": 10,
+  "by_group": {
+    "allando_v_savvaltas": [
+      "allando_v_savvaltas_magas_v140",
+      "allando_v_savvaltas_magas_v15"
+    ],
+    "allando_v_chirp": [
+      "allando_v_chirp_a5_v120"
+    ],
+    "allando_v_sin": [
+      "allando_v_sin_a8_f3_v65",
+      "allando_v_sin_a8_f5_v40"
+    ],
+    "valtozo_v_savvaltas_gas": [
+      "valtozo_v_savvaltas_gas_alacsony_pedal1_0"
+    ],
+    "valtozo_v_savvaltas_fek": [
+      "valtozo_v_savvaltas_fek_alacsony_pedal0_5"
+    ],
+    "valtozo_v_sin_gas": [
+      "valtozo_v_sin_gas_a8_f1_pedal1_0"
+    ],
+    "valtozo_v_sin_fek": [
+      "valtozo_v_sin_fek_a2_f5_pedal1_0",
+      "valtozo_v_sin_fek_a8_f5_pedal0_2"
+    ]
+  },
+  "all": [
+    "allando_v_chirp_a5_v120",
+    "allando_v_savvaltas_magas_v140",
+    "allando_v_savvaltas_magas_v15",
+    "allando_v_sin_a8_f3_v65",
+    "allando_v_sin_a8_f5_v40",
+    "valtozo_v_savvaltas_fek_alacsony_pedal0_5",
+    "valtozo_v_savvaltas_gas_alacsony_pedal1_0",
+    "valtozo_v_sin_fek_a2_f5_pedal1_0",
+    "valtozo_v_sin_fek_a8_f5_pedal0_2",
+    "valtozo_v_sin_gas_a8_f1_pedal1_0"
+  ]
+}
