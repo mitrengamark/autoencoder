@@ -1,0 +1,735 @@
+\documentclass[12pt,a4paper,onehalfspacing, oneside]{book} %betűtípus és oldalméret
+\usepackage[utf8]{inputenc}
+
+\usepackage{imakeidx}
+\usepackage[T1]{fontenc} % Output font encoding for international characters
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\graphicspath{ {figures/} }
+\usepackage{array}
+\usepackage[hungarian,hungarian]{babel}
+\usepackage[bindingoffset=0.5cm, left=2.50cm, right=2.50cm, top=3.00cm, bottom=3.00cm]{geometry} %margók
+
+\usepackage{bm}
+\usepackage{lmodern}
+\usepackage{multirow}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\makeatletter
+\usepackage{amsmath}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\makeatother        %egéeszen eddig
+\usepackage{authblk}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{natbib}
+\usepackage{hyperref}
+\include{ref.tex}
+\usepackage{setspace}
+\usepackage{tabularx}
+\onehalfspacing
+\usepackage{subfig}
+\usepackage{subfigure}
+\usepackage{subcaption}
+\usepackage[hungarian, hungarian]{babel}
+\usepackage{indentfirst}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\sisetup{output-decimal-marker={,}}
+\usepackage[table,xcdraw]{xcolor}
+\usepackage{comment}
+
+\usepackage[acronym,nonumberlist]{glossaries}
+\makeglossaries
+
+\newacronym{vae}{VAE}{Variational Autoencoder}
+\newacronym{ml}{ML}{Machine Learning}
+\newacronym{dl}{DL}{Deep Learning}
+\newacronym{llm}{LLM}{Large Language Model}
+\newacronym{pca}{PCA}{Principal Component Analysis}
+\newacronym{tsne}{t-SNE}{t-distributed Stochastic Neighbor Embedding}
+\newacronym{ae}{AE}{Autoencoder}
+\newacronym{usl}{USL}{UnSupervised Learning}
+\newacronym{kl}{KL-divergencia}{Kullback-Leibler divergencia}
+\newacronym{sl}{SL}{Supervised Learning}
+\newacronym{rl}{RL}{Reinforcement Learning}
+\newacronym{mdp}{MDP}{Markov Decision Process}
+\newacronym{mse}{MSE}{Mean Squared Error}
+\newacronym{cog}{CoG}{Center of Gravity}
+\newacronym{ice}{ICE}{Internal CombustionEngine}
+\newacronym{ev}{EV}{Electric Vehicle}
+\newacronym{std}{Std}{Standard deviation}
+
+\begin{document}
+\begin{titlepage}
+\begin{center}
+{ \LARGE \textbf{Járműdinamikai manőverek szemantikus reprezentációján alapuló redundanciaszűrés}\\[2cm]}
+% Upper part of the page
+
+{\normalsize \emph{Szerző:}}\\
+{ \large \bfseries Mitrenga Márk}\\[1cm]
+
+\begin{figure} [h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Picture/HUN-REN-SZTAKI-logo-allo_csak_engedellyel-szines_RGB.png}
+\end{figure}
+
+{\normalsize Rendszer és Irányításelméleti Kutatólaboratórium}\\[2cm]
+
+\begin{minipage}{0.3\textwidth}
+\centering
+{\normalsize \emph{Konzulensek:} \\
+ \bfseries Kővári Bálint\\
+ \bfseries Fényes Dániel\\
+ \bfseries Hegedűs Tamás}\\
+\end{minipage}         
+
+\vfill
+{\normalsize  TDK dolgozat}\\[1cm]
+%{\large \today}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width = 0.6\textwidth]{Picture/logo.png}
+\end{figure}
+
+\end{center}
+\end{titlepage}   
+\newpage
+
+
+\tableofcontents
+\markboth{}{}
+\newpage
+\section*{Absztrakt}
+A korszerű járműfejlesztés egyre nagyobb mennyiségű mérési adatot igényel, miközben nem minden elvégzett teszt szolgáltat valóban új információt a jármű dinamikájáról. A hasonló vagy részben redundáns manőverek feleslegesen növelhetik a mérési időt, az adatmennyiséget és a feldolgozási igényt. Felmerül tehát a kérdés: megállapítható-e egy járműmanőver teljes dinamikai viselkedése alapján, hogy valóban hordoz-e új információt?
+
+A dolgozat egy új, szemantikus reprezentáción alapuló megközelítést vizsgál a járműdinamikai mérési manőverek összehasonlítására és redundanciájuk azonosítására. A numerikus idősorok közvetlen összehasonlítása helyett a módszer célja a manőverek karakterisztikus dinamikai viselkedésének egységes, értelmezhető reprezentációba foglalása, majd ezek hasonlóságának vizsgálata embedding alapú térben. Ez lehetőséget teremthet arra, hogy ne pusztán az adatok numerikus közelsége, hanem a manőverek által hordozott dinamikai információ hasonlósága alapján történjen a redundancia meghatározása.
+
+A dolgozat központi kérdése, hogy ilyen szemantikus reprezentáció segítségével azonosíthatók-e azok a mérési manőverek, amelyek elhagyhatók anélkül, hogy az adathalmaz lényeges járműdinamikai információtartalma elveszne. A módszer eredményességét a redukált adathalmaz további járműdinamikai felhasználhatóságán keresztül vizsgáljuk. A megközelítés hosszabb távon hozzájárulhat olyan mérési stratégiák kialakításához, amelyek kevesebb teszttel, kisebb adatmennyiséggel és alacsonyabb erőforrásigénnyel képesek reprezentatív képet adni a vizsgált rendszer dinamikájáról.
+
+\chapter{Bevezetés}\label{ch:bevezetes}
+\section{Probléma feltárása, motiváció}
+A digitalizáció és az adatgyűjtési technológiák fejlődésével a tudományos kutatások és az ipari fejlesztések során keletkező adatok mennyisége folyamatosan növekszik. A korszerű mérőrendszerek, szimulációs környezetek és automatizált adatgyűjtési eljárások egyre nagyobb felbontású és részletességű adathalmazok előállítását teszik lehetővé. A rendelkezésre álló adatok mennyiségének növekedése azonban nem feltétlenül jár együtt az általuk hordozott új információ arányos bővülésével. Az ismétlődő vagy egymáshoz nagymértékben hasonló megfigyelések jelentős redundanciát eredményezhetnek, amely növeli a tárolási, feldolgozási és számítási erőforrások iránti igényt anélkül, hogy érdemben hozzájárulna a vizsgált rendszer mélyebb megismeréséhez.
+
+Az adathalmazok hatékony kezelése ezért nem kizárólag a rendelkezésre álló számítási kapacitás növelésével, hanem a tárolt információ célzott kiválasztásával is megközelíthető. A redundanciaszűrés célja azoknak az adatoknak az azonosítása, amelyek információtartalma jelentős átfedést mutat más megfigyelésekkel, így eltávolításuk lehetővé teheti az adathalmaz méretének csökkentését. A feladat alapvető nehézsége, hogy az adatok hasonlósága nem feltétlenül azonos az általuk hordozott információ hasonlóságával. Két megfigyelés numerikus értékei eltérhetnek, miközben ugyanazt a jelenséget írják le, de az is előfordulhat, hogy látszólag hasonló adatok között lényeges, a vizsgált rendszer működése szempontjából meghatározó különbségek találhatók. A hatékony redundanciaszűrésnek ezért nem pusztán az adatok mennyiségét kell csökkentenie, hanem törekednie kell az egyedi és releváns információk megőrzésére is.
+
+Ez a probléma különösen jelentős a járműiparban, ahol a járművek fejlesztése, tesztelése és dinamikai viselkedésének vizsgálata nagyszámú mérési manőver végrehajtását igényli. A jármű különböző üzemi állapotainak feltérképezéséhez a sebesség, a kormányzási gerjesztés, a gyorsítás és a fékezés paramétereinek szisztematikus változtatásával számos mérési forgatókönyv alakítható ki. A végrehajtott manőverek során többek között a jármű sebességei, gyorsulásai, forgási mozgásai, kerékcsúszási jellemzői és abroncserői kerülnek rögzítésre. Az egyes mérések így nagy felbontású, többváltozós idősorokat eredményeznek, amelyek feldolgozása és összehasonlítása jelentős erőforrásokat igényelhet.
+
+A mérési paraméterek különbözősége nem feltétlenül eredményez lényegesen eltérő járműdinamikai viselkedést, így a végrehajtott manőverek között jelentős információs átfedés alakulhat ki. Ennek felismerését azonban megnehezíti, hogy a manőverek dinamikai karakterisztikáját számos, egymással összefüggő mérési jel időbeli alakulása határozza meg. A kormányzási beavatkozások, a jármű mozgásállapotai, a kerékcsúszási jellemzők és az abroncserők közötti kapcsolatok, valamint az átmeneti és nemlineáris jelenségek egyaránt lényeges információt hordozhatnak. A redundancia meghatározásakor ezért nem elegendő az egyes jelcsatornák numerikus értékeinek vagy egyszerű statisztikai jellemzőinek összehasonlítása. Olyan megközelítésre van szükség, amely a manőverek teljes dinamikai viselkedését veszi figyelembe, és lehetővé teszi a hasonló információt hordozó mérések azonosítását az egyedi dinamikai sajátosságok megőrzése mellett.
+
+A járműdinamikai vizsgálatok során így alapvető kérdésként merül fel, hogy valóban szükség van-e valamennyi előírt mérési manőver végrehajtására és feldolgozására. Egy nagyszámú tesztből álló mérési sorozatban előfordulhat, hogy bizonyos manőverek nem szolgáltatnak érdemben új információt a jármű viselkedéséről, mivel dinamikai sajátosságaik más mérésekben már megjelentek. Az ilyen manőverek azonosítása és elhagyása jelentős lehetőséget kínálhat a mérési idő, a tárolási igény és az adatfeldolgozási költségek csökkentésére. A kihívás azonban nem egyszerűen a lehető legtöbb mérés eltávolítása, hanem annak meghatározása, hogy mely manőverek nélkülözhetők úgy, hogy a megmaradó adathalmaz továbbra is reprezentatív képet adjon a jármű dinamikai viselkedéséről.
+
+A probléma jelentőségét tovább növeli, hogy egy manőver információtartalma nem feltétlenül ítélhető meg annak bemeneti paraméterei vagy néhány kiemelt mérési jellemzője alapján. Két eltérő körülmények között végrehajtott mérés hasonló dinamikai viselkedést eredményezhet, míg látszólag hasonló manőverek között lényeges különbségek jelentkezhetnek. Különösen fontos, hogy a redundancia felismerése során ne kerüljenek eltávolításra azok a mérések, amelyek egyedi, ritkán előforduló vagy a jármű működési tartományának határához kapcsolódó jelenségeket tartalmaznak. A redundanciaszűrés sikeressége ezért nem kizárólag az eltávolított manőverek számával mérhető, hanem azzal is, hogy a redukált adathalmaz milyen mértékben őrzi meg az eredeti mérési sorozat lényeges dinamikai információit.
+
+Mindez egy további, gyakorlati szempontból is jelentős lehetőséget vet fel. Amennyiben meghatározható, hogy egy korábban elvégzett mérési sorozat mely manőverei bizonyultak redundánsnak, az eredmények a későbbi tesztprogramok megtervezését is támogathatják. Így a redundanciaszűrés nemcsak a már rendelkezésre álló adathalmazok utólagos csökkentésére jelenthet megoldást, hanem hosszabb távon a szükségtelen mérések előzetes elkerüléséhez is hozzájárulhat. A kutatás alapvető célja ezért annak vizsgálata, hogy a járműmanőverek teljes dinamikai viselkedése alapján azonosíthatók-e azok a mérések, amelyek elhagyása érdemi információvesztés nélkül lehetséges. Egy ilyen megközelítés lehetőséget teremthet a járműdinamikai tesztelés hatékonyabbá tételére, a szükséges erőforrások csökkentésére és a reprezentatív mérési adathalmazok célzott kialakítására.
+
+\section{Kapcsolódó kutatások}
+A nagyméretű adathalmazokban előforduló redundancia felismerése és csökkentése a gépi tanulás és az adatintenzív mérnöki alkalmazások egyik fontos kutatási területe. Különböző anyagtudományi adathalmazokon végzett vizsgálatok igazolták, hogy bizonyos feladatok esetén az adatok jelentős része eltávolítható a predikciós teljesítmény számottevő romlása nélkül \cite{li2023exploiting}. Az adathalmaz mérete tehát önmagában nem határozza meg annak információtartalmát, így a megfelelő minták kiválasztása legalább olyan fontos lehet, mint az adatok mennyiségének növelése. A célzott adatcsökkentés egyik lehetséges megközelítése a reprezentatív részhalmazok, az úgynevezett coresetek kiválasztása, amelyek segítségével a teljes tanító adathalmaz optimalizációs hatása egy kisebb, súlyozott részhalmaz felhasználásával közelíthető \cite{mirzasoleiman2020coresets}. Az ilyen eljárások lehetőséget kínálnak a feldolgozandó adatmennyiség csökkentésére, ugyanakkor a kiválasztás szempontjai jellemzően az adott tanulási feladathoz vagy optimalizációs célhoz kapcsolódnak.
+
+A redundancia felismerésének legegyszerűbb megközelítései az adatok közvetlen numerikus összehasonlításán alapulnak. Az euklideszi távolság például lehetővé teszi az azonos dimenziójú minták közötti eltérés meghatározását, idősorok esetében azonban érzékeny az időbeli eltolódásokra és a lefutások sebességének különbségeire. Ennek kezelésére alkalmazható a dinamikus időillesztés, vagyis a Dynamic Time Warping (DTW), amely két idősor elemei között nemlineáris időbeli megfeleltetést keres. Az időbeli illesztés dinamikus programozáson alapuló optimalizálásával eltérő időbeli lefutású, de hasonló alakú jelek is összehasonlíthatóvá válnak \cite{sakoe1978dynamic}. Többváltozós járműdinamikai adatok esetén ugyanakkor a mérési csatornák skálázása, súlyozása és együttes értelmezése további nehézségeket jelenthet.
+
+A közvetlen idősor-összehasonlítás alternatívája a mérési jelekből kinyert jellemzők alapján történő vizsgálat. Ilyen jellemzők lehetnek például a szélsőértékek, a szórás, a frekvenciatartománybeli sajátosságok vagy az egyes jelek közötti korrelációk. A nagyszámú idősorjellemző automatizált előállítására és statisztikai alapú kiválasztására különféle keretrendszerek állnak rendelkezésre, amelyek közül a tsfresh széles körben alkalmazható megoldást kínál \cite{christ2018time}. Az így létrejövő jellemzővektorok további elemzésére klaszterezési módszerek is alkalmazhatók. A klasszikus k-means algoritmus a mintákat a klaszterközéppontokhoz viszonyított távolság alapján csoportosítja \cite{mcqueen1967some}, míg a DBSCAN sűrűségalapú megközelítéssel teszi lehetővé eltérő alakú klaszterek és elkülönülő minták azonosítását \cite{ester1996density}. A klaszterezési módszerek alkalmasak lehetnek hasonló adatok csoportosítására, azonban az eredmény alapvetően a választott jellemzőktől és távolságmértéktől függ. A klasztertagság önmagában nem bizonyítja, hogy az egyes mérések azonos fizikai információt hordoznak, ezért a teljes manőverek redundanciájának megállapításához további szempontok szükségesek.
+
+A nagy dimenziójú adatok kezelésére széles körben alkalmazott megközelítés a dimenziócsökkentés. A főkomponens-analízis, vagyis a Principal Component Analysis (PCA) az eredeti változók lineáris kombinációiból olyan új koordinátarendszert alakít ki, amelyben az első komponensek a lehető legnagyobb varianciát őrzik meg \cite{jolliffe2016principal}. Bár a PCA hatékonyan csökkentheti az egymással korreláló változók számát, lineáris jellege korlátozhatja az összetett nemlineáris kapcsolatok reprezentálását. A nemlineáris dimenziócsökkentési eljárások közé tartozik a t-distributed Stochastic Neighbor Embedding (t-SNE), amely a nagy dimenziós adatok lokális szomszédsági viszonyainak alacsony dimenziós megjelenítésére szolgál \cite{van2008visualizing}. Fontos azonban megkülönböztetni a dimenziócsökkentést és a redundanciaszűrést: az alacsonyabb dimenziós reprezentáció önmagában nem határozza meg, hogy mely teljes mérési manőverek hagyhatók el. A t-SNE esetében ráadásul a kétdimenziós vizualizációban megjelenő távolságok nem tekinthetők automatikusan az eredeti térbeli hasonlóságok pontos megfelelőinek.
+
+A lineáris dimenziócsökkentés korlátainak kezelésére neurális hálózatokon alapuló reprezentációtanulási módszerek is alkalmazhatók. A mély autoenkóderek az eredeti adatok rekonstrukcióján keresztül alacsony dimenziós reprezentációkat képesek megtanulni, amelyek összetett adatstruktúrák esetén a PCA alternatíváját jelenthetik \cite{hinton2006reducing}. Az autoenkóderek tömör reprezentációja ugyanakkor szintén tartalmazhat egymással redundáns jellemzőket, ezért a bottleneck-reprezentáció elemei közötti korrelációk csökkentésére különböző eljárások kerültek kidolgozásra \cite{laakom2024reducing}. A reprezentáció belső redundanciájának mérséklése azonban eltérő feladat az önálló mérési manőverek közötti redundancia azonosításától.
+
+Az autoenkóderek továbbfejlesztett változatai közül kiemelt jelentőségű a Variational Autoencoder (VAE), amely a bemeneti adatokhoz valószínűségi látens reprezentációt rendel \cite{kingma2013auto}. Az ilyen modellek nemlineáris jellemzőkinyerési képessége a járműves alkalmazásokban is hasznosítható. VAE alkalmazásával lehetőség nyílik járműtrajektóriák tömörítésére és reprezentálására, amely a nagy mennyiségű közlekedési mozgásadat feldolgozását is támogathatja \cite{rakos2020compression}. Emellett értelmezhető látens reprezentációkra épülő megoldások is születtek járműtrajektóriák előrejelzésére, amelyekben a megtanult jellemzők egy része szakmailag értelmezhető tulajdonságokhoz kapcsolható \cite{neumeier2021variational}. A VAE-alapú járműves alkalmazások jelentős része ugyanakkor elsősorban a trajektóriák tömörítésére, előrejelzésére vagy értelmezésére összpontosít, nem pedig teljes járműdinamikai tesztmanőverek redundanciaszűrésére.
+
+A rekonstrukcióalapú módszerek mellett a reprezentációtanulás olyan irányai is megjelentek, amelyek az eredeti adatok visszaállítása helyett a különböző minták és időbeli részletek közötti kapcsolatok megtanulására helyezik a hangsúlyt. A hierarchikus kontrasztív tanulás alkalmazásával időbeli kontextust figyelembe vevő idősor-reprezentációk állíthatók elő, amelyek többféle további feldolgozási feladatban is felhasználhatók \cite{yue2022ts2vec}. A kontrasztív reprezentációtanulás ezáltal lehetőséget kínál az időbeli összefüggések megragadására anélkül, hogy a tanulás elsődleges célja a bemeneti adatok rekonstrukciója lenne. Az így kialakított reprezentációk azonban továbbra is a bemeneti idősorok numerikus struktúrájából származnak, és a fizikai szempontból releváns hasonlóságot önmagukban nem garantálják.
+
+A nagyméretű nyelvi és multimodális modellek fejlődése új lehetőségeket teremtett az összetett adatok magasabb szintű értelmezésére. A diagramok feldolgozása különösen releváns ebből a szempontból, mivel az időbeli lefutások és jelkapcsolatok vizuálisan is hordoznak értelmezhető információt. A vizuális jellemzők felismerését és a numerikus összefüggésekre épülő következtetést egyaránt igénylő diagramértelmezési feladatokhoz különböző adatállományok és kiértékelési módszerek kerültek kialakításra, amelyek közé tartozik a ChartQA is \cite{masry2022chartqa}. A diagramok tartalmának strukturált szöveges formába alakításával a vizuális információfeldolgozás és a nyelvi következtetés összekapcsolható, amelyre a DePlot szolgáltat példát \cite{liu2023deplot}. A grafikus és numerikus információk nyelvi feldolgozása ezáltal alkalmas lehet összetett összefüggések értelmezésére, bár a járműdinamikai manőverek információs redundanciájának meghatározása eltérő alkalmazási feladatot jelent.
+
+A vizuális nyelvi modellek, vagyis a Vision-Language Model (VLM) architektúrák lehetővé teszik képi és szöveges információk együttes feldolgozását. A korszerű multimodális modellcsaládok már összetett vizuális tartalmak értelmezésére, több kép együttes feldolgozására és vizuális következtetési feladatokra is alkalmazhatók \cite{bai2025qwen3}. Ennek köszönhetően lehetőség nyílhat a diagramokban megjelenő jelalakok, időbeli események és összefüggések természetes nyelvi leírására. A generált leírások ugyanakkor nem tekinthetők automatikusan a numerikus mérési adatok veszteségmentes megfelelőinek, ezért a szakmai tartalom pontossága és az eredeti dinamikai viselkedéssel való összhangja önálló vizsgálatot igényel.
+
+A természetes nyelvi leírások numerikus összehasonlításához a szövegbeágyazó modellek biztosíthatnak további lehetőséget. A szemantikailag értelmezhető mondatreprezentációk segítségével a szövegek közötti hasonlóság vektorműveletekkel, például koszinusz-hasonlósággal is meghatározható. Erre a megközelítésre épül többek között a Sentence-BERT architektúra \cite{reimers2019sentence}. A nagyméretű nyelvi modellekre épülő korszerű embeddingmodellek további lehetőségeket kínálnak a szemantikus hasonlóságvizsgálat és a visszakeresési feladatok megvalósítására \cite{zhang2025qwen3}. A természetes nyelvi reprezentációk ilyen módon lehetővé teszik a szövegek jelentésalapú összehasonlítását, azonban az általános nyelvi szemantika és a fizikai rendszerek dinamikai hasonlósága között nem feltétlenül áll fenn közvetlen megfelelés. Különösen lényeges lehet ez olyan esetekben, amikor két manőver leírása hasonló jelenségeket tartalmaz, de azok amplitúdója, frekvenciája, időbeli alakulása vagy üzemi tartománya eltér.
+
+A szemantikus reprezentációk előállítása ugyanakkor nem korlátozódik kizárólag természetes nyelvi bemenetekre. A multimodális embeddingmodellek lehetővé teszik a képi és szöveges információk egységes vektortérbe történő leképezését, ezáltal a különböző modalitásokból származó jellemzők közös reprezentációban jelenhetnek meg. A Qwen3-VL-Embedding modellcsalád többek között képek, szövegek és ezek kombinációinak feldolgozását támogatja, ami új lehetőségeket kínál az összetett vizuális és szemantikus információk együttes összehasonlítására \cite{li2026qwen3}. Ez különösen releváns lehet a többváltozós járműdinamikai manőverek vizsgálatában, ahol a diagramokon megjelenő időbeli lefutások és a természetes nyelvi leírások egymást kiegészítő információkat hordozhatnak.
+
+A redundanciaszűréshez kapcsolódó módszerek fejlődésével a közvetlen numerikus összehasonlítás mellett egyre nagyobb szerepet kaptak a statisztikai jellemzőkön és tanult reprezentációkon alapuló eljárások. A hagyományos módszerek hatékony eszközöket biztosítanak a numerikus hasonlóság mérésére, míg a neurális reprezentációtanulás lehetőséget kínál a nemlineáris adatstruktúrák megragadására. A vizuális nyelvi és szövegbeágyazó modellek fejlődése ugyanakkor új irányt nyit a mérési adatok által hordozott összetett információk értelmezésében és összehasonlításában. Továbbra is nyitott kérdés azonban, hogy a többváltozós járműdinamikai manőverek teljes viselkedéséből előállított szemantikus reprezentációk milyen mértékben alkalmasak az információs redundancia felismerésére. Ez indokolja olyan eljárások vizsgálatát, amelyek a numerikus adatok közvetlen összehasonlításán túl a manőverek karakterisztikus dinamikai sajátosságainak egységes reprezentálására és a lényeges információtartalom megőrzése melletti adatcsökkentésre törekednek.
+
+\section{Kutatási célkitűzés és hozzáadott érték}
+A dolgozat célja egy olyan új, szemantikus reprezentáción alapuló redundanciaszűrési módszer kidolgozása és vizsgálata, amely képes a járműdinamikai mérési manőverek közötti információs hasonlóság azonosítására. A kutatás alapvető törekvése, hogy a teljes manőverek összehasonlítása ne kizárólag a mérési adatok numerikus értékei vagy statisztikai jellemzői alapján történjen, hanem azok karakterisztikus dinamikai viselkedését is figyelembe vegye. Ennek központi kérdése, hogy a különböző mérési jelek időbeli lefutása és egymással fennálló kapcsolatai olyan egységes szemantikus reprezentációba foglalhatók-e, amely alkalmas a hasonló dinamikai információt hordozó manőverek felismerésére. A cél ezáltal egy kisebb, ugyanakkor a vizsgált rendszer lényeges dinamikai sajátosságait megőrző mérési adathalmaz kialakítása.
+
+A kutatás egyik legfontosabb hozzáadott értéke a járműdinamikai manőverek szemantikus reprezentációjának kialakítása, amely a mérési adatok közvetlen numerikus összehasonlítása helyett azok dinamikai jelentésének megragadására törekszik. A megközelítés alapját a mérési jelek vizuális és numerikus információinak együttes értelmezése képezi, amelynek eredményeként a manőverek karakterisztikus viselkedése természetes nyelvi formában írható le. Ez lehetőséget kínál arra, hogy az összehasonlítás során ne csupán az egyes mérési változók értékei, hanem azok időbeli alakulása, egymással fennálló kapcsolatai és a jármű egészére jellemző dinamikai jelenségek is figyelembe vehetők legyenek. A szemantikus reprezentáció ezáltal olyan egységes összehasonlítási alap kialakítását célozza, amely a teljes manőver dinamikai sajátosságait együttesen képes jellemezni.
+
+A módszer egyik meghatározó eleme a teljes mérési manőverek több szempontú dinamikai elemzése. Ennek érdekében az eredeti idősorokból egységes szerkezetű, a különböző járműdinamikai jellemzőket bemutató diagramok és kiegészítő numerikus metaadatok kerülnek előállításra. Ezek feldolgozása vizuális nyelvi modell (VLM) alkalmazásával történik, amely elkülönített feladatokon keresztül vizsgálja a jármű beavatkozásait és globális mozgásállapotait, a pályamozgást és forgási dinamikát, a kerékcsúszási jellemzőket, valamint az abroncserők alakulását. A specializált elemzések eredményeinek egyesítésével minden manőverhez egyetlen, egységes szerkezetű szakmai leírás rendelhető. A különböző dinamikai részfolyamatok együttes figyelembevétele lehetőséget kínál olyan jelenségek felismerésére és reprezentálására, amelyek az egyes mérési csatornák önálló vizsgálata vagy egyszerű statisztikai összesítése során háttérbe szorulhatnak.
+
+A kutatás további hozzáadott értéke két szemantikus reprezentációs megközelítés és két redundanciaszűrési algoritmus összehasonlító vizsgálata. A szöveges és multimodális embeddingek lehetővé teszik a teljes mérési manőverek egységes vektortérbeli reprezentálását, míg a hasonlóságuk alapján végrehajtott kiválasztás különböző méretű redukált adathalmazokat eredményez. A módszer kizárólag a megtartandó teljes manővereket határozza meg, azok eredeti numerikus adatait nem módosítja. A különböző konfigurációk eredményessége így a redukált adathalmazokból identifikált járműmodellek pontosságán keresztül vizsgálható.
+
+A kidolgozott megközelítés további sajátossága, hogy a szemantikus reprezentációk előállítása nem igényli új vizuális nyelvi vagy embeddingmodell betanítását, illetve a meglévő modellek feladatspecifikus finomhangolását. A feldolgozás előtanított modellekre és a járműdinamikai elemzési feladatokhoz kialakított strukturált promptokra épül. A feldolgozási lánc moduláris kialakítása emellett lehetővé teszi a diagramok, a nyelvi leírások és a vektorreprezentációk elkülönített előállítását és tárolását, valamint a redundanciaszűrés különböző hasonlósági küszöbértékek melletti megismétlését anélkül, hogy a teljes szemantikus reprezentációs folyamatot minden alkalommal újra kellene végrehajtani.
+
+A kutatás kiemelt célja annak vizsgálata, hogy a szemantikus térben meghatározott hasonlóság milyen kapcsolatban áll a manőverek tényleges dinamikai információtartalmával. A módszer eredményessége ezért nem kizárólag az elérhető adatcsökkentés mértéke alapján kerül értékelésre, hanem a redukált mérési adathalmaz gyakorlati felhasználhatóságának ellenőrzésével is. Ennek validációs eszközeként járműmodell-identifikáció alkalmazható, amely lehetőséget biztosít a teljes és a szűrt adathalmazok felhasználásával előállított modellek pontosságának összehasonlítására. A megközelítés hosszabb távú jelentősége túlmutathat a már rendelkezésre álló mérési adatok utólagos csökkentésén: a redundánsnak azonosított manőverek vizsgálata alapot szolgáltathat a jövőbeli tesztprogramok célzott kialakításához is, csökkentve a mérések számát, a kapcsolódó költségeket és a feldolgozáshoz szükséges erőforrásokat.
+
+\chapter{Környezet és mérési adatok}\label{ch:kornyezet}
+\section{Szimulációs környezet}
+A járműdinamikai redundanciaszűrés vizsgálatához olyan mérési adathalmaz szükséges, amely változatos beavatkozások mellett, egységes feltételekkel rögzíti a jármű válaszait. A valós járműtesztek idő- és költségigényére, valamint a vizsgált üzemi állapotok megismételhetőségének igényére tekintettel a felhasznált mérési adathalmaz szimulációs környezetben készült. A tesztek végrehajtására a CarMaker szoftver szolgált, amely járműdinamikai modellek, virtuális tesztpályák és különböző vezetési manőverek együttes vizsgálatát teszi lehetővé. A környezet MATLAB- és Simulink-integrációja támogatja a beavatkozások programozott előállítását, a tesztforgatókönyvek ismételt futtatását és a mérési adatok egységes rögzítését.
+
+A CarMaker részletes járműmodelljeiben a karosszéria mozgása mellett a hajtáslánc, a futómű és a gumiabroncsok viselkedése is figyelembe vehető. A megfelelően beállított szimuláció ezért lehetőséget teremt arra, hogy a kormányzási, gyorsítási és fékezési beavatkozásokra adott válaszok több, egymással összefüggő dinamikai változón keresztül legyenek elemezhetők.
+
+A szimulációs adatgyűjtés további előnye a vizsgálati körülmények szabályozhatósága. A manőverek azonos pályageometria és előírt gerjesztési paraméterek mellett ismételhetők meg, miközben a nem vizsgált környezeti hatások állandó értéken tarthatók. Ez megkönnyíti az eltérő tesztek összehasonlítását, mivel a dinamikai válaszok közötti különbségek értelmezésénél kisebb szerepet kapnak a nem kontrollált körülmények. Emellett olyan belső állapotok és kerékdinamikai jellemzők is közvetlenül hozzáférhetők, amelyek valós méréséhez speciális érzékelők vagy közvetett becslési eljárások lennének szükségesek.
+
+A mérési manőverek végrehajtásához két különböző kialakítású virtuális tesztpálya került létrehozásra. A szinuszos és csirpszerű kormányzási gerjesztések egy $10\,\mathrm{km}\times10\,\mathrm{km}$ kiterjedésű, nyílt területen zajlottak, amely elegendő mozgásteret biztosított a jármű pályájának alakulásához. A kettős sávváltási manőverekhez egy hosszú, egyenes, háromsávos útszakasz került kialakításra. A két szimulációs környezetet a \ref{tracks}. ábra szemlélteti.
+
+\begin{figure}[htb!]
+    \centering
+    \begin{minipage}{0.5\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Picture/nagypalya.png}
+    \end{minipage}%
+    \hfill
+    \begin{minipage}{0.28\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Picture/kettossavvalta.png}
+    \end{minipage}
+    \vspace{0.3cm}
+    \caption{A kormányzási gerjesztésekhez és a kettős sávváltási manőverekhez alkalmazott virtuális tesztpályák.}
+    \label{tracks}
+\end{figure}
+
+A vizsgált adathalmaz a Tesla Model S elektromos hajtású személygépkocsi CarMakerben kialakított járműmodelljével végrehajtott szimulációkból származik. A mérési sorozat egységes járműmodellre épül, ezért a manőverek közötti különbségek értelmezésekor elsősorban a beállított gerjesztési paraméterek és az ezekre adott dinamikai válaszok vizsgálhatók. Az alkalmazott járműmodellt a \ref{cars}. ábra mutatja be.
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.44\textwidth]{Picture/tesla.PNG}
+    \caption{A mérési manőverekhez alkalmazott Tesla Model S járműmodell.}
+    \label{cars}
+\end{figure}
+
+\section{Mérési adatok}
+Az adatgyűjtés során a különböző tesztforgatókönyvek azonos felépítésű, automatizált szimulációs folyamatban kerültek végrehajtásra. A MATLAB- és Simulink-környezetben kialakított vezérlési logika a sebességreferenciát, a kormányzási gerjesztést, valamint a gáz- és fékpedál beavatkozásait a beállított paraméterkombinációknak megfelelően változtatta. A szisztematikus paraméterezés célja nem csupán a manőverek számának növelése volt, hanem az eltérő terhelési és mozgásállapotok következetes lefedése, amely megfelelő kiindulási alapot biztosít a későbbi redundanciavizsgálathoz.
+
+A végrehajtott manőverek két fő csoportba sorolhatók: állandó és változó sebességű manőverekre. Az állandó sebességű mérések kettős sávváltásokat, valamint szinuszos és csirpszerű kormányzási gerjesztéseket tartalmaznak, míg a változó sebességű manőverek esetében a kettős sávváltások és a szinuszos kormányzási gerjesztések gyorsítás vagy fékezés mellett kerültek végrehajtásra. A hét manővercsoportot és azok mérési darabszámait a \ref{tab:meres}. táblázat foglalja össze.
+
+\begin{table}[htb!]
+\centering
+\begin{tabular}{cl|r}
+\hline
+\multicolumn{2}{c|}{Manőverek} & \multicolumn{1}{c}{Mérések} \\ \hline \hline
+\multicolumn{1}{c|}{\multirow{3}{*}{Állandó sebesség}} & Kettős sávváltás & 84 \\
+\multicolumn{1}{c|}{} & Szinuszos kormányzási szög & 224 \\
+\multicolumn{1}{c|}{} & Csirpszerű kormányzási szögjel & 84 \\ \hline
+\multicolumn{1}{c|}{\multirow{4}{*}{Változó sebesség}} & Kettős sávváltás, gyorsítás & 9 \\
+\multicolumn{1}{c|}{} & Kettős sávváltás, fékezés & 9 \\
+\multicolumn{1}{c|}{} & Szinuszos kormányzási szög, gyorsítás & 24 \\
+\multicolumn{1}{c|}{} & Szinuszos kormányzási szög, fékezés & 24 \\ \hline \hline
+\multicolumn{2}{c|}{Összesen} & 458 \\ \hline
+\end{tabular}
+\caption{A rögzített mérési manőverek megoszlása.}
+\label{tab:meres}
+\end{table}
+
+A három fő gerjesztéstípus bemeneti kormányzási jelét a \ref{fig:maneuver_excitations}. ábra szemlélteti. A kettős sávváltás rövid, irányváltó kormányzási impulzusokat, a szinuszos manőver állandó frekvenciájú periodikus gerjesztést, a csirpszerű manőver pedig folyamatosan növekvő frekvenciájú kormányzási jelet alkalmaz.
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.92\textwidth]{Picture/tdk_maneuver_excitations.pdf}
+    \caption{A három fő manővertípus kormányzási gerjesztése: kettős sávváltás, szinuszos és csirpszerű kormányzási szögjel.}
+    \label{fig:maneuver_excitations}
+\end{figure}
+
+A mérési adathalmazban összesen $458$ teljes manőver szerepel, a táblázatban bemutatott hét csoport szerinti felosztásban. Az állandó sebességű kettős sávváltások $28$ sebességreferencia és három oldalgyorsulási szint kombinációjából, a szinuszos kormányzási tesztek pedig $28$ sebesség, két amplitúdó és négy körfrekvencia kombinációjából adódnak. A csirpszerű kormányzási manővereknél a $28$ sebességértékhez három amplitúdó tartozik; a frekvenciasöprés valamennyi ilyen manővernél azonos, tehát nem képez további paraméterrácsot. A változó sebességű kettős sávváltások esetében a három pedálállás és a három oldalgyorsulási szint, míg a változó sebességű szinuszos manővereknél a három pedálállás, két amplitúdó és négy körfrekvencia eredményezi az egyes csoportok mérési számát. A részletes paraméterezést a \ref{manover-parameterek}. táblázat foglalja össze.
+
+\begin{table}[htb!]
+\begin{center}
+\begin{tabular}{llll}
+\hline \hline
+\multicolumn{2}{c|}{Manőver típusa} & \multicolumn{2}{c}{Beállított paraméterek} \\ \hline \hline
+\multicolumn{4}{c}{Állandó sebességű manőverek} \\ \hline \hline
+\multicolumn{2}{l|}{\multirow{4}{*}{Kettős sávváltás}} & sebesség (km/h) & 5--140 (lépésköz: 5) \\
+\multicolumn{2}{l|}{} & \multirow{3}{*}{$a_y$ ($\mathrm{m/s^2}$)} & alacsony (2--3) \\
+\multicolumn{2}{l|}{} & & közepes (4--5) \\
+\multicolumn{2}{l|}{} & & magas (8--9) \\ \hline
+\multicolumn{2}{l|}{\multirow{3}{*}{Szinuszos kormányzási szög}} & sebesség (km/h) & 5--140 (lépésköz: 5) \\
+\multicolumn{2}{l|}{} & amplitúdó ($^\circ$) & 2, 8 \\
+\multicolumn{2}{l|}{} & körfrekvencia (rad/s) & 1, 3, 5, 7 \\ \hline
+\multicolumn{2}{l|}{\multirow{3}{*}{Csirpszerű kormányzási szögjel}} & sebesség (km/h) & 5--140 (lépésköz: 5) \\
+\multicolumn{2}{l|}{} & amplitúdó ($^\circ$) & 1, 3, 5 \\
+\multicolumn{2}{l|}{} & frekvenciasöprés (Hz) & kb. 0,5--10 \\ \hline \hline
+\multicolumn{4}{c}{Változó sebességű manőverek} \\ \hline \hline
+\multicolumn{1}{l|}{\multirow{10}{*}{Kettős sávváltás}} & \multicolumn{1}{l|}{\multirow{5}{*}{gyorsítás}} & kezdő sebesség (km/h) & 50 \\
+\multicolumn{1}{l|}{} & \multicolumn{1}{l|}{} & gázpedálállás (\%) & 20, 50, 100 \\
+\multicolumn{1}{l|}{} & \multicolumn{1}{l|}{} & \multirow{3}{*}{$a_y$ ($\mathrm{m/s^2}$)} & alacsony (2--3) \\
+\multicolumn{1}{l|}{} & \multicolumn{1}{l|}{} & & közepes (4--5) \\
+\multicolumn{1}{l|}{} & \multicolumn{1}{l|}{} & & magas (8--9) \\ \cline{2-4}
+\multicolumn{1}{l|}{} & \multicolumn{1}{l|}{\multirow{5}{*}{fékezés}} & kezdő sebesség (km/h) & 100 \\
+\multicolumn{1}{l|}{} & \multicolumn{1}{l|}{} & fékpedálállás (\%) & 20, 50, 100 \\
+\multicolumn{1}{l|}{} & \multicolumn{1}{l|}{} & \multirow{3}{*}{$a_y$ ($\mathrm{m/s^2}$)} & alacsony (2--3) \\
+\multicolumn{1}{l|}{} & \multicolumn{1}{l|}{} & & közepes (4--5) \\
+\multicolumn{1}{l|}{} & \multicolumn{1}{l|}{} & & magas (8--9) \\ \hline
+\multicolumn{1}{l|}{\multirow{8}{*}{Szinuszos kormányzási szög}} & \multicolumn{1}{l|}{\multirow{4}{*}{gyorsítás}} & sebességreferencia (km/h) & 20 \\
+\multicolumn{1}{l|}{} & \multicolumn{1}{l|}{} & gázpedálállás (\%) & 20, 50, 100 \\
+\multicolumn{1}{l|}{} & \multicolumn{1}{l|}{} & amplitúdó ($^\circ$) & 2, 8 \\
+\multicolumn{1}{l|}{} & \multicolumn{1}{l|}{} & körfrekvencia (rad/s) & 1, 3, 5, 7 \\ \cline{2-4}
+\multicolumn{1}{l|}{} & \multicolumn{1}{l|}{\multirow{4}{*}{fékezés}} & sebességreferencia (km/h) & 120 \\
+\multicolumn{1}{l|}{} & \multicolumn{1}{l|}{} & fékpedálállás (\%) & 20, 50, 100 \\
+\multicolumn{1}{l|}{} & \multicolumn{1}{l|}{} & amplitúdó ($^\circ$) & 2, 8 \\
+\multicolumn{1}{l|}{} & \multicolumn{1}{l|}{} & körfrekvencia (rad/s) & 1, 3, 5, 7 \\ \hline \hline
+\end{tabular}
+\caption{A mérési forgatókönyvek beállított referenciaértékei és paraméterkombinációi.}
+\label{manover-parameterek}
+\end{center}
+\end{table}
+
+A csirpszerű kormányzási jel frekvenciája a gerjesztés során folyamatosan változik; az alkalmazott frekvenciasöprés névleges tartománya megközelítőleg $0{,}5$--$10$~Hz. A tárolt referenciajel kezdetén körülbelül $0{,}6$~Hz, a $100$~s időpont környezetében pedig $10$~Hz figyelhető meg. Ezt a frekvenciát nem szabad összekeverni a szinuszos gerjesztés körfrekvenciájával, amelynek paraméterei $1$, $3$, $5$ és $7$~rad/s értékek. A gáz- és fékpedál-beavatkozások a tárolt jelekben $0{,}2$, $0{,}5$ és $1{,}0$ normalizált értékként jelennek meg, amelyek rendre $20$, $50$ és $100\%$ pedálállásnak felelnek meg.
+
+A mérési jelek $0{,}01$ s mintavételi idővel kerültek rögzítésre, így minden teljes manőverhez egy $10805\times40$ méretű adatmátrix tartozik, amely 10805 időmintát és 40 mérési változót tartalmaz. A $40$ tárolt változó közé tartozik a jármű síkbeli helyzete ($x$, $y$), hosszirányú és oldalirányú sebessége ($v_x$, $v_y$), három irányú gyorsulása ($a_x$, $a_y$, $a_z$), valamint az elfordulási, bólintási és dőlési mozgás szöge és szögsebessége. A bemeneti jelek között a kormányzási szög, a gáz- és fékpedálállás, továbbá a szinuszos és csirpszerű kormányzási gerjesztések referenciajel-csatornái szerepelnek. A kerékdinamikát az egyes kerekek szögsebességei, hosszirányú és oldalirányú csúszási jellemzői, valamint hosszirányú és oldalirányú abroncserői írják le.
+
+Az adathalmaz egységes jelstruktúrája és paraméterezése lehetővé teszi a mérési manőverek automatizált feldolgozását, valamint az azonos típusú tesztek következetes összehasonlítását. A jelen dolgozatban alkalmazott szűrés egysége egy teljes manőver: a reprezentáció előállítása és a redundancia megállapítása a mérési fájlok kiválasztását szolgálja, miközben a megtartott felvételek eredeti numerikus idősorai változatlanul megmaradnak a későbbi járműdinamikai vizsgálatokhoz és a validációhoz.
+
+\chapter{Metodológia}\label{ch:metodologia}
+\section{Szemantikus reprezentáció megvalósítása}
+%manőverenként az időben egymás után következő adatsorokból plotokat csinálunk. A plotokból leírást generálunk egy qwen 3 vl 8b modellel aztán embeddeljük a szöveget az összes képpel együtt.
+A járműdinamikai manőverek szemantikus reprezentációjának előállításához egy több lépésből álló feldolgozási eljárás került kialakításra, amely a numerikus mérési idősorokból strukturált diagramokat és szakmai leírásokat állít elő, majd ezek felhasználásával nagy dimenziós vektorreprezentációkat hoz létre. A kutatás során két eltérő reprezentációs megközelítés kerül alkalmazásra. Az első a vizuális nyelvi modell által előállított, egyesített természetes nyelvi leírás beágyazására épül, míg a második a szakmai leírásokat és a hozzájuk tartozó diagramokat közvetlenül, multimodális embeddingmodell segítségével dolgozza fel. Mindkét megközelítés eredményeként minden teljes mérési manőverhez egyetlen szemantikus vektor rendelhető, amely a későbbi hasonlóságvizsgálat alapjául szolgál. A szöveges reprezentáció előállításának folyamatát a \ref{fig:szemantikus_folyamat}. ábra szemlélteti.
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=\textwidth]{Picture/tdk_representation_flowchart.pdf}
+    \caption{A járműdinamikai manőverek szemantikus reprezentációjának előállítása: közös diagramgenerálás után a szöveges és a multimodális VLM-ág párhuzamosan fut, majd mindkét reprezentáció azonos koszinusz-alapú redundanciaszűrésbe kerül.}
+    \label{fig:szemantikus_folyamat}
+\end{figure}
+
+A feldolgozás első lépéseként a korábban bemutatott mérési adathalmaz egyes manővereihez tartozó, időben egymást követő numerikus adatsorokból strukturált diagramok készülnek. A mérési fájlok egyenként $10805 \times 40$ méretű mátrixokat tartalmaznak, amelyek sorai az egymást követő időpillanatokat, oszlopai pedig a jármű különböző dinamikai jellemzőit reprezentálják.
+
+Az egyes mérési jelek önálló megjelenítése mellett olyan összetett diagramok is készülnek, amelyek több dinamikai változó időbeli lefutását vagy egymáshoz viszonyított alakulását szemléltetik. Ezek között szerepelnek a hosszirányú és oldalirányú sebességeket, gyorsulásokat, kormányzási beavatkozásokat, forgási mozgásokat, kerékcsúszási jellemzőket és abroncserőket bemutató ábrák. A hagyományos idősoros diagramokat további, idő szerint színezett ábrázolások egészítik ki, amelyek többek között a jármű síkbeli pályáját, a hosszirányú és oldalirányú sebesség kapcsolatát, valamint az abroncserők és a kerékcsúszás összefüggéseit teszik áttekinthetővé. A vizuális információk mellett minden manőverhez numerikus metaadatok is előállításra kerülnek, amelyek az egyes jelek statisztikai jellemzőit, szélsőértékeit, csúcsait és frekvenciatartománybeli sajátosságait tartalmazzák. Ezáltal a diagramok az időbeli viselkedés értelmezését, míg a numerikus jellemzők a pontos mennyiségi információk rendelkezésre állását biztosítják.
+
+A létrehozott diagramok a mérési jelek időbeli lefutásai mellett a különböző járműdinamikai változók közötti összefüggések szemléltetésére is szolgálnak. Erre mutat példát a \ref{fig:diagram_pelda}. ábra, amely egy szinuszos kormányzási manőver során a négy kerék oldalcsúszási szöge és oldalirányú abroncsereje közötti kapcsolatot ábrázolja. Az idő szerinti színezés lehetővé teszi a jellemzők közötti kapcsolat időbeli alakulásának követését is.
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=\textwidth]{Picture/08e_sideslip_vs_Fy_timecolor.png}
+    \caption{A négy kerék oldalcsúszási szöge és oldalirányú abroncsereje közötti kapcsolat egy szinuszos kormányzási manőver során, idő szerinti színezéssel.}
+    \label{fig:diagram_pelda}
+\end{figure}
+
+Az előállított diagramok és numerikus metaadatok feldolgozása a Qwen3-VL-8B vizuális nyelvi modell segítségével történik. A modell képi és szöveges információk együttes értelmezésére képes, így alkalmas a diagramokon megjelenő jelalakok és a hozzájuk tartozó numerikus jellemzők közös vizsgálatára. A teljes manőver egyetlen modellhívásban történő elemzése helyett négy elkülönített, szakmailag specializált feladat került kialakításra. A feldolgozás során összesen $14$ diagram kerül felhasználásra, amelyek a vizsgált dinamikai jelenségek alapján négy csoportba rendeződnek. Az egyes feladatokhoz kizárólag a kapcsolódó diagramok és numerikus jellemzők kerülnek átadásra, így a modell elemzése az adott dinamikai részterületre összpontosíthat. A négy elemzési feladatot a \ref{tab:vlm_feladatok}. táblázat foglalja össze.
+
+\begin{table}[htb!]
+\centering
+\small
+\begin{tabular}{ccl}
+\hline
+\textbf{Feladat} & \textbf{Diagramok} & \textbf{Vizsgált járműdinamikai jellemzők} \\ \hline \hline
+A & 4 & Beavatkozások, sebességek és gyorsulások \\
+B & 3 & Pályamozgás és forgási dinamika \\
+C & 3 & Kerékcsúszás és kerék-szögsebességek \\
+D & 4 & Abroncserők és erő-csúszás kapcsolatok \\ \hline
+\multicolumn{1}{r}{\textbf{Összesen}} & \textbf{14} & \\ \hline
+\end{tabular}
+\caption{A vizuális nyelvi modell számára kialakított elemzési feladatok és a hozzájuk tartozó diagramok.}
+\label{tab:vlm_feladatok}
+\end{table}
+
+Az első feladat a jármű hosszirányú és oldalirányú mozgásának, valamint a vezetői beavatkozások és a kialakuló dinamikai válaszok kapcsolatának elemzésére szolgál. A második feladat a jármű pályamozgását, a sebességkomponensek egymáshoz viszonyított alakulását, továbbá az elfordulási, bólintási és dőlési dinamikát vizsgálja. A harmadik elemzés a kerekek hossz- és keresztirányú csúszási jellemzőire, valamint szögsebességeire összpontosít, külön figyelmet fordítva az első és hátsó tengely, illetve a bal és jobb oldal közötti különbségekre. A negyedik feladat az abroncsok hossz- és keresztirányú erőit, azok időbeli változását, valamint a csúszási jellemzőkkel fennálló kapcsolataikat értelmezi. A feladatok elkülönítése lehetővé teszi a jármű globális mozgásának és a kerékdinamikai jelenségeknek a részletesebb vizsgálatát.
+
+A vizuális nyelvi modell működését minden feladat esetében előre meghatározott, strukturált prompt szabályozza. A promptok rögzítik az elemzés célját, a vizsgálandó jellemzőket és az elvárt kimeneti formátumot. A generált szövegek egységes szerkezetének biztosítása érdekében a modell válasza JSON-formátumban kerül előállításra, amely külön mezőkben tartalmazza a kezdeti állapotot, az időbeli változásokat, a meghatározó eseményeket, a jelek közötti összefüggéseket, a szimmetrikus és aszimmetrikus viselkedést, az oszcillációs jelenségeket, a végállapotot és a fontos numerikus jellemzőket. Az elemzések egy rövid szakmai összefoglalót is tartalmaznak. A promptok előírják, hogy a mennyiségi megállapítások a rendelkezésre álló numerikus metaadatokra, az időbeli viselkedésre vonatkozó következtetések pedig a diagramokra támaszkodjanak. A manőverek elnevezése nem kerül átadásra a modell számára, így az elemzés nem a fájlnévben szereplő paraméterekből, hanem a ténylegesen rendelkezésre bocsátott mérési információkból indul ki.
+
+A négy elkülönített elemzés eredményéből ezt követően egy további nyelvi modell hívás segítségével egységes, természetes nyelvi leírás készül. Ebben a lépésben már nem kerülnek képek a modell bemenetére, kizárólag a korábban létrehozott strukturált szakmai elemzések. Az egyes részleírások egyesítésének célja egy olyan összefüggő, néhány száz szavas szöveg előállítása, amely a jármű teljes vizsgált dinamikai viselkedését egységes szempontrendszer szerint foglalja össze. A szövegnek tartalmaznia kell a karakterisztikus mozgásállapotokat, a lényeges időbeli változásokat, a dinamikai jelenségek közötti kapcsolatokat és a meghatározó mennyiségi jellemzőket. Az így kialakított reprezentáció minden manőver esetében azonos szerkezeti és szakmai követelmények alapján készül, elősegítve a későbbi szemantikus összehasonlíthatóságot.
+
+A természetes nyelvi reprezentációk numerikus leképezése egy külön embeddingmodell, a Qwen3-Embedding-8B alkalmazásával történik. A modell bemenetét az egyes manőverekhez létrehozott egyesített szakmai leírás képezi, amelyhez egy $4096$ dimenziós vektort rendel. A leképezés a \ref{eq:szemantikus_embedding}. egyenlet szerint írható fel, ahol $d_i$ az $i$-edik manőver természetes nyelvi leírását, $f_{\mathrm{emb}}$ az embeddingmodell által megvalósított leképezést, $\mathbf{z}_i$ pedig a létrejövő szemantikus vektorreprezentációt jelöli.
+
+\begin{equation}
+\mathbf{z}_i = f_{\mathrm{emb}}(d_i), \qquad \mathbf{z}_i \in \mathbb{R}^{4096}.
+\label{eq:szemantikus_embedding}
+\end{equation}
+
+Az embedding során minden teljes mérési manőverhez egyetlen vektor kerül előállításra, függetlenül az eredeti mérési idősor hosszától és a felhasznált diagramok számától. A vektor a manőver szövegesen összefoglalt dinamikai sajátosságainak tanult reprezentációját tartalmazza, nem pedig az eredeti numerikus idősorok közvetlen tömörítését. A diagramokon szereplő információk ennek megfelelően közvetett módon, a vizuális nyelvi modell által előállított leíráson keresztül jelennek meg az embeddingtérben. A megoldás egyik lényeges sajátossága, hogy a vizuális nyelvi modell és az embeddingmodell egyaránt előtanított formában kerül alkalmazásra, a vizsgált manővereken történő további tanítás vagy feladatspecifikus finomhangolás nélkül.
+
+A szöveges reprezentáció mellett egy második, multimodális megközelítés is kialakításra került, amely a természetes nyelvi leírásokat a mérési adatokból előállított diagramokkal együttesen használja fel a manőverek reprezentálásához. Ennek célja annak vizsgálata, hogy a vizuális információk közvetlen bevonásával a mérési jelek időbeli lefutásai és dinamikai összefüggései a szöveges összefoglaláson túl is megjeleníthetők-e az embeddingtérben. A multimodális megközelítés további sajátossága, hogy a reprezentáció kialakítása elsősorban a jármű oldalirányú dinamikájához kapcsolódó jelenségekre összpontosít, különös tekintettel a kormányzási beavatkozásokra, az oldalirányú mozgásra, a perdületi válaszra, valamint az abroncsok csúszási és erőátviteli viselkedésére.
+
+A multimodális reprezentáció előállítása ugyanarra a mérési adathalmazra és diagramgenerálási eljárásra épül, mint a korábban ismertetett szöveges megközelítés. A bemeneti jelekből azonban a teljes tizennégy diagram helyett tíz, az oldalirányú dinamikai viselkedés szempontjából releváns ábra kerül kiválasztásra. Ezek között megtalálhatók a sebességkomponenseket, a transzlációs gyorsulásokat, a kormányzási beavatkozás és a kialakuló válasz kapcsolatát, a forgási dinamikát, a kerékcsúszási jellemzőket, valamint az abroncserők és az oldalcsúszási szögek összefüggéseit bemutató diagramok. A korábbi megközelítésben felhasznált pályatrajektória, kerék-szögsebességek, a hosszirányú pedálbeavatkozásokat részletező diagram és a hosszirányú, illetve oldalirányú abroncserők közös ábrázolása ebben a reprezentációban nem szerepel.
+
+A diagramok és a hozzájuk tartozó numerikus jellemzők értelmezését ebben az esetben is a Qwen3-VL-8B vizuális nyelvi modell végzi, a korábban ismertetett négy szakmai részfeladatnak megfelelően. A feladatokhoz rendelt bemeneti ábrák és az elemzési szempontok ugyanakkor az oldalirányú járműdinamikai jelenségekre összpontosítanak. Az első részfeladat a kormányzási gerjesztés és a globális oldalirányú válasz kapcsolatát, a második az oldalirányú sebesség és a perdületi mozgás alakulását, a harmadik a kerékcsúszási jellemzőket, míg a negyedik az oldalirányú abroncserőket és azok csúszási szögekkel fennálló kapcsolatát vizsgálja. A modell válaszai továbbra is egységes JSON-struktúrában készülnek, azonban a reprezentáció következő lépésében kizárólag az egyes részfeladatokhoz tartozó szakmai összefoglalók kerülnek felhasználásra.
+
+A multimodális megközelítésben a négy részfeladat eredményeinek egyesítése nem igényel további nyelvimodell-hívást. Ehelyett az egyes elemzések szakmai összefoglalói változatlan tartalommal, meghatározott sorrendben kerülnek egymás után. Az így kialakított természetes nyelvi leírás négy bekezdésből áll, amelyek elkülönítve őrzik meg a vizsgált dinamikai részterületek legfontosabb megállapításait. Ezzel elkerülhető, hogy a további szövegfúzió során az egyes részfeladatokhoz kapcsolódó sajátosságok újabb összefoglalási lépésen keresztül módosuljanak vagy háttérbe szoruljanak. A 458 mérési manőver mindegyikéhez ilyen szerkezetű leírás készült, amelyek terjedelme 244 és 361 szó közé esik, 288 szavas mediánnal.
+
+A multimodális beágyazás a Qwen3-VL-Embedding-8B modell alkalmazásával történik. A modell egyetlen bemeneti egységként dolgozza fel a négy szakmai összefoglalóból álló szöveget és a hozzájuk tartozó tíz diagramot, amelyek az elemzési részfeladatok sorrendjében kerülnek átadásra. A feldolgozás során a képek legfeljebb $768\times768$ pixel felbontásban szerepelnek, a modell maximális bemeneti hossza pedig 16384 token. A beágyazó modell helyben, CUDA-alapú számítási környezetben, bfloat16 numerikus formátummal kerül alkalmazásra.
+
+A multimodális leképezés az alábbi összefüggéssel írható le, ahol $d_i^{(m)}$ az $i$-edik manőver négy szakmai összefoglalójából álló szöveget, $\mathcal{I}_i$ a hozzá tartozó tíz diagram rendezett halmazát, $f_{\mathrm{mm}}$ pedig a multimodális embeddingmodell által megvalósított leképezést jelöli.
+
+\begin{equation}
+    \mathbf{z}_i^{(m)} = f_{\mathrm{mm}}\left(d_i^{(m)},\mathcal{I}_i\right), \qquad \mathbf{z}_i^{(m)} \in \mathbb{R}^{4096}.
+    \label{eq:multimodal_embedding}
+\end{equation}
+
+A létrejövő vektorok L2-normalizálást követően kerülnek felhasználásra, így valamennyi multimodális reprezentáció egységnyi euklideszi normával rendelkezik. Az egyes manőverekhez ebben a megközelítésben is egyetlen 4096 dimenziós vektor tartozik, azonban annak előállítása során a szöveges leírások mellett a diagramok képi információi is közvetlenül a modell bemenetére kerülnek. A két reprezentáció eltérő embeddingmodellekből és eltérő bemeneti információkból származik, ezért a későbbi hasonlóságvizsgálat mindkét reprezentáció esetében külön történik.
+
+A két megközelítéssel előállított vektorreprezentációk egymástól elkülönített Chroma vektoradatbázis-gyűjteményekben kerülnek tárolásra, a hozzájuk tartozó manőverazonosítókkal és manővercsoportokkal együtt. A feldolgozás eredményeként mind a 458 mérési manőverhez rendelkezésre áll egy szöveges és egy multimodális, egyenként 4096 dimenziós szemantikus vektor. Az elkülönített tárolás lehetővé teszi a két reprezentáció önálló vizsgálatát, valamint a későbbi hasonlóságszámítás és redundanciaszűrés azonos feltételek melletti végrehajtását. A diagramok, a szakmai leírások és az embeddingvektorok külön tárolása emellett támogatja a feldolgozási lépések ellenőrzését és szükség szerinti megismétlését.
+
+\section{Redundanciaszűrés}
+%cosine similarity az embedding vektorok között manővercsoportonként. thresholdok alapján nézzük meg hogy melyik manőverek nem redundánsak. ezeket kimentjük és nyomjuk tovább identifikációra.
+A szemantikus reprezentációk előállítását követően a redundanciaszűrés a manőverenként létrehozott, 4096 dimenziós embeddingvektorok összehasonlításával történik. A vizsgálatban mind a szöveges, mind a multimodális reprezentáció felhasználásra kerül, egymástól elkülönített hasonlóságszámítással. A módszer célja azoknak a mérési manővereknek az azonosítása, amelyek szemantikus reprezentációja jelentős hasonlóságot mutat más manőverekével, így potenciálisan redundáns információt hordoznak. Az összehasonlítás kizárólag az azonos típusú manővereket tartalmazó csoportokon belül történik, a korábban bemutatott hét manővercsoportnak megfelelően. Ezáltal az eltérő gerjesztési típusokhoz, illetve a gyorsítási és fékezési beavatkozásokhoz tartozó mérések nem kerülnek közvetlenül összehasonlításra. A kapott hasonlósági mátrixokon két különböző kiválasztási algoritmus kerül alkalmazásra: egy redundáns kapcsolatok iteratív megszüntetésén alapuló frekvencia-alapú szűrés, valamint egy szemantikus lefedettséget biztosító lefedőhalmaz-algoritmus. A frekvencia-alapú elnevezés ebben az esetben nem a mérési jelek frekvenciatartománybeli elemzésére, hanem a manőverekhez tartozó redundanciakapcsolatok előfordulási számára utal.
+
+A manőverek közötti hasonlóság meghatározására koszinusz-hasonlóság kerül alkalmazásra, amely két vektor által bezárt szög koszinuszát fejezi ki. Az eljárás a vektorok irányát hasonlítja össze. Az $i$-edik és $j$-edik manőverhez tartozó $\mathbf{z}_i,\mathbf{z}_j \in \mathbb{R}^{4096}$ szemantikus vektorok közötti hasonlóság a \ref{eq:cosine_similarity}. egyenlettel határozható meg.
+
+\begin{equation}
+s_{ij}=\frac{\mathbf{z}_i^\mathrm{T}\mathbf{z}_j}{\|\mathbf{z}_i\|_2\|\mathbf{z}_j\|_2},
+\label{eq:cosine_similarity}
+\end{equation}
+
+ahol $s_{ij}$ a két manőver szemantikus hasonlóságát, $\mathbf{z}_i^\mathrm{T}\mathbf{z}_j$ a vektorok skaláris szorzatát, míg $\|\mathbf{z}_i\|_2$ és $\|\mathbf{z}_j\|_2$ azok euklideszi normáját jelöli. A koszinusz-hasonlóság értéke $[-1,1]$ közé esik, ahol az $1$ azonos irányú, a $0$ ortogonális, míg a $-1$ ellentétes irányú vektorokat jelent. A jelen alkalmazásban a nagyobb pozitív értékek a manőverek szemantikus reprezentációinak nagyobb fokú hasonlóságát jelzik.
+
+A hasonlóságok kiszámítása során minden manővercsoporthoz külön szimmetrikus hasonlósági mátrix készül. Az egyes mátrixok sorai és oszlopai a csoportba tartozó manővereket reprezentálják, az $(i,j)$ pozícióban szereplő érték pedig az adott két manőver koszinusz-hasonlóságát tartalmazza. A főátló elemei egységnyi értékűek, mivel minden vektor önmagával maximális hasonlóságot mutat. A páronkénti vizsgálat során kizárólag a mátrix főátló feletti elemei kerülnek figyelembevételre, így valamennyi különböző manőverpár pontosan egyszer szerepel az összehasonlításban. A hasonlósági mátrixok numerikus formában és vizuálisan, hőtérképként is mentésre kerülnek. A hőtérképes ábrázolás a csoporton belüli hasonlósági viszonyok gyors áttekintését segíti, különösen a nagy hasonlóságú manőverpárok és az esetleges klaszterszerű mintázatok azonosításában. Egy ilyen példa látható a \ref{fig:cosine_matrix_example}. ábrán.
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=\textwidth]{Picture/text_vlm_tesla_cosine_similarity_matrix_valtozo_v_savvaltas_gas.png}
+    \caption{Koszinusz-hasonlósági mátrix egy változó sebességű, gyorsítással végrehajtott kettős sávváltás manővercsoport esetén.}
+    \label{fig:cosine_matrix_example}
+\end{figure}
+
+A redundancia meghatározása egy előre megválasztott $\tau$ hasonlósági küszöbérték alapján történik. Két manőver potenciálisan redundánsnak tekinthető, amennyiben koszinusz-hasonlóságuk eléri vagy meghaladja ezt az értéket. A vizsgálat során a $\tau \in \{0{,}90;0{,}91;\ldots;0{,}96\}$ küszöbértékek kerülnek alkalmazásra, amelyek lehetővé teszik a szűrés szigorúságának szisztematikus változtatását. Alacsonyabb küszöbérték esetén több manőverpár minősül hasonlónak, így nagyobb mértékű adatcsökkentés válhat lehetővé, míg magasabb küszöbérték mellett kizárólag a különösen hasonló reprezentációjú manőverek kerülnek redundanciakapcsolatba.
+
+A redundáns manőverek kiválasztására elsőként egy frekvencia-alapú, iteratív eltávolítási algoritmus kerül alkalmazásra. Ennek első lépéseként minden manővercsoporton belül meghatározásra kerülnek azok a manőverpárok, amelyek hasonlósága eléri a választott küszöbértéket. A kapcsolatok a \ref{eq:redundans_parok} egyenlettel definiálható halmazba rendezhetők, ahol $\mathcal{E}_{\tau}$ a küszöbérték alapján redundánsnak minősített párokat tartalmazza.
+
+\begin{equation}
+\mathcal{E}_{\tau}=\left\{(i,j)\mid i<j,\ s_{ij}\geq\tau\right\}.
+\label{eq:redundans_parok}
+\end{equation}
+
+A kialakított kapcsolatrendszerben minden manőverhez meghatározható, hogy hány másik manőverrel alkot redundáns párt. A kiválasztási eljárás minden iterációban azt a manővert távolítja el, amely a legtöbb ilyen kapcsolatban vesz részt. Ha $d_i$ az $i$-edik manőverhez tartozó, aktuálisan fennálló redundáns kapcsolatok számát jelöli, akkor az eltávolítandó manőver indexe a \ref{eq:redundancia_kivalasztas}. összefüggéssel határozható meg.
+
+\begin{equation}
+i^* \in \underset{i}{\operatorname{arg\,max}}\ d_i.
+\label{eq:redundancia_kivalasztas}
+\end{equation}
+
+Az adott manőver eltávolításával egyidejűleg minden hozzá kapcsolódó redundáns pár törlésre kerül a vizsgált kapcsolatrendszerből, majd a fennmaradó manőverek kapcsolatszámai újraszámításra kerülnek. A folyamat addig ismétlődik, amíg egyetlen, a küszöbértéket elérő hasonlóságú pár sem marad a csoportban. Azok a manőverek, amelyek egyetlen redundáns kapcsolatban sem szerepelnek, automatikusan megtartásra kerülnek. Az algoritmus eredményeként olyan részhalmaz áll elő, amelyben a megmaradó manőverek páronkénti koszinusz-hasonlósága minden csoporton belül kisebb a választott küszöbértéknél. A kiválasztás nem feltétlenül eredményezi a lehető legkisebb elemszámú részhalmazt, azonban lehetővé teszi a redundáns kapcsolatok szisztematikus megszüntetését.
+
+A frekvencia-alapú szűrés mellett egy második, lefedőhalmaz-algoritmus (greedy set cover) is alkalmazásra kerül. Míg az előbbi a legtöbb redundáns kapcsolatban szereplő manőverek iteratív eltávolítására épül, addig a lefedőhalmaz-algoritmus közvetlenül a megtartandó manővereket választja ki. Ennek során minden manőverhez meghatározásra kerül azon mérések halmaza, amelyek koszinusz-hasonlósága eléri a választott küszöbértéket. Az $i$-edik manőverhez tartozó lefedőhalmaz a \ref{eq:coverage_set} egyenlettel definiálható.
+
+\begin{equation}
+    \mathcal{C}_i(\tau)=\{i\}\cup\{j\in\mathcal{M}_g\mid s_{ij}\geq\tau\},
+    \label{eq:coverage_set}
+\end{equation}
+
+ahol $\mathcal{M}_g$ a $g$-edik manővercsoport elemeinek halmazát jelöli. A kiválasztás kezdetén valamennyi manőver lefedetlen, a megtartandó részhalmaz pedig üres. Az algoritmus minden iterációban azt a manővert tartja meg, amely a legtöbb addig lefedetlen mérést képes képviselni. A kiválasztás a \ref{eq:greedy_set_cover_selection} egyenlet szerint történik.
+
+\begin{equation}
+    i^*\in\underset{i\in\mathcal{M}_g\setminus\mathcal{K}_{\tau,g}}{\arg\max}\left|\mathcal{C}_i(\tau)\cap\mathcal{U}_{\tau,g}\right|,
+    \label{eq:greedy_set_cover_selection}
+\end{equation}
+
+ahol $\mathcal{K}_{\tau,g}$ a már kiválasztott, $\mathcal{U}_{\tau,g}$ pedig a még lefedetlen manőverek halmaza. A kiválasztott manőver és az általa képviselt mérések lefedetté válnak, majd a folyamat a fennmaradó lefedetlen elemek alapján ismétlődik. Az algoritmus akkor ér véget, amikor valamennyi eredeti manőverhez tartozik legalább egy megtartott, a küszöbértéket elérő hasonlóságú képviselő. Azonos számú újonnan lefedhető manőver esetén a nagyobb átlagos koszinusz-hasonlóság, további egyezésnél pedig a manőverazonosítók sorrendje dönt.
+
+A két algoritmus eltérő célfüggvényét a \ref{fig:redundancy_algorithms}. ábra egy kis, szemléltető hasonlósági gráfon mutatja be. A frekvencia-alapú eljárás a legtöbb redundáns kapcsolatban szereplő manővert távolítja el, míg a lefedőhalmaz-algoritmus a legtöbb még lefedetlen manővert képviselő elemet tartja meg. Az ábra nem a dolgozat mérési koszinuszmátrixából készült, hanem a két kiválasztási logika megértését segíti.
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=\textwidth]{Picture/tdk_redundancy_algorithms.pdf}
+    \caption{A frekvencia-alapú redundanciaszűrés és a mohó lefedőhalmaz-algoritmus szemléltetése egy hat csúcsú példagráfon. A frekvencia-módszer a legnagyobb fokszámú csúcsokat távolítja el, a lefedőhalmaz pedig a legnagyobb lefedést adó csúcsokat tartja meg.}
+    \label{fig:redundancy_algorithms}
+\end{figure}
+
+Mindkét kiválasztási algoritmus alkalmazásra kerül a szöveges és a multimodális reprezentációkból előállított hasonlósági mátrixokon. Így összesen négy konfiguráció eredménye hasonlítható össze, lehetővé téve a reprezentációs megközelítés és a kiválasztási algoritmus hatásának vizsgálatát.
+
+A redundanciaszűrés minden küszöbérték esetében egymástól függetlenül kerül végrehajtásra, így az eredeti szemantikus reprezentációk újbóli előállítása nélkül több különböző méretű adathalmaz hozható létre. A szűrés eredményeként az eltávolítandó manőverek azonosítói manővercsoportonként kerülnek rögzítésre. Ezek alapján meghatározható a megtartandó manőverek halmaza, amely az eredeti mérési sorozat és az eltávolításra kijelölt manőverek halmazának különbségeként áll elő. Az adatcsökkentés mértéke a \ref{eq:redukcio_merteke}. egyenlet szerint számszerűsíthető, ahol $N$ az eredeti, $N_{\mathrm{megtartott}}$ pedig a szűrés után megmaradó manőverek számát jelöli.
+
+\begin{equation}
+R(\tau)=\left(1-\frac{N_{\mathrm{megtartott}}(\tau)}{N}\right)\cdot100\%.
+\label{eq:redukcio_merteke}
+\end{equation}
+
+A különböző küszöbértékekhez tartozó eredmények összehasonlítása lehetővé teszi annak vizsgálatát, hogy a hasonlósági kritérium változtatása milyen mértékben befolyásolja a megtartott adathalmaz méretét. A további járműdinamikai vizsgálatokhoz mindkét szemantikus reprezentáció és mindkét kiválasztási algoritmus esetében a $0{,}90$ és $0{,}96$ közötti, $0{,}01$ lépésközzel meghatározott küszöbértékekhez tartozó redukált adathalmazok kerülnek előállításra és külön exportálásra. 
+
+A redundanciaszűrés utolsó lépése a kiválasztott manőverek eredeti mérési állományainak elkülönítése. Mindkét szemantikus reprezentáció és mindkét kiválasztási algoritmus esetében külön kerülnek rögzítésre a megtartott és az eltávolított manőverek azonosítói, lehetővé téve az egyes konfigurációk eredményeinek összehasonlítását. A megtartott mérésekhez tartozó \texttt{.mat} fájlok külön adathalmazokba kerülnek másolásra, miközben a bennük tárolt numerikus idősorok változatlanok maradnak. A kiválasztási folyamat így nem módosítja vagy rekonstruálja a mérési jeleket, kizárólag a további feldolgozáshoz felhasznált teljes manőverek halmazát határozza meg. Az előállított redukált adathalmazok közvetlenül felhasználhatók a következő szakaszban ismertetett járműmodell-identifikációhoz, amely a szemantikus redundanciaszűrés eredményességének validálására szolgál.
+
+A kidolgozott szemantikus megközelítések eredményességének értékeléséhez hagyományos, numerikus reprezentációkon alapuló eljárások is alkalmazásra kerülnek. Ezek alapját a főkomponens-analízis (PCA) képezi, amely a nagy dimenziós adatokból a legnagyobb varianciát megőrző, egymásra merőleges komponenseket állítja elő. A PCA alkalmazását különböző normalizálási eljárások előzik meg. A min-max normalizálás a változókat meghatározott értéktartományra skálázza, míg a z-score standardizálás az átlag és a szórás alapján alakítja át az adatokat. A létrejövő numerikus reprezentációk alapján a korábban ismertetett frekvencia-alapú szűrés mellett két klaszterezési algoritmus is alkalmazásra kerül.
+
+A k-means algoritmus a mintákat előre meghatározott számú klaszterbe rendezi, amelyek középpontjait a hozzájuk tartozó elemek átlagából határozza meg. Ezzel szemben a k-medoids algoritmus minden klasztert egy ténylegesen létező adatminta segítségével reprezentál, amely a klaszteren belüli távolságok alapján kerül kiválasztásra. A két klaszterezési megközelítés így lehetőséget biztosít hasonló numerikus jellemzőkkel rendelkező manőverek csoportosítására, majd a teljes mérésekből álló részhalmaz meghatározására. A hagyományos eljárások és a szemantikus redundanciaszűrés eredményességének összehasonlítása az azonos validációs környezetben kapott járműmodell-identifikációs hibák alapján történik.
+
+\section{Járműidentifikáció}
+A redundanciaszűrés eredményességének ellenőrzésére nemlineáris járműmodell-identifikáció kerül alkalmazásra, amely lehetővé teszi a különböző redukált mérési adathalmazokon alapuló modellek összehasonlítását. Az identifikáció egy oldalirányú egynyomvonalú járműmodell abroncsparamétereinek optimalizálására épül \cite{pajecka}. Az így előállított modellek pontosságának értékelése az oldalirányú sebesség és a perdületi sebesség becslési hibája alapján történik. Az identifikáció ebben a dolgozatban kizárólag a redundanciaszűréssel kiválasztott manőverek további járműdinamikai felhasználhatóságának validálását szolgálja.
+
+A modell fő geometriai és dinamikai változóit a \ref{fig:bicycle_model}. ábra foglalja össze: a tömegközéppontban értelmezett $v_x$, $v_y$ sebességkomponensek, a perdületi szögsebesség ($\dot{\psi}$), a kormányzási szög ($\delta$), valamint az első és hátsó tengely oldalirányú abroncserői ($F_{y,f}$, $F_{y,r}$).
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.92\textwidth]{Picture/tdk_bicycle_model.pdf}
+    \caption{Az identifikációhoz alkalmazott oldalirányú egynyomvonalú járműmodell vázlata a fő geometriai paraméterekkel, sebességkomponensekkel, perdületi szögsebességgel és oldalirányú abroncserőkkel.}
+    \label{fig:bicycle_model}
+\end{figure}
+
+A nemlineáris, oldalirányú egynyomvonalú járműmodell az oldalirányú mozgást és a perdületi dinamikát a gumiabroncsok által létrehozott erők figyelembevételével írja le. Az abroncsok oldalirányú erőinek meghatározására a Pacejka-féle Magic Formula egyszerűsített alakja kerül alkalmazásra, amelyet a \ref{eq:simple-pacejka} egyenlet ad meg \cite{pajecka}. Ebben $B$ a merevségi tényező, $C$ az alaktényező, $D$ pedig az erőkarakterisztika csúcsértékét meghatározó paraméter.
+
+\begin{equation}
+	F_y(\alpha) = D \sin\!\Big( C\, \arctan(B\, \alpha) \Big),
+	\label{eq:simple-pacejka}
+\end{equation}
+
+A jármű merev testként történő közelítésével az oldalirányú és perdületi mozgás két differenciálegyenlettel jellemezhető. A $v_y$ és $v_x$ változók rendre a jármű tömegközéppontjában, azaz a CoG (Center of Gravity) pontban értelmezett oldalirányú és hosszirányú sebességet jelölik. A perdületi szögsebességet $\dot{\psi}$, az első és hátsó tengely tömegközépponttól mért távolságát pedig $l_f$ és $l_r$ adja meg. A gördülési és bólintási mozgások elhanyagolásával a jármű dinamikája a \ref{eq:bicycle-dynamics} egyenletrendszer szerint írható le \cite{Rajesh}.
+
+\begin{subequations}
+	\label{eq:bicycle-dynamics}
+	\begin{align}
+		m\,(\dot v_y + v_x \dot{\psi}) &= F_{y,f} + F_{y,r}, \label{eq:lat-momentum} \\
+		I_z \ddot{\psi} &= \ell_f\,F_{y,f} - \ell_r\,F_{y,r}. \label{eq:yaw-momentum}
+	\end{align}
+\end{subequations}
+
+Az oldalirányú abroncserők meghatározásához szükséges az első és hátsó tengely csúszási szögének kiszámítása. Ezeket a jármű sebességkomponensei, perdületi sebessége, geometriai paraméterei, valamint az első tengely esetében a kormányzási szög ($\delta$) határozzák meg. A csúszási szögek a \ref{eq:slip-angles} egyenletekkel számíthatók.
+
+\begin{subequations}
+	\label{eq:slip-angles}
+	\begin{align}
+		\alpha_f &= \arctan \left( \frac{v_y + l_f \dot{\psi}}{v_x} \right) - \delta, \\
+		\alpha_r &= \arctan \left( \frac{v_y - l_r \dot{\psi}}{v_x} \right),
+	\end{align}
+\end{subequations}
+
+A kapott csúszási szögek felhasználásával az első és hátsó tengely oldalirányú abroncserői a \ref{oldalerők} összefüggések alapján határozhatók meg. A két tengelyhez külön paraméterkészlet tartozik, lehetővé téve eltérő abroncskarakterisztikák figyelembevételét.
+
+\begin{subequations}
+    \begin{align}
+	F_{y,f} = F_y(\alpha_f, D_f, C_f, B_f), \\
+	F_{y,r} = F_y(\alpha_r, D_r, C_r, B_r).
+\end{align}
+\label{oldalerők}
+\end{subequations}
+
+A nemlineáris modell paramétereinek meghatározása során az oldalirányú abroncserők közvetlen felhasználása helyett a jármű mérhető mozgásállapotaira támaszkodó optimalizálás kerül alkalmazásra. Ennek gyakorlati jelentősége, hogy az abroncserők közvetlen meghatározása általában speciális mérőeszközöket igényel, míg a jármű sebesség- és perdületi jellemzői megfelelő érzékelőkkel vagy becslési eljárásokkal hozzáférhetők.
+
+Az identifikációhoz felhasznált adathalmazt a \ref{halmaz} egyenlet definiálja, ahol $N$ a rendelkezésre álló minták száma. A modell bemeneti változóit a kormányzási szög és a hosszirányú sebesség alkotja, vagyis $u_i = \{\delta_i, v_{x,i}\}$.
+
+\begin{equation}
+	\mathcal{D} = \{t_i, u_i ,v_{y,i}^{\,\text{meas}},\,\dot{\psi}_i^{\,\text{meas}}\}_{i=1}^N
+    \label{halmaz}
+\end{equation}
+
+A mérési adatok között az időbélyegek ($t_i$), a bemeneti változók ($u_i$), valamint az oldalirányú sebesség és a perdületi sebesség mért értékei ($v_{y,i}^{\,\text{meas}}$, $\dot{\psi}_i^{\,\text{meas}}$) szerepelnek. A járműmodell a választott $\theta$ paramétervektor és a megadott bemenetek alapján előállítja a becsült $v_y(t_i,u_i,\theta)$ és $\dot{\psi}(t_i,u_i,\theta)$ kimeneteket. A meghatározandó abroncsparamétereket a $\theta = \{D_f, B_f, C_f, D_r, B_r, C_r\}$ halmaz tartalmazza. A paraméterbecsléshez alkalmazott korlátozott optimalizálási feladatot a \ref{eq:ident_vehicle_level} összefüggés adja meg.
+
+\begin{subequations}
+	\label{eq:ident_vehicle_level}
+	\begin{align}
+		& \min_{{\theta}}\; J({\theta}) = \sum_{i=1}^N \Big[ \big(v_{y,i}^{\,\text{meas}} - v_y(t_i,u_i, {\theta})\big)^2 +  \nonumber \\ 
+		& + \big(\dot{\psi}_i^{\,\text{meas}} - \dot{\psi}(t_i, u_i, {\theta})\big)^2 \Big] +  \lambda\,\|L({\theta}-{\theta}_0)\|_2^2, \nonumber \\
+		&  \text{s.t.}\; B_{\{f,r\}} \in [5,25], \: D_{\{f,r\}}\in \nonumber \\ &\in [ \mu_1 m/4 g,  \mu_2 m/4 g], \: C_{\{f,r\}} \in [1,2].
+	\end{align}
+\end{subequations}
+
+A becslés során alkalmazott korlátozások a gumiabroncs-paraméterek megengedett tartományait határozzák meg. A $D$ paraméter határértékei a jármű tömegéhez, a nehézségi gyorsuláshoz ($g$) és a tapadási viszonyokhoz kapcsolódnak. A tömegközéppont elhelyezkedésének és a tapadási tényezőnek a hatását a $\mu_i$ paraméter képviseli, amelynek alsó és felső értéke rendre $\mu_1 = 0{,}75$ és $\mu_2 = 1{,}25$. Az optimalizálási feladat emellett regularizációs tagot is tartalmaz, amelyben $\lambda \ge 0$ szabályozza a $\theta_0$ referencia-paramétervektortól való eltérés büntetését, míg az $L$ mátrix a különböző paraméterek skálázását biztosítja. A paraméterkorlátok és a regularizáció célja a fizikailag elfogadható paramétertartomány előnyben részesítése és a becslési folyamat kedvezőtlen megoldásainak korlátozása.
+
+A \ref{eq:ident_vehicle_level} egyenletben meghatározott költségfüggvény nem konvex optimalizálási problémát eredményez. Ennek megoldására a MATLAB \texttt{fmincon} függvénye kerül alkalmazásra, amely lehetővé teszi a nemlineáris célfüggvény gradiensalapú, paraméterkorlátokat figyelembe vevő minimalizálását.
+
+Az identifikált modellek pontosságának értékelése az oldalirányú sebesség ($v_y$) és a perdületi sebesség ($\dot{\psi}$) alapján történik. A teljes és a különböző redukált adathalmazokon meghatározott modellek összehasonlítására azonos tesztadatok kerülnek felhasználásra. A becslési pontosságot a négyzetes középhiba gyöke (RMSE) jellemzi, amely a \ref{eq:ident_rmse} egyenlet szerint számítható.
+
+\begin{equation}
+    \mathrm{RMSE}_y = \sqrt{\frac{1}{N}\sum_{i=1}^{N}\left(y_i^{\mathrm{meas}}-\hat{y}_i\right)^2},
+    \label{eq:ident_rmse}
+\end{equation}
+
+ahol $y$ a vizsgált kimeneti változót, $y_i^{\mathrm{meas}}$ a referenciaadatot, $\hat{y}_i$ az identifikált modell által becsült értéket, $N$ pedig az értékeléshez felhasznált minták számát jelöli. A mutató külön kerül meghatározásra az oldalirányú és a perdületi sebességre. Az alacsonyabb RMSE-érték kisebb becslési hibát jelent, így lehetővé teszi a különböző redundanciaszűrési konfigurációk eredményességének összehasonlítását.
+
+\chapter{Kísérleti vizsgálatok és eredmények}\label{ch:kiserleti_eredmenyek}
+A kidolgozott redundanciaszűrési módszerek vizsgálata a hét manővercsoportba rendezett, összesen 458 mérési sorozat felhasználásával történt. A kísérletek célja annak meghatározása, hogy a különböző szemantikus reprezentációk és manőverkiválasztási algoritmusok milyen mértékű adatcsökkentést tesznek lehetővé, valamint hogyan befolyásolják a redukált adathalmazok felhasználásával identifikált járműmodellek pontosságát. Az értékelés két egymást követő lépésből áll. Elsőként a kidolgozott négy szemantikus redundanciaszűrési konfiguráció kerül összehasonlításra az elért adatcsökkentés és az identifikációs pontosság alapján. Ezt követően a kiválasztott szemantikus megközelítés teljesítménye egy rögzített referencia-küszöbérték mellett hagyományos dimenziócsökkentési és klaszterezési eljárásokkal kerül összevetésre.
+
+Az összehasonlításban két szemantikus reprezentáció és két manőverkiválasztási algoritmus szerepel. A szöveges VLM-reprezentáció az eredeti mérési adatokból előállított diagramok és numerikus jellemzők alapján generált szakmai leírásokat használja fel a 4096 dimenziós embeddingvektorok kialakításához. A multimodális VLM-reprezentáció ezzel szemben az oldalirányú dinamikára összpontosító szöveges elemzéseket és a hozzájuk tartozó diagramokat együttesen dolgozza fel. Mindkét reprezentációra alkalmazásra kerül a frekvencia-alapú redundanciaszűrés, valamint a lefedőhalmaz-algoritmus. Az így kialakított négy konfiguráció lehetővé teszi a reprezentációs módszer és a kiválasztási algoritmus hatásának elkülönített vizsgálatát.
+
+A szemantikus reprezentációk eloszlásának szemléltetésére a 4096 dimenziós embeddingvektorok kétdimenziós leképezése készült t-SNE alkalmazásával. A \ref{fig:tsne_text_vlm}. ábrán minden pont egy teljes mérési manővert reprezentál, a különböző színek pedig a hét manővercsoportot jelölik. A vizualizáción az egyes gerjesztési típusok részleges elkülönülése és átfedése egyaránt megfigyelhető, ami a szemantikus reprezentációk közötti hasonlósági viszonyokra utal. Fontos azonban, hogy a t-SNE-vetület kizárólag a reprezentációk szemléltetését szolgálja, a redundanciaszűrés az eredeti, 4096 dimenziós embeddingtérben számított koszinusz-hasonlóságokon alapul.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{Picture/ALL_groups_tsne_2d.pdf}
+    \caption{A szöveges VLM-reprezentációk kétdimenziós t-SNE-vetülete. A színek a hét manővercsoportot jelölik; a redundanciaszűrés az eredeti 4096 dimenziós térben történik.}
+    \label{fig:tsne_text_vlm}
+\end{figure}
+
+A redundanciaszűrés mind a négy konfiguráció esetében a $\tau\in\{0{,}90;0{,}91;\ldots;0{,}96\}$ küszöbértékeken, a korábban meghatározott hét manővercsoporton belül történt. Az egyes beállítások mellett megtartott teljes manőverek számát a \ref{tab:vlm_kept_counts}. táblázat foglalja össze.
+
+\begin{table}[htbp]
+    \centering
+    \small
+    \setlength{\tabcolsep}{5pt}
+    \begin{tabular}{ccccc}
+        \hline
+        & \multicolumn{2}{c}{Szöveges VLM} & \multicolumn{2}{c}{Multimodális VLM} \\
+        \cline{2-5}
+        $\tau$ & Frekvencia & Lefedőhalmaz & Frekvencia & Lefedőhalmaz \\
+        \hline
+        0,90 & 35 & 16 & 19 & 7 \\
+        0,91 & 52 & 18 & 27 & 10 \\
+        0,92 & 74 & 32 & 40 & 15 \\
+        0,93 & 111 & 55 & 68 & 23 \\
+        0,94 & 177 & 107 & 118 & 51 \\
+        0,95 & 265 & 199 & 221 & 141 \\
+        0,96 & 383 & 346 & 371 & 329 \\
+        \hline
+    \end{tabular}
+    \caption{A megtartott manőverek száma a különböző szemantikus reprezentációk és kiválasztási algoritmusok esetén.}
+    \label{tab:vlm_kept_counts}
+\end{table}
+
+A \ref{tab:vlm_kept_counts}. táblázat adatait a \ref{fig:kept_vs_threshold}. ábra görbékként is megjeleníti. A négy konfiguráció közötti különbség így közvetlenül leolvasható: a multimodális reprezentáció és a lefedőhalmaz-algoritmus minden vizsgált küszöbértéken kevesebb manővert tart meg, miközben $\tau=0{,}95$ és $\tau=0{,}96$ között mind a négy görbe meredeken emelkedik.
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Picture/tdk_kept_vs_threshold.pdf}
+    \caption{A megtartott manőverek száma a hasonlósági küszöbérték függvényében a négy szemantikus redundanciaszűrési konfiguráció esetén. A szaggatott függőleges vonal a $\tau=0{,}95$ referencia-küszöbértéket jelöli.}
+    \label{fig:kept_vs_threshold}
+\end{figure}
+
+Az eredmények alapján a hasonlósági küszöbérték megválasztása valamennyi konfigurációban jelentősen befolyásolja az adathalmaz méretét. Az alacsonyabb küszöbértékek mellett a kiválasztott manőverek száma nagymértékben csökken, míg a magasabb küszöbértékek egyre több mérés megtartását eredményezik. A multimodális reprezentáció azonos kiválasztási algoritmus és küszöbérték mellett valamennyi vizsgált esetben kevesebb manővert tart meg, mint a szöveges reprezentáció. Hasonlóan, a lefedőhalmaz-algoritmus mindkét reprezentáció esetében kisebb részhalmazt állít elő, mint a frekvencia-alapú szűrés.
+
+A két hatás különösen jól megfigyelhető a $\tau=0{,}95$ küszöbértéknél. A szöveges VLM-reprezentáció és a frekvencia-alapú szűrés 265, míg a lefedőhalmaz-algoritmus 199 manővert tart meg. A multimodális reprezentáció alkalmazásával ugyanezek az értékek rendre 221 és 141 manőverre csökkennek. A legnagyobb adatcsökkentést tehát a multimodális reprezentáció és a lefedőhalmaz-algoritmus kombinációja biztosítja. A megtartott manőverek kisebb száma azonban önmagában nem jelenti a kiválasztás nagyobb hatékonyságát, mivel a redukált adathalmazok járműdinamikai felhasználhatóságát az identifikációs eredmények alapján kell értékelni.
+
+A redundanciaszűréssel létrehozott adathalmazok gyakorlati alkalmasságának vizsgálatára járműmodell-identifikáció került végrehajtásra. A korábban ismertetett nemlineáris, oldalirányú egynyomvonalú járműmodell Pacejka-abroncsparamétereinek meghatározása a különböző redukált adathalmazokon külön-külön történt meg. Az identifikált modellek értékelése közös tesztadatok alapján történt, így az egyes konfigurációkhoz tartozó becslési hibák összehasonlíthatók.
+
+A modellek pontosságának értékelésére a jármű oldalirányú sebessége ($v_y$) és perdületi sebessége ($\dot{\psi}$) kerül felhasználásra. A két kimenet becslési hibáját a négyzetes középhiba gyöke (RMSE) jellemzi. A kisebb RMSE-érték pontosabb modellválaszt jelez. Az oldalirányú sebesség és a perdületi sebesség különböző fizikai mennyiségek, ezért hibáik önállóan kerülnek értékelésre, közvetlen összeadásuk vagy átlagolásuk nélkül.
+
+A négy szemantikus redundanciaszűrési konfiguráció identifikációs eredményeit a \ref{tab:vlm_rmse_vy}. és \ref{tab:vlm_rmse_yaw}. táblázatok foglalják össze. Az első táblázat az oldalirányú sebesség, míg a második a perdületi sebesség becslési hibáját tartalmazza.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Az oldalirányú sebesség becslési hibája (RMSE) a szemantikus redundanciaszűrési konfigurációk esetében.}
+    \label{tab:vlm_rmse_vy}
+    \small
+    \setlength{\tabcolsep}{5pt}
+    \begin{tabular}{ccccc}
+        \hline
+        & \multicolumn{2}{c}{Szöveges VLM} & \multicolumn{2}{c}{Multimodális VLM} \\
+        \cline{2-5}
+        $\tau$ & Frekvencia & Lefedőhalmaz & Frekvencia & Lefedőhalmaz \\
+        \hline
+        0,90 & 0,02426 & 0,05403 & 0,07876 & 0,04136 \\
+        0,91 & 0,02251 & 0,04635 & 0,04037 & 0,05342 \\
+        0,92 & 0,15630 & 0,03576 & 0,03886 & 0,04917 \\
+        0,93 & 0,01743 & 0,02673 & 0,03261 & 0,04656 \\
+        0,94 & 0,02251 & 0,01875 & 0,02829 & 0,03580 \\
+        0,95 & 0,01654 & 0,02562 & 0,02058 & 0,03051 \\
+        0,96 & \textbf{0,01555} & 0,01719 & 0,01919 & 0,02139 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+    \centering
+    \caption{A perdületi sebesség becslési hibája (RMSE) a szemantikus redundanciaszűrési konfigurációk esetében.}
+    \label{tab:vlm_rmse_yaw}
+    \small
+    \setlength{\tabcolsep}{5pt}
+    \begin{tabular}{ccccc}
+        \hline
+        & \multicolumn{2}{c}{Szöveges VLM} & \multicolumn{2}{c}{Multimodális VLM} \\
+        \cline{2-5}
+        $\tau$ & Frekvencia & Lefedőhalmaz & Frekvencia & Lefedőhalmaz \\
+        \hline
+        0,90 & 0,004134 & 0,009368 & 0,012490 & 0,006462 \\
+        0,91 & 0,004415 & 0,008619 & 0,008055 & 0,009667 \\
+        0,92 & 0,019870 & 0,008570 & 0,007765 & 0,009465 \\
+        0,93 & 0,004102 & 0,006542 & \textbf{0,003305} & 0,009231 \\
+        0,94 & 0,005467 & 0,005161 & 0,006864 & 0,006194 \\
+        0,95 & 0,004423 & 0,002433 & 0,005296 & 0,006481 \\
+        0,96 & 0,003753 & 0,004655 & 0,004964 & 0,004882 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+A két kimeneti változó RMSE-értékeinek küszöbfüggését a \ref{fig:rmse_vs_threshold}. ábra foglalja össze. Az oldalirányú sebességnél a szöveges VLM frekvencia-alapú szűrésének $\tau=0{,}92$ konfigurációja kiugró hibát ad, míg a magasabb küszöbértékeken a hibák általában csökkennek. A perdületi sebességnél a legkisebb egyedi hiba a szöveges VLM lefedőhalmaz-algoritmusának $\tau=0{,}95$ beállításánál jelentkezik.
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=\textwidth]{Picture/tdk_rmse_vs_threshold.pdf}
+    \caption{Az identifikált modellek oldalirányú és perdületi sebességre vonatkozó RMSE-értékei a hasonlósági küszöbérték függvényében.}
+    \label{fig:rmse_vs_threshold}
+\end{figure}
+
+Az adatcsökkentés és a modellpontosság kapcsolatát a \ref{fig:tradeoff_scatter}. ábra két szórásdiagramon mutatja. A fekete körrel kiemelt pontok a $\tau=0{,}95$ beállításokat jelölik. Látható, hogy a legtöbb manővert megtartó konfiguráció nem minden esetben adja a legkisebb hibát, és a $\tau=0{,}95$ referencia a megtartott elemszám és a becslési hiba közötti köztes, kiegyensúlyozott tartományba esik.
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=\textwidth]{Picture/tdk_tradeoff_scatter.pdf}
+    \caption{Az identifikációs RMSE és a megtartott manőverek számának kapcsolata. A fekete keret a $\tau=0{,}95$ küszöbértékeket emeli ki; az oldalirányú sebesség $0{,}156$ RMSE-értéke ($\tau=0{,}92$, szöveges VLM + frekvencia) a tengelytartományon kívül esik.}
+    \label{fig:tradeoff_scatter}
+\end{figure}
+
+Az oldalirányú sebesség becslési eredményei alapján a szöveges VLM-reprezentáció frekvencia-alapú szűréssel történő alkalmazása biztosítja a legkisebb hibát. A $\tau=0{,}96$ küszöbértéknél az RMSE értéke 0,01555, amely a vizsgált konfigurációk közül a legkedvezőbb eredmény. Ugyanez a megközelítés a $\tau=0{,}95$ és $\tau=0{,}93$ küszöbértékek mellett rendre 0,01654 és 0,01743 hibát eredményez, lényegesen kisebb megtartott adathalmazokkal.
+
+A perdületi sebesség esetében a legkisebb egyedi RMSE-érték a szöveges VLM-reprezentáció és a lefedőhalmaz-algoritmus $\tau=0{,}95$ konfigurációjánál figyelhető meg, 0,002433 értékkel. Az adott konfiguráció oldalirányú sebességre számított hibája azonban 0,02562, amely számottevően meghaladja a frekvencia-alapú szűrés azonos küszöbérték mellett kapott eredményét. A szöveges VLM-reprezentáció frekvencia-alapú szűrése $\tau=0{,}96$ mellett 0,003753 perdületi sebességre vonatkozó RMSE-t biztosít, így mindkét vizsgált kimenet tekintetében kedvező pontosságot ér el.
+
+A multimodális reprezentáció a vizsgált beállítások egy részében szintén alacsony hibát eredményez, ugyanakkor az oldalirányú sebesség becslése során általában elmarad a szöveges VLM-reprezentáció frekvencia-alapú változatától. Különösen megfigyelhető ez a $\tau=0{,}95$ küszöbértéknél, ahol a szöveges reprezentáció 0,01654, míg a multimodális reprezentáció 0,02058 RMSE-értéket ad frekvencia-alapú szűrés mellett. Ezzel párhuzamosan a multimodális megközelítés 221 manővert tart meg a szöveges változat 265 manőverével szemben. Az eredmények tehát azt mutatják, hogy a multimodális reprezentáció által biztosított nagyobb adatcsökkentés ebben a konfigurációban a modellpontosság csökkenésével jár együtt.
+
+A két kiválasztási algoritmus összehasonlítása alapján a lefedőhalmaz-módszer rendszerint kisebb adathalmazokat eredményez, azonban az identifikációs pontosság tekintetében nem mutat általános előnyt. A teljes szemantikus lefedettség biztosítása mellett ugyanis egyes, az identifikáció szempontjából releváns dinamikai sajátosságok kevésbé hangsúlyosan jelenhetnek meg a kiválasztott részhalmazban. Ezzel szemben a frekvencia-alapú szűrés a legtöbb vizsgált beállításban kedvezőbb kompromisszumot eredményez a két kimeneti változó becslési hibájának együttes értékelésekor. Ez arra utal, hogy a szemantikus térben megfogalmazott lefedettségi feltétel önmagában nem elegendő a járműdinamikai identifikációhoz szükséges információtartalom megőrzésének biztosításához.
+
+Az eredmények ugyanakkor arra is rámutatnak, hogy a modellhibák nem változnak minden esetben monoton módon a hasonlósági küszöbérték növelésével. Erre különösen szemléletes példa a szöveges VLM-reprezentáció frekvencia-alapú szűrésének $\tau=0{,}92$ konfigurációja, amelynél az oldalirányú sebesség RMSE-értéke 0,15630-ra növekszik. A szomszédos küszöbértékekhez tartozó lényegesen kisebb hibák arra utalnak, hogy a kiválasztott konkrét manőverek összetétele jelentős szerepet játszik az identifikáció eredményességében. A küszöbérték ezért nem kizárólag az adathalmaz méretét szabályozza, hanem közvetett módon az identifikációhoz rendelkezésre álló dinamikai gerjesztések összetételét is befolyásolja.
+
+A redundanciaszűrés eredményességének értékelésekor a modellpontosság mellett a megtartott manőverek számát is figyelembe kell venni. A szöveges VLM-reprezentáció frekvencia-alapú szűrése $\tau=0{,}96$ mellett 383 manővert tart meg, amely 16,38\%-os adatcsökkentésnek felel meg. Bár a szöveges VLM-reprezentáció frekvencia-alapú szűrésének vizsgált küszöbértékei közül ennél a beállításnál mindkét kimenet esetében a legkisebb becslési hiba figyelhető meg, az eredeti adathalmaz jelentős részének megtartása szükséges. A $\tau=0{,}95$ küszöbérték alkalmazásával ezzel szemben 265 manőver marad meg, amely 42,14\%-os adatcsökkentést eredményez. A további 118 manőver eltávolítása mellett az oldalirányú sebesség RMSE-értéke 0,01654, a perdületi sebességé pedig 0,004423, így mindkét kimenet esetében továbbra is alacsony becslési hiba érhető el. Az alacsonyabb küszöbértékek további adatcsökkentést tesznek lehetővé, ugyanakkor a kiválasztott részhalmazok méretének csökkenésével a becslési hibák változékonysága is megfigyelhető. A $\tau=0{,}93$ beállítás például mindössze 111 manővert tart meg, és szintén kedvező identifikációs eredményt biztosít, azonban a két kimeneti változó hibái nem azonos módon változnak. A vizsgált beállítások között így nem jelölhető ki valamennyi szempontból egyértelműen optimális küszöbérték. A $\tau=0{,}95$ ugyanakkor olyan köztes beállításnak tekinthető, amely jelentős adatcsökkentést biztosít, miközben mindkét vizsgált dinamikai változó becslési pontossága kedvező marad.
+
+A saját módszerek összehasonlítását követően a szöveges VLM-reprezentáció frekvencia-alapú szűrése hagyományos, numerikus reprezentációkra épülő adatcsökkentési megközelítésekkel kerül összevetésre. A referenciaeljárások PCA-alapú dimenziócsökkentésre épülnek, amelyet különböző normalizálási és manőverkiválasztási eljárások egészítenek ki. A vizsgált konfigurációk között frekvencia-alapú redundanciaszűrés, valamint k-means és k-medoids klaszterezés szerepel. Az összehasonlítás alapjául a $\tau=0{,}95$ küszöbérték került kiválasztásra, amely a korábbi eredmények alapján jelentős adatcsökkentést biztosít, miközben mindkét vizsgált dinamikai változó esetében kedvező identifikációs pontosságot eredményez. A referencia-küszöbérték rögzítése lehetővé teszi, hogy az összehasonlítás elsődlegesen az alkalmazott reprezentációs és kiválasztási módszerek eltéréseire összpontosítson. Az összehasonlítást a \ref{tab:traditional_comparison}. táblázat foglalja össze.
+
+\begin{table}[htbp]
+    \centering
+    \caption{A hagyományos adatcsökkentési módszerek és a szöveges VLM-alapú redundanciaszűrés identifikációs eredményeinek összehasonlítása. A relatív eltérések a szöveges VLM $\tau=0{,}95$ konfigurációjához viszonyított értékeket jelölik.}
+    \label{tab:traditional_comparison}
+    \scriptsize
+    \setlength{\tabcolsep}{3.5pt}
+    \begin{tabular}{lcccc}
+        \hline
+        Módszer & $v_y$ RMSE & $\dot{\psi}$ RMSE & $\Delta e_{v_y}$ (\%) & $\Delta e_{\dot{\psi}}$ (\%) \\
+        \hline
+        PCA min-max + frekvencia & 0,02133 & 0,005128 & +28,90 & +15,94 \\
+        PCA z-score + frekvencia & 0,01860 & 0,004818 & +12,50 & +8,93 \\
+        PCA min-max + k-means & 0,02980 & 0,006417 & +80,17 & +45,08 \\
+        PCA min-max + k-medoids & 0,02968 & 0,007126 & +79,44 & +61,11 \\
+        PCA z-score + k-means & 0,02603 & 0,006483 & +57,38 & +46,57 \\
+        PCA z-score + k-medoids & 0,02375 & 0,006147 & +43,59 & +38,98 \\
+        \hline
+        \textbf{Szöveges VLM, 0,95} & \textbf{0,01654} & \textbf{0,004423} & \textbf{0,00} & \textbf{0,00} \\
+        Szöveges VLM, 0,93 & 0,01743 & 0,004102 & +5,38 & -7,26 \\
+        Szöveges VLM, 0,96 & 0,01555 & 0,003753 & -5,99 & -15,15 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+A \ref{tab:traditional_comparison}. táblázat relatív hibáit a \ref{fig:pca_vlm_delta}. ábra vízszintes oszlopdiagramon is bemutatja. A szöveges VLM $\tau=0{,}95$ konfigurációja a $0\%$ referencia; a legkedvezőbb PCA-alapú eljárás (z-score + frekvencia) ehhez képest $+12{,}50\%$ és $+8{,}93\%$ relatív hibanövekedést mutat.
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.92\textwidth]{Picture/tdk_pca_vlm_delta.pdf}
+    \caption{A hagyományos PCA-alapú módszerek és a szöveges VLM további küszöbértékeinek relatív identifikációs hibája a szöveges VLM $\tau=0{,}95$ frekvencia-alapú konfigurációjához viszonyítva. A kiemelt oszlop a legjobb PCA-konfiguráció.}
+    \label{fig:pca_vlm_delta}
+\end{figure}
+
+A relatív hibaváltozás a szöveges VLM-reprezentáció $\tau=0{,}95$ konfigurációjának eredményéhez viszonyítva, a \ref{eq:relative_identification_error} egyenlet alapján kerül meghatározásra:
+
+\begin{equation}
+    \Delta e = \frac{e-e_{\mathrm{VLM},0{,}95}}{e_{\mathrm{VLM},0{,}95}}\cdot100\%,
+    \label{eq:relative_identification_error}
+\end{equation}
+
+ahol $e$ a vizsgált módszer RMSE-értékét, $e_{\mathrm{VLM},0{,}95}$ pedig a referencia-konfiguráció azonos kimeneti változóra számított hibáját jelöli. A pozitív érték nagyobb, míg a negatív érték kisebb becslési hibát jelent a referenciához képest.
+
+A hagyományos módszerek közül a PCA z-score normalizálással végrehajtott változata biztosítja a legkedvezőbb identifikációs eredményeket, 0,01860 oldalirányú sebességre és 0,004818 perdületi sebességre vonatkozó RMSE-értékkel. A szöveges VLM-reprezentáció frekvencia-alapú szűrése $\tau=0{,}95$ mellett ugyanakkor mindkét kimenet esetében kisebb hibát eredményez: az oldalirányú sebességnél 0,01654, a perdületi sebességnél pedig 0,004423 értéket. A hagyományos módszerek közül legjobban teljesítő konfiguráció hibája így rendre 12,50\%-kal és 8,93\%-kal nagyobb a szöveges VLM-alapú módszer eredményénél.
+
+A PCA-alapú reprezentációk klaszterezéssel kiegészített változatai szintén nagyobb becslési hibát eredményeztek a szöveges VLM-reprezentációhoz képest. A k-means és k-medoids algoritmusokkal végrehajtott manőverkiválasztás eredményei alapján a normalizálási eljárás és a kiválasztási stratégia egyaránt befolyásolja a redukált adathalmazból identifikált modell pontosságát. A vizsgált konfigurációk közül a PCA z-score normalizálással és frekvencia-alapú szűréssel alkalmazott változata biztosította a legkisebb becslési hibát, azonban mindkét kimeneti változó esetében elmaradt a szöveges VLM-alapú módszer eredményétől.
+
+A szöveges VLM-reprezentáció további küszöbértékeken kapott eredményei szintén alátámasztják a szemantikus redundanciaszűrés alkalmazhatóságát. A $\tau=0{,}93$ konfiguráció mindössze 111 megtartott manőver mellett 0,01743 oldalirányú sebességre és 0,004102 perdületi sebességre vonatkozó RMSE-értéket eredményez, amelyek egyaránt kisebbek a hagyományos megközelítések közül legjobban teljesítő PCA z-score konfiguráció hibáinál. A $\tau=0{,}96$ beállítás ennél is kisebb becslési hibákat biztosít, ugyanakkor az eredeti manőverek jelentős részének megtartásával jár. A különböző küszöbértékek tehát eltérő adatcsökkentési és modellpontossági kompromisszumokat kínálnak. A hagyományos módszerekkel történő összehasonlításhoz kiválasztott $\tau=0{,}95$ küszöbérték ezek között egy köztes, kiegyensúlyozott referencia-beállítást képvisel, amelynek alkalmazásával az eredeti mérések több mint 40\%-a eltávolítható, miközben a kapott modell mindkét vizsgált kimenet esetében felülmúlja a hagyományos referenciaeljárások identifikációs pontosságát.
+
+A kísérleti eredmények azt mutatják, hogy a szemantikus reprezentáció kialakítása és a redundanciaszűrési algoritmus megválasztása egyaránt jelentős hatással van a járműmodell-identifikáció pontosságára. A multimodális reprezentáció és a lefedőhalmaz-algoritmus kombinációja a legnagyobb adatcsökkentést teszi lehetővé, de ez nem jár együtt a legkedvezőbb modellpontossággal. A szöveges VLM-reprezentáció frekvencia-alapú szűrése ezzel szemben több küszöbértéknél is kedvező becslési hibát eredményez, és a rendelkezésre álló összehasonlításban vizsgált PCA-alapú konfigurációnál kisebb hibát biztosít mind az oldalirányú sebesség, mind a perdületi sebesség esetében. A kapott eredmények alátámasztják, hogy a járműdinamikai mérési manőverek szemantikus reprezentációjára épülő redundanciaszűrés alkalmas lehet a mérési adathalmaz méretének csökkentésére úgy, hogy a megtartott mérésekből továbbra is pontos nemlineáris járműmodell identifikálható.
+
+\chapter{Konklúzió és további kutatási irányok}\label{ch:konkluzio}
+A dolgozat egy szemantikus reprezentáción alapuló redundanciaszűrési megközelítést mutatott be, amelynek célja a hasonló dinamikai információt hordozó járműmanőverek azonosítása és a mérési adathalmaz méretének csökkentése. A kidolgozott módszer a többváltozós numerikus idősorok közvetlen összehasonlítása helyett a manőverek karakterisztikus dinamikai viselkedését egységes szemantikus reprezentációban ragadja meg. A feldolgozási folyamat során a mérési adatokból strukturált diagramok és numerikus jellemzők készülnek, amelyek alapján egy vizuális nyelvi modell négy elkülönített szakmai feladatban elemzi a jármű dinamikai viselkedését. Az előállított leírások felhasználásával minden teljes manőverhez egyetlen, 4096 dimenziós embeddingvektor rendelhető, lehetővé téve a mérések szemantikus térben történő összehasonlítását.
+
+A kutatás során két különböző reprezentációs megközelítés került kialakításra. Az első a vizuális nyelvi modell által generált szakmai leírások egyesítésére és azok szöveges beágyazására épül, míg a második a természetes nyelvi összefoglalókat és a mérési diagramokat közvetlenül, multimodális embeddingmodell alkalmazásával dolgozza fel. A redundanciaszűrés mindkét reprezentáció esetében az azonos típusú manőverek közötti koszinusz-hasonlóság alapján történt. A vizsgálat két különböző kiválasztási algoritmusra terjedt ki: a legtöbb redundáns kapcsolatban szereplő manőverek iteratív eltávolításán alapuló frekvencia-alapú szűrésre, valamint a megtartott manőverek szemantikus lefedettségét biztosító lefedőhalmaz-algoritmusra. A négy kialakított konfiguráció lehetővé tette a reprezentációs módszer és a kiválasztási stratégia hatásának összehasonlítását.
+
+A 458 járműdinamikai manővert tartalmazó adathalmazon végzett kísérletek alapján a hasonlósági küszöbérték, a reprezentáció és a kiválasztási algoritmus egyaránt jelentősen befolyásolja a megtartott mérések számát. A multimodális reprezentáció és a lefedőhalmaz-algoritmus kombinációja valamennyi vizsgált küszöbértéknél a legnagyobb adatcsökkentést eredményezte. A $\tau=0{,}95$ beállítás mellett például mindössze 141 manőver megtartására volt szükség, ami az eredeti adathalmaz 69,21\%-os csökkentésének felel meg. A további járműdinamikai vizsgálatok ugyanakkor rámutattak arra, hogy a nagyobb mértékű adatcsökkentés nem feltétlenül jár együtt a dinamikai információtartalom kedvezőbb megőrzésével.
+
+A redundanciaszűrés eredményességének validálása nemlineáris járműmodell-identifikáció segítségével történt, amelynek során az oldalirányú sebesség és a perdületi sebesség becslési pontossága került értékelésre. A vizsgált konfigurációk közül a szöveges VLM-reprezentáció frekvencia-alapú szűréssel történő alkalmazása biztosította a legkedvezőbb eredményeket a két kimeneti változó együttes figyelembevételével. A $\tau=0{,}95$ referencia-küszöbérték mellett 265 manőver maradt meg, amely 42,14\%-os adatcsökkentést jelent. Az így kiválasztott mérésekből identifikált modell oldalirányú sebességre számított RMSE-értéke 0,01654, míg a perdületi sebesség esetében 0,004423 volt. A magasabb, $\tau=0{,}96$ küszöbérték mindkét változónál kisebb becslési hibát eredményezett, azonban lényegesen több manőver megtartását igényelte. Az eredmények alapján a $\tau=0{,}95$ olyan köztes beállításnak tekinthető, amely jelentős adatcsökkentés mellett kedvező identifikációs pontosságot biztosít.
+
+A kiválasztott szemantikus megközelítés eredményei hagyományos, PCA-alapú adatcsökkentési eljárásokkal is összehasonlításra kerültek. A referenciaeljárások között különböző normalizálási módszerek, valamint frekvencia-alapú, k-means és k-medoids kiválasztási stratégiák szerepeltek. Az összehasonlítás során a szöveges VLM-reprezentáció frekvencia-alapú szűréssel, $\tau=0{,}95$ mellett mindkét vizsgált kimeneti változó esetében kisebb becslési hibát eredményezett, mint a PCA-alapú konfigurációk. A legkedvezőbb hagyományos módszerhez viszonyítva az oldalirányú sebesség RMSE-értéke 11,08\%-kal, a perdületi sebességé pedig 8,20\%-kal volt kisebb. Ez alátámasztja, hogy a mérési manőverek dinamikai viselkedésének szemantikus reprezentációja a vizsgált környezetben kedvező alternatívát jelenthet a hagyományos numerikus reprezentációkra épülő redundanciaszűréssel szemben.
+
+A kutatás eredményei egyúttal rámutatnak a szemantikus hasonlóság és a járműdinamikai információtartalom közötti kapcsolat összetettségére. A lefedőhalmaz-algoritmus valamennyi eredeti manőverhez biztosít szemantikailag hasonló képviselőt, azonban ez önmagában nem eredményezett kedvezőbb identifikációs pontosságot. A különböző küszöbértékekhez tartozó modellhibák sem minden esetben változtak monoton módon, ami a kiválasztott manőverek konkrét összetételének jelentőségére utal. Mindez azt mutatja, hogy az embeddingtérben mért hasonlóság nem tekinthető a fizikai információtartalom közvetlen és teljes értékű mérőszámának, ezért a redukált adathalmazok eredményességét az adott alkalmazáshoz kapcsolódó validációval is szükséges ellenőrizni.
+
+A kidolgozott módszer további előnye, hogy a szemantikus reprezentációk előállítása előtanított vizuális nyelvi és embeddingmodellekkel, feladatspecifikus finomhangolás nélkül valósult meg. A diagramok, a szakmai leírások és a vektorreprezentációk elkülönített kezelése lehetővé teszi az egyes feldolgozási lépések ellenőrzését és megismétlését. A kiválasztott teljes manőverek eredeti numerikus idősorai változatlan formában maradnak meg, így a szemantikus reprezentáció kizárólag a redundancia felismerését és a mérési adathalmaz szűrését szolgálja, nem helyettesíti a későbbi mérnöki feldolgozáshoz szükséges adatokat.
+
+A kidolgozott módszer egyik legfontosabb gyakorlati alkalmazási lehetősége a valós járműtesztek előzetes megtervezésében rejlik. A szimulációs környezetben végrehajtott manőverek szemantikus összehasonlításával meghatározhatók azok a mérések, amelyek várhatóan a legfontosabb dinamikai információkat hordozzák, így a későbbi valós tesztprogramban elegendő lehet kizárólag ezek végrehajtása. A kutatás során a szöveges VLM-reprezentáció és a frekvencia-alapú szűrés kombinációjával, $\tau=0{,}95$ küszöbérték mellett a vizsgált manőverek száma 458-ról 265-re csökkent, miközben a redukált adathalmazból továbbra is kedvező pontosságú nemlineáris járműmodell volt identifikálható. Ez arra utal, hogy a megfelelően kiválasztott manőverekkel jelentős adatcsökkentés érhető el a modellpontosság számottevő romlása nélkül. Amennyiben ez a tulajdonság valós járműmérések esetében is igazolható, a szükséges tesztek számának csökkentésével jelentősen mérsékelhető lenne a mérési idő, a tesztjárművek igénybevétele és a kapcsolódó költségek. A módszer így nemcsak a már rendelkezésre álló adathalmazok utólagos redukálására, hanem a költséghatékony járműdinamikai mérési programok kialakítására is lehetőséget kínálhat. A gyakorlati alkalmazáshoz azonban további járműmodelleken és valós mérési adatokon végzett validáció szükséges, különös tekintettel az érzékelőzajok, a mérési bizonytalanságok és a változó környezeti feltételek hatására.
+
+
+\listoffigures
+\listoftables
+\printglossary[type=\acronymtype, title=Rövidítések]
+\bibliographystyle{unsrt}
+\bibliography{referencies}
+
+\end{document}
